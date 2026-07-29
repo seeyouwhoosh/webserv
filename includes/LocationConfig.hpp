@@ -7,5 +7,7 @@ private:
 public:
 	LocationConfig();
 	~LocationConfig();
+	LocationConfig(LocationConfig &other);
+	LocationConfig	&operator=(LocationConfig &other);
 };
 

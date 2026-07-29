@@ -7,12 +7,6 @@ private:
 public:
 	ServerConfig();
 	~ServerConfig();
+	ServerConfig(ServerConfig &other);
+	ServerConfig	&operator=(ServerConfig &other);
 };
-
-ServerConfig::ServerConfig()
-{
-}
-
-ServerConfig::~ServerConfig()
-{
-}
