@@ -10,29 +10,58 @@ NC			= \033[0m
 # Compiler
 NAME		= webserv
 CC			= c++
-CFLAGS		= -Wall -Werror -Wextra -std=c++98
+CFLAGS		= -Wall -Werror -Wextra -std=c++98 -g3
+MAKE		= make -sC
 RM			= rm -rf
 
+# Includes
+INCLUDE_DIR	= includes
+INCLUDES	= -I$(INCLUDE_DIR)
+
 # Sources
-SOURCES		= 
+SRC_DIR		= srcs
+SOURCES		= main.cpp
 
 # Objects
-OBJECTS		= $(SOURCES:.cpp=.o)
+OBJ_DIR		= objs
+OBJ			= $(SOURCES:.c=.o)
+OBJECTS		= $(addprefix $(OBJ_DIR)/, $(SOURCES:.c=.o))
+
+# Bonus sources
+BSRC_DIR	= src
+BSOURCES	= 
+
+# Bonus objects
+BOBJ_DIR	= obj
+BOBJECTS	= $(addprefix $(BOBJ_DIR)/, $(BSOURCES:.c=.o))
+
+all: $(NAME)
 
 
 # Main program
-all: $(OBJECTS) $(NAME)
-
 $(NAME): $(OBJECTS)
-	@echo "$(BBLUE)$(NAME)$(NC): Creating $(GREEN)$@$(NC)..."
-	$(CC) $(CFLAGS) -o $@ $(OBJECTS) 
+	@echo "$(BBLUE)$(NAME)$(NC): Creating $(GREEN)$(NAME)$(NC)..."
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LINKER)
 	@echo "$(BBLUE)$(NAME)$(NC): $(GREEN)$(NAME)$(NC) created"
 
-%.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@ 
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ 
 
+# Bonus program
+bonus: $(BOBJECTS)
+	@echo "$(BBLUE)$(NAME)$(NC): Creating $(GREEN)$(NAME) ($@)$(NC)..."
+	$(CC) $(CFLAGS) -o $(NAME) $(BOBJECTS) $(LINKER)
+	@echo "$(BBLUE)$(NAME)$(NC): $(GREEN)$(NAME) ($@)$(NC) created"
+
+$(BOBJ_DIR)/%.o: $(BOBJ_DIR)/%.c
+	@mkdir -p $(BOBJ_DIR)
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+# Cleaning targets
 clean:
-	@$(RM) $(OBJECTS)
+	@$(RM) $(OBJ_DIR)
+	@$(RM) $(BOBJ_DIR)
 	@echo "$(BBLUE)$(NAME)$(NC): Objects cleaned"
 
 fclean: clean
