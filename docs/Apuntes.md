@@ -1,6 +1,4 @@
 # Apuntes de webserv
-## Cosas a hacer
-- [ ] Comentarios del config file (#)
 
 ## Estructura del archivo de configuración
 *Ejemplo:*
@@ -52,7 +50,22 @@ server {
 }
 ```
 
-https://nginx.org/en/docs/http/ngx_http_core_module.html#listen 
+https://nginx.org/en/docs/http/ngx_http_core_module.html#listen
+
+ * Default: `listen *:80 | *:8000;`
+ * Si solo se da el address, se usa el puerto 80
+ * Puede hacer varios listens, pero no pueden ser exactamente iguales
+ * Formatos que pueden coger:
+```conf
+    listen 127.0.0.1:8000;
+    listen 127.0.0.1; = listen 127.0.0.1:80
+    listen 8000; = listen *:8000
+    listen *:8000; Nota: gestionar wildcards
+    listen localhost:8000; = listen 127.0.0.1:8000
+    listen [::]:8000; IPv6; = listen *:8000;
+```
+
+ * Posibles adiciones: Soporte de IPv6, `default_server`
 
 * Set up default error pages.
 ```
@@ -114,8 +127,7 @@ Enables or disables the directory listing output.
 * Default file to serve when the requested resource is a directory.
 ```
 Syntax:	index file ...;
-Default:	
-index index.html;
+Default:	index index.html;
 Context:	http, server, location
 Defines files that will be used as an index. The file name can contain variables. Files are checked in the specified order. The last element of the list can be a file with an absolute path. Example:
 ```
