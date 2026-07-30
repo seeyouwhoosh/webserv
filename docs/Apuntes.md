@@ -40,6 +40,34 @@ Los directives:
 
 *NOTA: Some directives can appear in multiple contexts, in which case you can override the setting inherited from the parent by including the directive in the child context.*
 
+*  Define all the interface:port pairs on which your server will listen to (defining multiple websites served by your program).
+
+```
+server {
+    listen 8080;
+}
+
+server {
+    listen 127.0.0.1:9000;
+}
+```
+
+https://nginx.org/en/docs/http/ngx_http_core_module.html#listen 
+
+* Set up default error pages.
+```
+Syntax:	error_page code ... [=[response]] uri;
+Default:	—
+Context:	http, server, location, if in location
+Defines the URI that will be shown for the specified errors. A uri value can contain variables.
+
+Example:
+
+error_page 404             /404.html;
+error_page 500 502 503 504 /50x.html;
+
+```
+
 * maximum allowed size for client request bodies
 ```config
 Syntax: 	client_max_body_size size;
