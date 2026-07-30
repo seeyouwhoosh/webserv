@@ -24,16 +24,16 @@ SOURCES		= main.cpp
 
 # Objects
 OBJ_DIR		= objs
-OBJ			= $(SOURCES:.c=.o)
-OBJECTS		= $(addprefix $(OBJ_DIR)/, $(SOURCES:.c=.o))
+OBJ			= $(SOURCES:.cpp=.o)
+OBJECTS		= $(addprefix $(OBJ_DIR)/, $(SOURCES:.cpp=.o))
 
 # Bonus sources
-BSRC_DIR	= src
+BSRC_DIR	= srcs
 BSOURCES	= 
 
 # Bonus objects
-BOBJ_DIR	= obj
-BOBJECTS	= $(addprefix $(BOBJ_DIR)/, $(BSOURCES:.c=.o))
+BOBJ_DIR	= objs
+BOBJECTS	= $(addprefix $(BOBJ_DIR)/, $(BSOURCES:.cpp=.o))
 
 all: $(NAME)
 
@@ -44,7 +44,7 @@ $(NAME): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LINKER)
 	@echo "$(BBLUE)$(NAME)$(NC): $(GREEN)$(NAME)$(NC) created"
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ 
 
@@ -54,18 +54,18 @@ bonus: $(BOBJECTS)
 	$(CC) $(CFLAGS) -o $(NAME) $(BOBJECTS) $(LINKER)
 	@echo "$(BBLUE)$(NAME)$(NC): $(GREEN)$(NAME) ($@)$(NC) created"
 
-$(BOBJ_DIR)/%.o: $(BOBJ_DIR)/%.c
+$(BOBJ_DIR)/%.o: $(BOBJ_DIR)/%.cpp
 	@mkdir -p $(BOBJ_DIR)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # Cleaning targets
 clean:
-	@$(RM) $(OBJ_DIR)
-	@$(RM) $(BOBJ_DIR)
+	$(RM) $(OBJ_DIR)
+	$(RM) $(BOBJ_DIR)
 	@echo "$(BBLUE)$(NAME)$(NC): Objects cleaned"
 
 fclean: clean
-	@$(RM) $(NAME)
+	$(RM) $(NAME)
 	@echo "$(BBLUE)$(NAME)$(NC): Fully cleaned"
 
 re: fclean all
