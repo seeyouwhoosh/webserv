@@ -1,5 +1,8 @@
 # Apuntes de webserv
 
+## Notas
+* Gestionar que el archivo no tenga bytes ilimitados, like el archivo este de /dev/urandom
+
 ## Estructura del archivo de configuración
 *Ejemplo:*
 ```conf
