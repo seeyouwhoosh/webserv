@@ -33,22 +33,31 @@ typedef	struct s_listen
 class GlobalConfig
 {
 private:
+
+public:
+	GlobalConfig();
+	~GlobalConfig();
+	GlobalConfig(GlobalConfig &other);
+	GlobalConfig	&operator=(GlobalConfig &other);
+
 	std::vector<ServerConfig>	servers;
 	std::string					root;
 	std::vector<std::string>	indexes;
 	bool						autoindex;
 	std::string					client_max_body_size;
 	std::map<int, std::string>	error_pages;
-public:
-	GlobalConfig();
-	~GlobalConfig();
-	GlobalConfig(GlobalConfig &other);
-	GlobalConfig	&operator=(GlobalConfig &other);
 };
 
 class ServerConfig
 {
 private:
+
+public:
+	ServerConfig();
+	~ServerConfig();
+	ServerConfig(ServerConfig &other);
+	ServerConfig	&operator=(ServerConfig &other);
+
 	std::vector<LocationConfig> locations;
 	std::vector<t_listen>		listens;
 	std::string					server_name;
@@ -58,16 +67,18 @@ private:
 	size_t						client_max_body_size;
 	cgi_handler_type			cgi_handler;
 	std::map<int, std::string>	error_pages;
-public:
-	ServerConfig();
-	~ServerConfig();
-	ServerConfig(ServerConfig &other);
-	ServerConfig	&operator=(ServerConfig &other);
 };
 
 class LocationConfig
 {
 private:
+
+public:
+	LocationConfig();
+	~LocationConfig();
+	LocationConfig(LocationConfig &other);
+	LocationConfig	&operator=(LocationConfig &other);
+
 	std::string					root;
 	std::vector<std::string>	indexes;
 	bool						autoindex;
@@ -77,10 +88,4 @@ private:
 	std::string					upload_store;
 	int							return_status;
 	std::map<int, std::string>	error_pages;
-
-public:
-	LocationConfig();
-	~LocationConfig();
-	LocationConfig(LocationConfig &other);
-	LocationConfig	&operator=(LocationConfig &other);
 };

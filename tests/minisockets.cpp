@@ -3,9 +3,22 @@
 #include <unistd.h>
 #include <iostream>
 #include <sys/epoll.h>
+#include "utils.hpp"
+#include "Config.hpp"
 
 int	main(int ac, char **av)
 {
+	ServerConfig	server;
+
+	server.autoindex = AUTOINDEX_ON;
+	server.client_max_body_size = 1;
+	server.error_pages[404] = "404.html";
+	server.indexes[0] = "index.html";
+	server.root = ".";
+	server.server_name = "no.es";
+	server.listens[0].host = "localhost";
+	server.listens[0].port = 9999;
+
 	/* Create a socket (IPv4, TCP). El tercer argumento es 0 porque suele haber un solo protocolo para para cada tipo (SOCK_STREAM, por ejemplo) */
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1)
@@ -14,12 +27,7 @@ int	main(int ac, char **av)
 		return 1;
 	}
 
-	
-	int opt = 1;
-	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)); // Para que no haya un delay al conectarse por segunda vez
-	
-	/* Listen to port 9999 on any address
-	
+	/*
 	Para el tipo de socket que tenemos, en nuestro caso un AF_INET, pasamos una estructura u otra, en este caso, usamos sockaddr_in 
 	
 	struct sockaddr_in {
@@ -43,34 +51,38 @@ int	main(int ac, char **av)
 
 	sockaddr_in	sockaddr;
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_addr.s_addr = INADDR_ANY;
-	sockaddr.sin_port = htons(9999); //convert host number to network byte
+	sockaddr.sin_addr.s_addr = inet_addr(server.listens[0].host);
+	sockaddr.sin_port = htonl(server.listens[0].port); //convert host number to network byte
 
 	if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) == -1)
 	{
-		std::cout << "Error: bind to port 9999 failed\n";
+		std::cout << "Error: bind to port " << server.listens[0].port << " failed\n";
 		return 1;
 	}
 
 	size_t addrlen = sizeof(sockaddr);
 
-	// Start listening. Hold at most 10 connections in the queue
-	// backlog is the maximum number of connections that will be queued before connections start being refused.
+	/* Start listening. Hold at most number connections in the queue
+	backlog is the maximum number of connections that will be queued before connections start being refused.
+	*/
 
-	if (listen(sockfd, 10) == -1)
+	if (listen(sockfd, server.client_max_body_size) == -1)
 	{
 		std::cout << "Error: listen on socker failed " << errno << "\n";
 		return 1;
 	}
 
-	// Grab a connection from the queue
-	// addrlen is now a value-result argument. It expects a pointer to an int that will be the size of addr. After the function is executed, the int refered by addrlen will be set to the size of the peer address.
-
+	/* Grab a connection from the queue
+	/* addrlen is now a value-result argument. It expects a pointer to an int that will be the size of addr. After the function is executed, the int refered by addrlen will be set to the size of the peer address.
+	*/
+	std::cout << "Before accepting: \n- address: " << inet_ntoa(sockaddr.sin_addr.s_addr) << "\n- port: " << ntohl(sockaddr.sin_port) << "\n";
 	int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
-	if (connection == -1) {
-	std::cout << "Error: failed to grab connection " << errno << std::endl;
-	exit(EXIT_FAILURE);
+	if (connection == -1)
+	{
+		std::cout << "Error: failed to grab connection " << errno << std::endl;
+		exit(EXIT_FAILURE);
 	}
+	std::cout << "After accepting: \n- address: " << inet_ntoa(sockaddr.sin_addr.s_addr) << "\n- port: " << ntohl(sockaddr.sin_port) << "\n";
 
 	// Read from the connection
 	char buffer[100];
