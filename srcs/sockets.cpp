@@ -1,4 +1,4 @@
-#include "idk.hpp"
+#include "socket.hpp"
 
 in_addr_t	inet_addr(std::stringstream &addr)
 {
@@ -35,4 +35,14 @@ in_addr_t	inet_addr(std::string &addr)
 	}
 
 	return htonl((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]);
+}
+
+std::string	inet_ntoa(in_addr_t addr)
+{
+	std::stringstream ss;
+	addr = ntohl(addr);
+
+	ss << ((addr >> 24) & 255 ) << "." << ((addr >> 16) & 255 ) << "." << ((addr >> 8) & 255 ) << "." << (addr & 255 ) << ".";
+
+	return ss.str();
 }
