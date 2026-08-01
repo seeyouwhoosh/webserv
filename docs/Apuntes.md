@@ -143,3 +143,10 @@ No sé, a leer esto: https://www.getpagespeed.com/server-setup/nginx/nginx-uploa
 * Execution of CGI, based on file extension 
 
 fastcgi_pass o no sé
+
+## Nota sobre IPv4
+
+IPv4 addresses are divided into unicast, broadcast, and multicast addresses.  Unicast addresses specify a single interface of a host, broadcast addresses specify all hosts on a network, and multicast addresses address all hosts in a multicast group. Datagrams to broadcast addresses can be sent or received only when
+the SO_BROADCAST socket flag is set.
+
+Note that the address and the port are always stored in network byte order.  In particular, this means that you need to call htons(3) on the number that is assigned to a port. All address/port manipulation functions in the standard library work in network byte order.
