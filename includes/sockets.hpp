@@ -6,6 +6,5 @@
 
 /* Network byte host to string and viceversa */
 
-in_addr_t	inet_addr(std::stringstream &addr);
-in_addr_t	inet_addr(std::string &addr);
-std::string	inet_ntoa(in_addr_t addr);
+int inet_pton(int af, const char *src, void *dst);
+const char	*inet_ntop(int af, const void *src, char dst[size], socklen_t size);
