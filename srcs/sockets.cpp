@@ -106,3 +106,16 @@ const char	*inet_ntop(int af, const void *src, char dst[size], socklen_t size)
 	return dst;
 }
 
+/* prepares listening socket, if it fails, return value < 0, else returns socket */
+int	listen_socket(struct sockaddr *sockaddr, int listen_num)
+{
+	int	af = sockaddr->sa_family;
+
+	if ((serversock = socket(af, SOCK_STREAM, 0)) < 0)
+		return error_msg(errno, NULL);
+	if (bind(serversock, sockaddr, sizeof(*sockaddr)) < 0)
+		return error_msg(errno, NULL);
+	if (listen(serversock, listen_num) < 0)
+		return error_msg(errno, NULL);
+	return serversock;
+}
