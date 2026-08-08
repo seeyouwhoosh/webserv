@@ -110,9 +110,11 @@ const char	*inet_ntop(int af, const void *src, char dst[size], socklen_t size)
 int	listen_socket(struct sockaddr *sockaddr, int listen_num)
 {
 	int	af = sockaddr->sa_family;
+	int	yes = 1;
 
 	if ((serversock = socket(af, SOCK_STREAM, 0)) < 0)
 		return error_msg(errno, NULL);
+	setsockopt(serversock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 	if (bind(serversock, sockaddr, sizeof(*sockaddr)) < 0)
 		return error_msg(errno, NULL);
 	if (listen(serversock, listen_num) < 0)
