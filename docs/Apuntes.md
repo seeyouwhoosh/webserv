@@ -301,3 +301,16 @@ int	main(int ac, char **av)
 	close(sockfd);
 }
 ```
+
+## Data encapsulation
+
+A layered model more consistent with Unix might be:
+
+* Application Layer (telnet, ftp, etc.)
+* Host-to-Host Transport Layer (TCP, UDP)
+* Internet Layer (IP and routing)
+* Network Access Layer (Ethernet, wi-fi, or whatever)
+
+A packet is born, the packet is wrapped (“encapsulated”) in a header (and rarely a footer) by the first protocol (say, the TFTP protocol), then the whole thing (TFTP header included) is encapsulated again by the next protocol (say, UDP), then again by the next (IP), then again by the final protocol on the hardware (physical) layer (say, Ethernet).
+
+When another computer receives the packet, the hardware strips the Ethernet header, the kernel strips the IP and UDP headers, the TFTP program strips the TFTP header, and it finally has the data.

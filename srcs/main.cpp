@@ -17,8 +17,9 @@
 
 
 // Para que el ctrl C no rompa el programa
-void	sigint_handler()
+void	sigint_handler(int sig)
 {
+	(void)sig;
 	signal(SIGINT, SIG_IGN);
 	free_stuff();
 	exit(0);
@@ -34,7 +35,7 @@ int	main(int ac, char **av)
 		return 1;
 	}
 
-	signal(SIGINT, sigint_handler);
+	std::signal(SIGINT, sigint_handler);
 
 	if (parse_file(av[1]) == -1 || prepare_sockets() == -1)
 	{

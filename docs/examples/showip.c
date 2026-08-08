@@ -26,8 +26,9 @@ int main(int argc, char *argv[])
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;  // Either IPv4 or IPv6
 	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE | AI_CANONNAME;
 
-	if ((status = getaddrinfo(argv[1], NULL, &hints, &res)) != 0) {
+	if ((status = getaddrinfo(argv[1], "8080", &hints, &res)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
 		return 2;
 	}
@@ -54,7 +55,7 @@ int main(int argc, char *argv[])
 
 		// convert the IP to a string and print it:
 		inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-		printf("  %s: %s\n", ipver, ipstr);
+		printf("  %s: %s \n  CANONNAME: %s\n\n", ipver, ipstr, p->ai_canonname);
 	}
 
 	freeaddrinfo(res); // free the linked list

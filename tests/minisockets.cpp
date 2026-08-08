@@ -1,60 +1,67 @@
-#include <arpa/inet.h>
 #include <iostream>
+#include <sstream>
+#include <cstring>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fstream>
-#include <cstring>
 #include <sys/socket.h>
+#include <netdb.h>
+#include <fcntl.h>
 
 #define PORT 9999
+#define BACKLOG 5
 #define BUFFER_SIZE 1024
-
-void sendHtml(int *sock, const char *route) {
-  FILE *html = fopen(route, "r");
-  if (!html) {
-    perror("Error opening html file");
-    return;
-  }
-
-  char buf[BUFFER_SIZE] = {0};
-  size_t read = 0;
-
-  char *header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
-  send(*sock, header, strlen(header), 0);
-
-  while ((read = fread(buf, sizeof(buf[0]), BUFFER_SIZE, html)) > 0) {
-    send(*sock, buf, read, 0);
-  }
-  fclose(html);
-}
 
 /* outputs error message if msg is not NULL (else, picks from strerror) and return -err_code */
 int	error_msg(int err_code, const char *msg)
 {
-	std::cerr << "Error: "
+	std::cerr << "\033[1;31mError: \033[0;31m";
 	if (msg)
 		std::cerr << msg << "\n";
 	else
-		std::cerr << strerror(err_code) << "\n";
+		std::cerr << strerror(err_code) << "\n\033[0m";
 	return -err_code;
 }
 
 /* prepares listening socket, if it fails, return value < 0, else returns socket */
 int	listen_socket(struct addrinfo *addr, int listen_num)
 {
-	if ((serversock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) < 0)
-		return error_msg(errno, NULL);
-	if (bind(serversock, addr->ai_addr, res->ai_addrlen) < 0)
-		return error_msg(errno, NULL);
-	if (listen(serversock, listen_num) < 0)
-		return error_msg(errno, NULL);
-	return serversock;
+	int	serversock;
+	int	status;
+	int	yes = 1;
+
+	if (!addr)
+		return error_msg(-1, "not a valid struct");
+
+	for (struct addrinfo *p = addr; p != NULL; p = p->ai_next)
+	{
+		if ((serversock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0)
+		{
+			status = errno;
+			continue;
+		}
+		setsockopt(serversock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+		if (bind(serversock, p->ai_addr, p->ai_addrlen) < 0)
+		{
+			status = errno;
+			close(serversock);
+			continue;
+		}
+		if (listen(serversock, listen_num) < 0)
+		{
+			close(serversock);
+			return error_msg(errno, NULL);
+		}
+		return serversock;
+	}
+	return error_msg(status, NULL);
 }
 
 int	main(int ac, char **av)
 {
-	struct addrinfo hints;
-	struct addrinfo	*servinfo;
+	struct addrinfo	hints;
+	struct addrinfo	*server_info;
+	int				status;
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -62,32 +69,44 @@ int	main(int ac, char **av)
 
 	std::stringstream	port;
 	port << PORT;
-	if (getaddrinfo(NULL, port.str(), &servinfo) != 0)
-	{
-		std::cout << "Error: GAI\n";
-	}
+	if ((status = getaddrinfo(NULL, port.str().c_str(), &hints, &server_info)) != 0)
+		return (errno, NULL);
 
-	int	sockfd = listen_socket((struct sockaddr *)servinfo->ai_addr, 5);
+	int	sockfd = listen_socket(server_info, BACKLOG);
 	std::cout << "Listening for connections on port " << PORT << "\n";
 
-	struct sockaddr_in	clientaddr;
-	socklen_t	clientlen = sizeof(clientaddr);
-	int	*clientsocket = (int *)malloc(sizeof(int));
-	while (1)
+	struct sockaddr_storage	clientaddr;
+	socklen_t			clientlen = sizeof(clientaddr);
+	int					*clientsocket = (int *)malloc(sizeof(int));
+
+	if ((*clientsocket = accept(sockfd, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
+		return error_msg(errno, NULL);
+	if (fcntl(*clientsocket, F_SETFL, O_NONBLOCK) < 0)
+		return error_msg(errno, NULL);;
+	std::cout << "Connection accepted\n";
+
+	std::cout << "Here is to do whatever a webserver does\n";
+	const char	*msg = "Here is where the header is supposed to go.\n READING FOR SOMETHING\n";
+	int	len = std::strlen(msg);
+	if (send(*clientsocket, msg, len, 0) < 0)
+		return error_msg(errno, NULL);
+
+	char	buff[BUFFER_SIZE];
+	int		read_size;
+
+	std::cout << "The client is saying: \n";
+	while ((read_size = recv(*clientsocket, buff, BUFFER_SIZE, 0)))
 	{
-
-		if ((*clientsocket = accept(sockfd, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
-		{
-			std::cout << "Error: failed to grab connection " << errno << std::endl;
-			continue;
-		}
-		std::cout << "Connection accepted\n";
-
-		std::cout << "Here is to do whatever a webserver does\n";
-		close(*clientsocket);
-		std::cout << "Client disconnected\n";
-		free(clientsocket);
+		if (read_size < 0)
+			return error_msg(errno, NULL);
+		buff[read_size] = '\0';
+		std::cout << buff;
 	}
-	close(sockfd);
 
+	close(*clientsocket);
+	std::cout << "Client disconnected\n";
+	free(clientsocket);
+
+	close(sockfd);
+	freeaddrinfo(server_info);
 }
