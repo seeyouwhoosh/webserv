@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <poll.h>
 
 #define PORT 9999
 #define BACKLOG 5
@@ -72,36 +73,89 @@ int	main(int ac, char **av)
 	if ((status = getaddrinfo(NULL, port.str().c_str(), &hints, &server_info)) != 0)
 		return (errno, NULL);
 
-	int	sockfd = listen_socket(server_info, BACKLOG);
+	int	sockfd;
+	if ((sockfd = listen_socket(server_info, BACKLOG)) < 0)
+	{
+		freeaddrinfo(server_info);
+		return error_msg(sockfd, NULL);
+	}
 	std::cout << "Listening for connections on port " << PORT << "\n";
 
 	struct sockaddr_storage	clientaddr;
-	socklen_t			clientlen = sizeof(clientaddr);
-	int					*clientsocket = (int *)malloc(sizeof(int));
+	socklen_t				clientlen = sizeof(clientaddr);
+	int						*clientsocket = (int *)malloc(sizeof(int));
 
 	if ((*clientsocket = accept(sockfd, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
 		return error_msg(errno, NULL);
 	if (fcntl(*clientsocket, F_SETFL, O_NONBLOCK) < 0)
 		return error_msg(errno, NULL);;
+	
 	std::cout << "Connection accepted\n";
-
 	std::cout << "Here is to do whatever a webserver does\n";
-	const char	*msg = "Here is where the header is supposed to go.\n READING FOR SOMETHING\n";
-	int	len = std::strlen(msg);
-	if (send(*clientsocket, msg, len, 0) < 0)
-		return error_msg(errno, NULL);
+	std::cout << "The client is saying: \n";
 
 	char	buff[BUFFER_SIZE];
 	int		read_size;
+	const char	*msg = "Here is where the header is supposed to go.\n READING FOR SOMETHING\n";
+	int	len = std::strlen(msg);
+	
+	struct pollfd pfd[1];
+	pfd[0].fd = *clientsocket;
+	pfd[0].events = POLLIN | POLLOUT;
 
-	std::cout << "The client is saying: \n";
-	while ((read_size = recv(*clientsocket, buff, BUFFER_SIZE, 0)))
+	if (send(*clientsocket, msg, len, 0) < 0)
+		return error_msg(errno, NULL);
+	pfd[0].events &= ~POLLOUT;
+
+	while (1)
 	{
-		if (read_size < 0)
+		int num_events = poll(pfd, 1, 5000);
+		if (num_events < 0)
+		{
+			if (errno == EINTR)
+				continue;
 			return error_msg(errno, NULL);
-		buff[read_size] = '\0';
-		std::cout << buff;
+		}
+		if (num_events == 0)
+		{
+			std::cout << "Poll timed out!\n";
+			break;
+		}
+		if (pfd[0].revents & POLLHUP)
+		{
+			std::cout << "Client closed connection\n";
+			break;
+		}
+
+		if (pfd[0].revents & POLLOUT)
+		{
+			;
+		}
+		if (pfd[0].revents & POLLIN)
+		{
+			char buff[BUFFER_SIZE];
+
+			int read_size = recv(*clientsocket, buff, BUFFER_SIZE - 1, 0);
+			if (read_size > 0)
+			{
+				buff[read_size] = '\0';
+				std::cout << buff;
+			}
+			else if (read_size == 0)
+			{
+				std::cout << "Client closed connection\n";
+				break;
+			}
+			else
+			{
+				if (errno == EAGAIN || errno == EWOULDBLOCK)
+					continue;
+				return error_msg(errno, NULL);
+			}
+		}
 	}
+	
+
 
 	close(*clientsocket);
 	std::cout << "Client disconnected\n";
