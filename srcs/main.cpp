@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "GlobalConfig.hpp"
+#include "WebServer.hpp"
 #include <iostream>
 #include <fstream>
 #include <signal.h>
@@ -21,10 +21,15 @@ void	sigint_handler(int sig)
 {
 	(void)sig;
 	signal(SIGINT, SIG_IGN);
-	free_stuff();
+	// cosas
 	exit(0);
 }
 
+
+int	parse_file(char *file)
+{
+	return 0;
+}
 
 int	main(int ac, char **av)
 {
@@ -35,11 +40,13 @@ int	main(int ac, char **av)
 		return 1;
 	}
 
-	std::signal(SIGINT, sigint_handler);
+	signal(SIGINT, sigint_handler);
 
-	if (parse_file(av[1]) == -1 || prepare_sockets() == -1)
+	WebServer	webserv;
+
+	if (parse_file(av[1]) < 0 || webserv.prepare_listeners() < 0)
 	{
-		free_stuff();
+		webserv.free_all();
 		return 1;
 	}
 

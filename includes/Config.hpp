@@ -26,9 +26,11 @@ enum e_autoindex
 
 typedef	struct s_listen
 {
-	std::string		host;
-	unsigned int	port;
-}					t_listen;
+	std::string				host;
+	std::string				port;
+	struct addrinfo			*serversock_info = NULL;
+	int						sockfd;
+}							t_listen;
 
 class GlobalConfig
 {
@@ -40,11 +42,10 @@ public:
 	GlobalConfig(GlobalConfig &other);
 	GlobalConfig	&operator=(GlobalConfig &other);
 
-	std::vector<ServerConfig>	servers;
 	std::string					root;
 	std::vector<std::string>	indexes;
 	bool						autoindex;
-	std::string					client_max_body_size;
+	size_t						client_max_body_size;
 	std::map<int, std::string>	error_pages;
 };
 
