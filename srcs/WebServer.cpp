@@ -99,5 +99,25 @@ int	WebServer::prepare_listeners()
 			}
 		}
 	}
-	
+	return 0;
+}
+
+int	WebServer::epoll_add_listens(int epoll_instance)
+{
+	struct epoll_event	event;
+
+	event.events = EPOLLIN;
+	for (size_t i = 0; i < servers.size() ; i++)
+	{
+		for (size_t j = 0; i < servers[i].listens.size(); j++)
+		{
+			event.data.fd = servers[i].listens[j].sockfd;
+			if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, event.data.fd, &event) < 0)
+			{
+				free_all();
+				return error_msg(errno, NULL);
+			}
+		}
+	}
+	return 0;
 }

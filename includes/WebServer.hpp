@@ -5,6 +5,7 @@
 #include <netdb.h>
 #include <string>
 #include <cstring>
+#include <sys/epoll.h>
 
 #include "Config.hpp"
 
@@ -23,9 +24,10 @@ public:
 	GlobalConfig				global;
 	std::vector<ServerConfig>	servers;
 
-	struct pollfd				*poll_fds;
+	struct epoll_event			*epolls_events;
 
 	int		prepare_listeners();
+	int		epoll_add_listens(int epoll_instance);
 	void	free_all();
 	void	free_all_addrinfos();
 };

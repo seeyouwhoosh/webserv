@@ -15,7 +15,6 @@
 #include <fstream>
 #include <signal.h>
 
-
 // Para que el ctrl C no rompa el programa
 void	sigint_handler(int sig)
 {
@@ -43,6 +42,8 @@ int	main(int ac, char **av)
 	signal(SIGINT, sigint_handler);
 
 	WebServer	webserv;
+	int			num_events;
+	int			epoll_ins;
 
 	if (parse_file(av[1]) < 0 || webserv.prepare_listeners() < 0)
 	{
@@ -50,10 +51,20 @@ int	main(int ac, char **av)
 		return 1;
 	}
 
-	while (true)
+	if ((epoll_ins = epoll_create(MAX_CONNECTIONS)))
 	{
-		poll_and_answer_requests();
+		webserv.free_all();
+		return error_msg(errno, NULL);
 	}
 
-	return 1;
+	webserv.epoll_add_listens(epoll_ins);
+
+	while (true)
+	{
+		if ((num_events = epoll_wait(epoll_ins, )))
+		process_requests();
+	}
+
+	webserv.free_all();
+	return 0;
 }

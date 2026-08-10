@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
-#include <poll.h>
+#include <sys/epoll.h>
 
 #define PORT 9999
 #define BACKLOG 5
@@ -99,17 +99,31 @@ int	main(int ac, char **av)
 	const char	*msg = "Here is where the header is supposed to go.\n READING FOR SOMETHING\n";
 	int	len = std::strlen(msg);
 	
-	struct pollfd pfd[1];
-	pfd[0].fd = *clientsocket;
-	pfd[0].events = POLLIN | POLLOUT;
+	struct epoll_event	epolls_events[5];
+	struct epoll_event	event;
+
+	int					epoll_instance = epoll_create(1);
+
+	if (epoll_instance < 0)
+		return error_msg(errno, NULL);
+	
+	event.data.fd = sockfd;
+	event.events = EPOLLIN | EPOLLOUT;
+
+	if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, sockfd, &event) < 0)
+		return error_msg(errno, NULL);
 
 	if (send(*clientsocket, msg, len, 0) < 0)
 		return error_msg(errno, NULL);
-	pfd[0].events &= ~POLLOUT;
+	event.events &= ~EPOLLOUT;
+	event.events = EPOLLIN | EPOLLET;
+
+	if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, *clientsocket, &event) < 0)
+		return error_msg(errno, NULL);
 
 	while (1)
 	{
-		int num_events = poll(pfd, 1, 5000);
+		int num_events = epoll_wait(epoll_instance, epolls_events, 5, -1);
 		if (num_events < 0)
 		{
 			if (errno == EINTR)
@@ -121,17 +135,12 @@ int	main(int ac, char **av)
 			std::cout << "Poll timed out!\n";
 			break;
 		}
-		if (pfd[0].revents & POLLHUP)
+		if (epolls_events[0].events & EPOLLHUP)
 		{
 			std::cout << "Client closed connection\n";
 			break;
 		}
-
-		if (pfd[0].revents & POLLOUT)
-		{
-			;
-		}
-		if (pfd[0].revents & POLLIN)
+		if (epolls_events[0].events & EPOLLIN)
 		{
 			char buff[BUFFER_SIZE];
 
@@ -154,8 +163,6 @@ int	main(int ac, char **av)
 			}
 		}
 	}
-	
-
 
 	close(*clientsocket);
 	std::cout << "Client disconnected\n";
