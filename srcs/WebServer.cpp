@@ -97,12 +97,13 @@ int	WebServer::prepare_listeners()
 				free_all();
 				return (errno, NULL);
 			}
+			listeners.push_back(servers[i].listens[j].sockfd);
 		}
 	}
 	return 0;
 }
 
-int	WebServer::epoll_add_listens(int epoll_instance)
+int	WebServer::epoll_add_listens()
 {
 	struct epoll_event	event;
 
@@ -112,12 +113,75 @@ int	WebServer::epoll_add_listens(int epoll_instance)
 		for (size_t j = 0; i < servers[i].listens.size(); j++)
 		{
 			event.data.fd = servers[i].listens[j].sockfd;
-			if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, event.data.fd, &event) < 0)
+			if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, servers[i].listens[j].sockfd, &event) < 0)
 			{
 				free_all();
 				return error_msg(errno, NULL);
 			}
 		}
 	}
+	num_connections = listeners.size();
 	return 0;
+}
+
+/* If it's an existing fd (listener), returns true, else returns false */
+bool	WebServer::is_listener(int fd)
+{
+	for (size_t i = 0; i < listeners.size(); i++)
+	{
+		if (fd == listeners[i])
+			return true;
+	}
+	return false;
+}
+
+int	WebServer::epoll_add_fd(int fd)
+{
+	struct epoll_event	event;
+
+	event.events = EPOLLIN | EPOLLET;
+	event.data.fd = fd;
+	if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, fd, &event) < 0)
+		return error_msg(errno, NULL);
+	return 0;
+}
+
+int	WebServer::handle_new_connection(int listener)
+{
+	struct sockaddr_storage	clientaddr;
+	socklen_t				clientlen = sizeof(clientaddr);
+	int						clientsock;
+	const char	*msg = "Connection to some server accepted\n";
+
+	if ((clientsock = accept(listener, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
+		return error_msg(errno, NULL);
+	if (fcntl(clientsock, F_SETFL, O_NONBLOCK) < 0)
+		return error_msg(errno, NULL);
+
+	if (send(clientsock, msg, len, 0) < 0)
+		return error_msg(errno, NULL);
+
+	clients.push_back(clientsock);
+	num_connections++;
+	epoll_add_fd(clientsock);
+}
+int	WebServer::handle_client_data();
+
+void	WebServer::process_connections(int num_events)
+{
+	for (size_t i = 0; i < num_events ; i++)
+	{
+		if (epoll_events[i].revents & EPOLLHUP)
+		{
+			std::cout << "Client closed connection\n";
+			continue;
+		}
+		if (epoll_events[i].revents & EPOLLIN)
+		{
+			if (is_listener(epoll_events[i].fd))
+				handle_new_connection(epoll_events[i].fd);
+			else
+				handle_client_data();
+		}
+	}
 }

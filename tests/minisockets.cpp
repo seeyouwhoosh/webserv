@@ -96,7 +96,7 @@ int	main(int ac, char **av)
 
 	char	buff[BUFFER_SIZE];
 	int		read_size;
-	const char	*msg = "Here is where the header is supposed to go.\n READING FOR SOMETHING\n";
+	const char	*msg = "Connection to some server accepted\n";
 	int	len = std::strlen(msg);
 	
 	struct epoll_event	epolls_events[5];

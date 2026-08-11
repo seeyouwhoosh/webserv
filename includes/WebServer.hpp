@@ -24,10 +24,15 @@ public:
 	GlobalConfig				global;
 	std::vector<ServerConfig>	servers;
 
-	struct epoll_event			*epolls_events;
+	int							epoll_instance;
+	std::vector<int &>			listeners;
+	std::vector<int &>			clients;
+	size_t						num_connections;
+	struct epoll_event			*epoll_events;
 
 	int		prepare_listeners();
-	int		epoll_add_listens(int epoll_instance);
+	int		epoll_add_listens();
+	void	process_connections(int num_events);
 	void	free_all();
 	void	free_all_addrinfos();
 };

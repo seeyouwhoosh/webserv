@@ -43,7 +43,6 @@ int	main(int ac, char **av)
 
 	WebServer	webserv;
 	int			num_events;
-	int			epoll_ins;
 
 	if (parse_file(av[1]) < 0 || webserv.prepare_listeners() < 0)
 	{
@@ -51,18 +50,26 @@ int	main(int ac, char **av)
 		return 1;
 	}
 
-	if ((epoll_ins = epoll_create(MAX_CONNECTIONS)))
+	if ((webserv.epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
 	{
 		webserv.free_all();
 		return error_msg(errno, NULL);
 	}
 
-	webserv.epoll_add_listens(epoll_ins);
+	if (webserv.epoll_add_listens(epoll_ins) < 0)
+		return 1;
 
 	while (true)
 	{
-		if ((num_events = epoll_wait(epoll_ins, )))
-		process_requests();
+		if ((num_events = epoll_wait(epoll_ins, webserv.epolls_events, MAX_CONNECTIONS, -1)) < 0)
+		{
+			webserv.free_all();
+			return error_msg(errno, NULL);
+		}
+		else if (num_events == 0)
+			continue;
+		else
+			process_connections(num_events);
 	}
 
 	webserv.free_all();
