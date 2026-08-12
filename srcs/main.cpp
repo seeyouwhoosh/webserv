@@ -46,20 +46,37 @@ int	main(int ac, char **av)
 	WebServer	webserv;
 	int			num_events;
 
-	if (parse_file(av[1]) < 0 || webserv.prepare_listeners() < 0)
+	/*																*/
+	t_listen	listen;
+	listen.host = "localhost";
+	listen.port = "9999";
+
+	ServerConfig	coso;
+	coso.listens.push_back(listen);
+	webserv.servers.push_back(coso);
+
+	/*																*/
+
+	if (parse_file(av[1]) < 0)
+		return 1;
+
+	if (webserv.prepare_listeners() < 0)
 	{
 		webserv.free_all();
 		return 1;
 	}
-
 	if ((webserv.epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
 	{
 		webserv.free_all();
 		return error_msg(errno, NULL);
 	}
-
+	
+	std::cout << "\033[1m[webserv]\33[0m: epoll instance created succesfully" << "\n";
+	
 	if (webserv.epoll_add_listens() < 0)
 		return 1;
+
+	std::cout << "\033[1m[webserv]\33[0m: epoll added listeners to watch" << "\n";
 
 	while (true)
 	{

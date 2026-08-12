@@ -39,8 +39,8 @@ private:
 public:
 	GlobalConfig();
 	~GlobalConfig();
-	GlobalConfig(GlobalConfig &other);
-	GlobalConfig	&operator=(GlobalConfig &other);
+	GlobalConfig(const GlobalConfig &other);
+	GlobalConfig	&operator=(const GlobalConfig &other);
 
 	std::string					root;
 	std::vector<std::string>	indexes;
@@ -57,8 +57,8 @@ private:
 public:
 	LocationConfig();
 	~LocationConfig();
-	LocationConfig(LocationConfig &other);
-	LocationConfig	&operator=(LocationConfig &other);
+	LocationConfig(const LocationConfig &other);
+	LocationConfig	&operator=(const LocationConfig &other);
 
 	std::string					root;
 	std::vector<std::string>	indexes;
@@ -78,8 +78,8 @@ private:
 public:
 	ServerConfig();
 	~ServerConfig();
-	ServerConfig(ServerConfig &other);
-	ServerConfig	&operator=(ServerConfig &other);
+	ServerConfig(const ServerConfig &other);
+	ServerConfig	&operator=(const ServerConfig &other);
 
 	std::vector<LocationConfig> locations;
 	std::vector<t_listen>		listens;

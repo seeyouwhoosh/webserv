@@ -11,12 +11,12 @@ WebServer::WebServer() {}
 
 WebServer::~WebServer() {}
 
-WebServer::WebServer(WebServer &other)
+WebServer::WebServer(const WebServer &other)
 {
 	*this = other;
 }
 
-WebServer &WebServer::operator=(WebServer &other)
+WebServer &WebServer::operator=(const WebServer &other)
 {
 	(void)other;
 	return *this;
@@ -109,6 +109,7 @@ int	WebServer::prepare_listeners()
 				free_all();
 				return (errno, NULL);
 			}
+			std::cout << "\033[1m[webserv]\33[0m: Listening on " << servers[i].listens[j].host << ":" << servers[i].listens[j].port << "\n";
 			listeners.push_back(servers[i].listens[j].sockfd);
 		}
 	}
@@ -158,6 +159,7 @@ int	WebServer::epoll_add_fd(int fd)
 	return 0;
 }
 
+#include <arpa/inet.h>
 int	WebServer::handle_new_connection(int listener)
 {
 	struct sockaddr_storage	clientaddr;
@@ -167,6 +169,33 @@ int	WebServer::handle_new_connection(int listener)
 
 	if ((clientsock = accept(listener, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
 		return error_msg(errno, NULL);
+
+
+
+	struct sockaddr	addr;
+	char			str[INET6_ADDRSTRLEN];
+	int				port;
+
+	socklen_t len = sizeof(addr);
+	if (getsockname(listener, &addr, &len) < 0)
+		return error_msg(errno, NULL);
+
+	if (addr.sa_family == AF_INET)
+	{
+		struct sockaddr_in *addr4 = (struct sockaddr_in *)&addr;
+		if (!inet_ntop(AF_INET, &addr4->sin_addr, str, sizeof(str)))
+			return error_msg(errno, NULL);
+		port = ntohs(addr4->sin_port);
+	}
+	else if (addr.sa_family == AF_INET6)
+	{
+		struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)&addr;
+		if (!inet_ntop(AF_INET6, &addr6->sin6_addr, str, sizeof(str)))
+			return error_msg(errno, NULL);
+		port = ntohs(addr6->sin6_port);
+	}
+	std::cout << "\033[1m[webserv]\33[0m: new incoming connection from " << str << ":" << port << "\n";
+
 	if (fcntl(clientsock, F_SETFL, O_NONBLOCK) < 0)
 		return error_msg(errno, NULL);
 

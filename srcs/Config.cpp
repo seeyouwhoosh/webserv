@@ -18,11 +18,11 @@ GlobalConfig::GlobalConfig() {}
 
 GlobalConfig::~GlobalConfig() {}
 
-GlobalConfig::GlobalConfig(GlobalConfig &other)
+GlobalConfig::GlobalConfig(const GlobalConfig &other)
 {
 	*this = other;
 }
-GlobalConfig	&GlobalConfig::operator=(GlobalConfig &other)
+GlobalConfig	&GlobalConfig::operator=(const GlobalConfig &other)
 {
 	(void)other;
 	
@@ -33,11 +33,11 @@ ServerConfig::ServerConfig() {}
 
 ServerConfig::~ServerConfig() {}
 
-ServerConfig::ServerConfig(ServerConfig &other)
+ServerConfig::ServerConfig(const ServerConfig &other)
 {
 	*this = other;
 }
-ServerConfig	&ServerConfig::operator=(ServerConfig &other)
+ServerConfig	&ServerConfig::operator=(const ServerConfig &other)
 {
 	(void)other;
 	
@@ -48,11 +48,11 @@ LocationConfig::LocationConfig() {}
 
 LocationConfig::~LocationConfig() {}
 
-LocationConfig::LocationConfig(LocationConfig &other)
+LocationConfig::LocationConfig(const LocationConfig &other)
 {
 	*this = other;
 }
-LocationConfig	&LocationConfig::operator=(LocationConfig &other)
+LocationConfig	&LocationConfig::operator=(const LocationConfig &other)
 {
 	(void)other;
 	

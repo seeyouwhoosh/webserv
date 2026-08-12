@@ -17,8 +17,8 @@ private:
 	
 public:
 	WebServer();
-	WebServer(WebServer &other);
-	WebServer &operator=(WebServer &other);
+	WebServer(const WebServer &other);
+	WebServer &operator=(const WebServer &other);
 	~WebServer();
 
 	GlobalConfig				global;
@@ -42,10 +42,6 @@ public:
 };
 
 int	listen_socket(struct addrinfo *addr, int listen_num);
-
-int inet_pton(int af, const char *src, void *dst);
-
-const char	*inet_ntop(int af, const void *src, char *dst, socklen_t size);
 
 
 /* GENERAL UTILS */
