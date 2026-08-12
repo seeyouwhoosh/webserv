@@ -16,15 +16,16 @@
 #include <signal.h>
 #include <cstdlib> // exit
 
+int	g_signal = 1;
+
+
 // Para que el ctrl C no rompa el programa
 void	sigint_handler(int sig)
 {
 	(void)sig;
 	signal(SIGINT, SIG_IGN);
-	// cosas
-	exit(0);
+	g_signal = 1;
 }
-
 
 int	parse_file(char *file)
 {
@@ -46,17 +47,18 @@ int	main(int ac, char **av)
 	WebServer	webserv;
 	int			num_events;
 
-	/*																*/
+	/* ************************************************************* */
 	t_listen	listen;
 	listen.host = "localhost";
 	listen.port = "9999";
+	listen.serversock_info = NULL;
 
-	ServerConfig	coso;
-	coso.listens.push_back(listen);
-	webserv.servers.push_back(coso);
+	ServerConfig server;
 
-	/*																*/
+	server.listens.push_back(listen);
+	webserv.servers.push_back(server);
 
+	/* ************************************************************* */
 	if (parse_file(av[1]) < 0)
 		return 1;
 
@@ -65,20 +67,23 @@ int	main(int ac, char **av)
 		webserv.free_all();
 		return 1;
 	}
+
+	std::cout << "\033[1m[webserv]\33[0m sockets listening on servers" << "\n";
+
 	if ((webserv.epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
 	{
 		webserv.free_all();
 		return error_msg(errno, NULL);
 	}
 	
-	std::cout << "\033[1m[webserv]\33[0m: epoll instance created succesfully" << "\n";
+	std::cout << "\033[1m[webserv]\33[0m epoll instance created succesfully" << "\n";
 	
 	if (webserv.epoll_add_listens() < 0)
 		return 1;
 
-	std::cout << "\033[1m[webserv]\33[0m: epoll added listeners to watch" << "\n";
+	std::cout << "\033[1m[webserv]\33[0m epoll added listeners to watch. Total connections: " << webserv.num_connections << "\n";
 
-	while (true)
+	while (g_signal)
 	{
 		if ((num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events, MAX_CONNECTIONS, -1)) < 0)
 		{

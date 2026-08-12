@@ -24,8 +24,12 @@ GlobalConfig::GlobalConfig(const GlobalConfig &other)
 }
 GlobalConfig	&GlobalConfig::operator=(const GlobalConfig &other)
 {
-	(void)other;
-	
+	indexes = other.indexes;
+	error_pages = other.error_pages;
+
+	autoindex = other.autoindex;
+	client_max_body_size = other.client_max_body_size;
+	root = other.root;
 	return *this;
 }
 
@@ -39,8 +43,16 @@ ServerConfig::ServerConfig(const ServerConfig &other)
 }
 ServerConfig	&ServerConfig::operator=(const ServerConfig &other)
 {
-	(void)other;
-	
+	locations = other.locations;
+	listens = other.listens;
+	cgi_handlers = other.cgi_handlers;
+	error_pages = other.error_pages;
+
+	server_name = other.server_name;
+	root = other.root;
+	autoindex = other.autoindex;
+	client_max_body_size = other.client_max_body_size;
+
 	return *this;
 }
 
@@ -54,7 +66,15 @@ LocationConfig::LocationConfig(const LocationConfig &other)
 }
 LocationConfig	&LocationConfig::operator=(const LocationConfig &other)
 {
-	(void)other;
-	
+	root = other.root;
+	indexes = other.indexes;
+	cgi_handlers = other.cgi_handlers;
+	error_pages = other.error_pages;
+
+	autoindex = other.autoindex;
+	limit_except = other.limit_except;
+	upload_store = other.upload_store;
+	return_status = other.return_status;
+	client_max_body_size = other.client_max_body_size;
 	return *this;
 }

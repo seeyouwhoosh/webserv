@@ -88,7 +88,7 @@ public:
 	std::vector<std::string>	indexes;
 	bool						autoindex;
 	size_t						client_max_body_size;
-	cgi_handler_type			cgi_handler;
+	cgi_handler_type			cgi_handlers;
 	std::map<int, std::string>	error_pages;
 };
 

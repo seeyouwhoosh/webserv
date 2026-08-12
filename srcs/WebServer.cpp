@@ -7,7 +7,10 @@
 
 #define BUFFER_SIZE 1024
 
-WebServer::WebServer() {}
+WebServer::WebServer()
+{
+	epoll_events = new struct epoll_event[MAX_CONNECTIONS];
+}
 
 WebServer::~WebServer() {}
 
@@ -26,7 +29,7 @@ void	WebServer::free_all()
 {
 	for (size_t i = 0; i < servers.size() ; i++)
 	{
-		for (size_t j = 0; i < servers[i].listens.size(); j++)
+		for (size_t j = 0; j < servers[i].listens.size(); j++)
 		{
 			if (servers[i].listens[j].serversock_info)
 				freeaddrinfo(servers[i].listens[j].serversock_info);
@@ -34,13 +37,14 @@ void	WebServer::free_all()
 				close(servers[i].listens[j].sockfd);
 		}
 	}
+	delete[] epoll_events;
 }
 
 void	WebServer::free_all_addrinfos()
 {
 	for (size_t i = 0; i < servers.size() ; i++)
 	{
-		for (size_t j = 0; i < servers[i].listens.size(); j++)
+		for (size_t j = 0; j < servers[i].listens.size(); j++)
 		{
 			if (servers[i].listens[j].serversock_info)
 				freeaddrinfo(servers[i].listens[j].serversock_info);
@@ -84,7 +88,7 @@ int	listen_socket(struct addrinfo *addr, int listen_num)
 
 int	WebServer::prepare_listeners()
 {
-	int	status;
+	int				status;
 	struct addrinfo	hints = {};
 
 	hints.ai_family = AF_UNSPEC;
@@ -93,7 +97,7 @@ int	WebServer::prepare_listeners()
 
 	for (size_t i = 0; i < servers.size() ; i++)
 	{
-		for (size_t j = 0; i < servers[i].listens.size(); j++)
+		for (size_t j = 0; j < servers[i].listens.size(); j++)
 		{
 			if ((status = getaddrinfo(
 				servers[i].listens[j].host.c_str(),
@@ -109,7 +113,7 @@ int	WebServer::prepare_listeners()
 				free_all();
 				return (errno, NULL);
 			}
-			std::cout << "\033[1m[webserv]\33[0m: Listening on " << servers[i].listens[j].host << ":" << servers[i].listens[j].port << "\n";
+			std::cout << "\033[1m[webserv]\33[0m Listening on " << servers[i].listens[j].host << ":" << servers[i].listens[j].port << "\n";
 			listeners.push_back(servers[i].listens[j].sockfd);
 		}
 	}
@@ -123,7 +127,7 @@ int	WebServer::epoll_add_listens()
 	event.events = EPOLLIN;
 	for (size_t i = 0; i < servers.size() ; i++)
 	{
-		for (size_t j = 0; i < servers[i].listens.size(); j++)
+		for (size_t j = 0; j < servers[i].listens.size(); j++)
 		{
 			event.data.fd = servers[i].listens[j].sockfd;
 			if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, servers[i].listens[j].sockfd, &event) < 0)
