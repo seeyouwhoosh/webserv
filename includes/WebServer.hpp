@@ -25,14 +25,18 @@ public:
 	std::vector<ServerConfig>	servers;
 
 	int							epoll_instance;
-	std::vector<int &>			listeners;
-	std::vector<int &>			clients;
+	std::vector<int>			listeners;
+	std::vector<int>			clients;
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
 
 	int		prepare_listeners();
 	int		epoll_add_listens();
-	void	process_connections(int num_events);
+	int		process_connections(int num_events);
+	bool	is_listener(int fd);
+	int		epoll_add_fd(int fd);
+	int		handle_new_connection(int listener);
+	int		handle_client_data(int client);
 	void	free_all();
 	void	free_all_addrinfos();
 };

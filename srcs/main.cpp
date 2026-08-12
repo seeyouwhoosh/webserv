@@ -14,6 +14,7 @@
 #include <iostream>
 #include <fstream>
 #include <signal.h>
+#include <cstdlib> // exit
 
 // Para que el ctrl C no rompa el programa
 void	sigint_handler(int sig)
@@ -27,6 +28,7 @@ void	sigint_handler(int sig)
 
 int	parse_file(char *file)
 {
+	(void)file;
 	return 0;
 }
 
@@ -56,20 +58,20 @@ int	main(int ac, char **av)
 		return error_msg(errno, NULL);
 	}
 
-	if (webserv.epoll_add_listens(epoll_ins) < 0)
+	if (webserv.epoll_add_listens() < 0)
 		return 1;
 
 	while (true)
 	{
-		if ((num_events = epoll_wait(epoll_ins, webserv.epolls_events, MAX_CONNECTIONS, -1)) < 0)
+		if ((num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events, MAX_CONNECTIONS, -1)) < 0)
 		{
 			webserv.free_all();
 			return error_msg(errno, NULL);
 		}
 		else if (num_events == 0)
 			continue;
-		else
-			process_connections(num_events);
+		else if (webserv.process_connections(num_events) < 0)
+			break;
 	}
 
 	webserv.free_all();

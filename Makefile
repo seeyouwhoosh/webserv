@@ -20,7 +20,8 @@ INCLUDES	= -I$(INCLUDE_DIR)
 
 # Sources
 SRC_DIR		= srcs
-SOURCES		= main.cpp
+SOURCES		= main.cpp \
+				WebServer.cpp utils.cpp socket_utils.cpp
 
 # Objects
 OBJ_DIR		= objs

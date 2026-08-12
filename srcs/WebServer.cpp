@@ -1,14 +1,26 @@
 #include "WebServer.hpp"
 #include <unistd.h> // close
 #include <fcntl.h> // fcntl
+#include <algorithm>
+#include <sstream>
+#include <cerrno>
+
+#define BUFFER_SIZE 1024
 
 WebServer::WebServer() {}
 
 WebServer::~WebServer() {}
 
-WebServer::WebServer(WebServer &other) {}
+WebServer::WebServer(WebServer &other)
+{
+	*this = other;
+}
 
-WebServer &WebServer::operator=(WebServer &other) {}
+WebServer &WebServer::operator=(WebServer &other)
+{
+	(void)other;
+	return *this;
+}
 
 void	WebServer::free_all()
 {
@@ -73,7 +85,7 @@ int	listen_socket(struct addrinfo *addr, int listen_num)
 int	WebServer::prepare_listeners()
 {
 	int	status;
-	struct addrinfo	hints = {0};
+	struct addrinfo	hints = {};
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -158,30 +170,72 @@ int	WebServer::handle_new_connection(int listener)
 	if (fcntl(clientsock, F_SETFL, O_NONBLOCK) < 0)
 		return error_msg(errno, NULL);
 
-	if (send(clientsock, msg, len, 0) < 0)
+	if (send(clientsock, msg, std::strlen(msg), 0) < 0)
 		return error_msg(errno, NULL);
 
 	clients.push_back(clientsock);
 	num_connections++;
 	epoll_add_fd(clientsock);
+	return 0;
 }
-int	WebServer::handle_client_data();
 
-void	WebServer::process_connections(int num_events)
+int	WebServer::handle_client_data(int client)
 {
-	for (size_t i = 0; i < num_events ; i++)
+	char				buff[BUFFER_SIZE];
+	std::stringstream	ss;
+
+	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
+	if (read_size > 0)
 	{
-		if (epoll_events[i].revents & EPOLLHUP)
+		buff[read_size] = '\0';
+		ss << "Client fd " << client << ": " << buff;
+		std::cout << ss.str();
+
+		for (size_t i = 0; i < clients.size(); i++)
+		{
+			if (clients[i] == client)
+				continue;
+			if (send(clients[i], ss.str().c_str(), ss.str().length(), 0) < 0)
+				return error_msg(errno, NULL);
+		}
+	}
+	else if (read_size == 0)
+	{
+		std::cout << "Client closed connection\n";
+		close(client);
+		if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, client, 0) < 0)
+		{
+			free_all();
+			return error_msg(errno, NULL);
+		}
+		clients.erase(std::find(clients.begin(), clients.end(), client));
+		num_connections--;
+	}
+	else
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return 0;
+		return error_msg(errno, NULL);
+	}
+	return 0;
+}
+
+int	WebServer::process_connections(int num_events)
+{
+	for (int i = 0; i < num_events ; i++)
+	{
+		if (epoll_events[i].events & EPOLLHUP)
 		{
 			std::cout << "Client closed connection\n";
 			continue;
 		}
-		if (epoll_events[i].revents & EPOLLIN)
+		if (epoll_events[i].events & EPOLLIN)
 		{
-			if (is_listener(epoll_events[i].fd))
-				handle_new_connection(epoll_events[i].fd);
-			else
-				handle_client_data();
+			if (is_listener(epoll_events[i].data.fd) == true && handle_new_connection(epoll_events[i].data.fd) < 0)
+				return -1;
+			else if (handle_client_data(epoll_events[i].data.fd) < 0)
+				return -1;
 		}
 	}
+	return 0;
 }
