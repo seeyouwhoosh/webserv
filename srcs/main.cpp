@@ -83,7 +83,6 @@ int	main(int ac, char **av)
 	while (g_signal)
 	{
 		num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events, MAX_CONNECTIONS, -1);
-		std::cout << num_events << "\n";
 		if (num_events < 0)
 		{
 			webserv.free_all();

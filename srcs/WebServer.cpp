@@ -250,6 +250,14 @@ int	WebServer::handle_client_data(int client)
 		buff[read_size] = '\0';
 		ss << "Client fd " << client << ": " << buff;
 		std::cout << ss.str() << std::flush;
+
+		for (size_t i = 0; i < clients.size(); i++)
+		{
+			if (clients[i] == client)
+				continue;
+			if (send(clients[i], ss.str().c_str(), ss.str().length(), 0) < 0)
+				return error_msg(errno, "send", NULL);
+		}
 	}
 	else if (read_size == 0)
 	{
@@ -274,7 +282,6 @@ int	WebServer::handle_client_data(int client)
 
 int	WebServer::process_connections(int num_events)
 {
-	std::cout << num_events << "\n";
 	for (int i = 0; i < num_events ; i++)
 	{
 		if (epoll_events[i].events & EPOLLERR)
@@ -291,7 +298,6 @@ int	WebServer::process_connections(int num_events)
 		}
 		if (epoll_events[i].events & EPOLLIN)
 		{
-			std::cout << epoll_events[i].data.fd << "\n";
 			if (is_listener(epoll_events[i].data.fd))
 			{
 				if (handle_new_connection(epoll_events[i].data.fd) < 0)
