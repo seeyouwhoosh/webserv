@@ -1,10 +1,20 @@
 # webserv
 
 ## Resources
-* https://www.alimnaqvi.com/blog/webserv (empezar aquí)
-* https://github.com/Kaydooo/Webserv_42 (para los resources)
-* https://beej.us/guide/bgnet/html/split/ (sockets)
-* https://httpwg.org/specs/rfc9112.html (http return values)
-* https://nginx101.com/ (nginx)
-* https://nginx.org/en/docs/ (documentación oficial de nginx)
-* https://docs.nginx.com/nginx/admin-guide/web-server/web-server/ (lo que he encontrado para implementar la mayoría de la configuración)
+### General
+* https://www.alimnaqvi.com/blog/webserv
+* https://nginx101.com/
+* https://nginx.org/en/docs/
+* https://docs.nginx.com/nginx/admin-guide/web-server/web-server/ 
+
+### Sockets
+* https://beej.us/guide/bgnet/html
+* https://devarea.com/linux-io-multiplexing-select-vs-poll-vs-epoll/
+* https://ncona.com/2019/04/building-a-simple-server-with-cpp/
+* https://man7.org/linux/man-pages/man7/epoll.7.html and other man pages
+
+
+### HTTP requests
+* https://httpwg.org/specs/rfc9112.html
+* https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
+* https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods 

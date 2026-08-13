@@ -14,12 +14,10 @@
 #include <iostream>
 #include <fstream>
 #include <signal.h>
-#include <cstdlib> // exit
 
 int	g_signal = 1;
 
 
-// Para que el ctrl C no rompa el programa
 void	sigint_handler(int sig)
 {
 	(void)sig;
@@ -58,6 +56,7 @@ int	main(int ac, char **av)
 	webserv.servers.push_back(server);
 
 	/* ************************************************************* */
+
 	if (parse_file(av[1]) < 0)
 		return 1;
 

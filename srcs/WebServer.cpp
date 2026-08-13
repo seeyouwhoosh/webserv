@@ -192,8 +192,7 @@ int	WebServer::handle_new_connection(int listener)
 	if ((clientsock = accept(listener, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
 		return error_msg(errno, "accept", NULL);
 
-	int flags = fcntl(clientsock, F_GETFL, 0);
-	if (flags < 0 || fcntl(clientsock, F_SETFL, flags | O_NONBLOCK) < 0)
+	if (fcntl(clientsock, F_SETFL, O_NONBLOCK) < 0)
 	{
 		close(clientsock);
 		return error_msg(errno, "fcntl", NULL);
@@ -238,7 +237,7 @@ int	WebServer::handle_new_connection(int listener)
 
 	return 0;
 }
-
+// HANDLE CLIENT REQUESTS
 int	WebServer::handle_client_data(int client)
 {
 	char				buff[BUFFER_SIZE];
