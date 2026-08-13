@@ -37,7 +37,19 @@ void	WebServer::free_all()
 				close(servers[i].listens[j].sockfd);
 		}
 	}
+	
 	delete[] epoll_events;
+}
+
+int	WebServer::close_connection(int fd)
+{
+	if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, fd, 0) < 0)
+	{
+		free_all();
+		return error_msg(errno, NULL);
+	}
+	close(fd);
+	return 0;
 }
 
 void	WebServer::free_all_addrinfos()
@@ -106,12 +118,12 @@ int	WebServer::prepare_listeners()
 				&servers[i].listens[j].serversock_info)) < 0)
 			{
 				free_all_addrinfos();
-				return (errno, NULL);
+				return error_msg(errno, NULL);
 			}
 			if ((servers[i].listens[j].sockfd = listen_socket(servers[i].listens[j].serversock_info, MAX_CONNECTIONS) < 0))
 			{
 				free_all();
-				return (errno, NULL);
+				return error_msg(errno, NULL);
 			}
 			std::cout << "\033[1m[webserv]\33[0m Listening on " << servers[i].listens[j].host << ":" << servers[i].listens[j].port << "\n";
 			listeners.push_back(servers[i].listens[j].sockfd);
@@ -156,7 +168,7 @@ int	WebServer::epoll_add_fd(int fd)
 {
 	struct epoll_event	event;
 
-	event.events = EPOLLIN | EPOLLET;
+	event.events = EPOLLIN;
 	event.data.fd = fd;
 	if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, fd, &event) < 0)
 		return error_msg(errno, NULL);
@@ -174,41 +186,51 @@ int	WebServer::handle_new_connection(int listener)
 	if ((clientsock = accept(listener, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
 		return error_msg(errno, NULL);
 
-
-
-	struct sockaddr	addr;
-	char			str[INET6_ADDRSTRLEN];
-	int				port;
-
-	socklen_t len = sizeof(addr);
-	if (getsockname(listener, &addr, &len) < 0)
-		return error_msg(errno, NULL);
-
-	if (addr.sa_family == AF_INET)
+	int flags = fcntl(clientsock, F_GETFL, 0);
+	if (flags < 0 || fcntl(clientsock, F_SETFL, flags | O_NONBLOCK) < 0)
 	{
-		struct sockaddr_in *addr4 = (struct sockaddr_in *)&addr;
-		if (!inet_ntop(AF_INET, &addr4->sin_addr, str, sizeof(str)))
-			return error_msg(errno, NULL);
+		close(clientsock);
+		return error_msg(errno, NULL);
+	}
+
+	char str[INET6_ADDRSTRLEN] = {0};
+	int port = 0;
+
+	if (clientaddr.ss_family == AF_INET)
+	{
+		struct sockaddr_in *addr4 = (struct sockaddr_in *)&clientaddr;
+		inet_ntop(AF_INET, &addr4->sin_addr, str, sizeof(str));
 		port = ntohs(addr4->sin_port);
 	}
-	else if (addr.sa_family == AF_INET6)
+	else if (clientaddr.ss_family == AF_INET6)
 	{
-		struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)&addr;
-		if (!inet_ntop(AF_INET6, &addr6->sin6_addr, str, sizeof(str)))
-			return error_msg(errno, NULL);
+		struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)&clientaddr;
+		inet_ntop(AF_INET6, &addr6->sin6_addr, str, sizeof(str));
 		port = ntohs(addr6->sin6_port);
 	}
-	std::cout << "\033[1m[webserv]\33[0m: new incoming connection from " << str << ":" << port << "\n";
 
-	if (fcntl(clientsock, F_SETFL, O_NONBLOCK) < 0)
+	if (epoll_add_fd(clientsock) < 0)
+	{
+		close(clientsock);
 		return error_msg(errno, NULL);
+	}
+
+	std::cout << "\033[1m[webserv]\33[0m: new incoming connection from " 
+				<< str << ":" << port << std::endl;
+
 
 	if (send(clientsock, msg, std::strlen(msg), 0) < 0)
-		return error_msg(errno, NULL);
+	{
+		if (errno != EAGAIN && errno != EWOULDBLOCK)
+		{
+			close(clientsock); 
+			return error_msg(errno, NULL);
+		}
+	}
 
 	clients.push_back(clientsock);
 	num_connections++;
-	epoll_add_fd(clientsock);
+
 	return 0;
 }
 
@@ -222,12 +244,10 @@ int	WebServer::handle_client_data(int client)
 	{
 		buff[read_size] = '\0';
 		ss << "Client fd " << client << ": " << buff;
-		std::cout << ss.str();
+		std::cout << ss.str() << std::flush;
 
 		for (size_t i = 0; i < clients.size(); i++)
 		{
-			if (clients[i] == client)
-				continue;
 			if (send(clients[i], ss.str().c_str(), ss.str().length(), 0) < 0)
 				return error_msg(errno, NULL);
 		}
@@ -235,12 +255,12 @@ int	WebServer::handle_client_data(int client)
 	else if (read_size == 0)
 	{
 		std::cout << "Client closed connection\n";
-		close(client);
 		if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, client, 0) < 0)
 		{
 			free_all();
 			return error_msg(errno, NULL);
 		}
+		close(client);
 		clients.erase(std::find(clients.begin(), clients.end(), client));
 		num_connections--;
 	}
@@ -257,15 +277,24 @@ int	WebServer::process_connections(int num_events)
 {
 	for (int i = 0; i < num_events ; i++)
 	{
+		if (epoll_events[i].events & EPOLLERR)
+		{
+			close_connection(epoll_events[i].data.fd);
+			std::cout << "Client error\n";
+		}
 		if (epoll_events[i].events & EPOLLHUP)
 		{
+			close_connection(epoll_events[i].data.fd);
 			std::cout << "Client closed connection\n";
 			continue;
 		}
 		if (epoll_events[i].events & EPOLLIN)
 		{
-			if (is_listener(epoll_events[i].data.fd) == true && handle_new_connection(epoll_events[i].data.fd) < 0)
-				return -1;
+			if (is_listener(epoll_events[i].data.fd))
+			{
+				if (handle_new_connection(epoll_events[i].data.fd) < 0)
+					return -1;
+			}
 			else if (handle_client_data(epoll_events[i].data.fd) < 0)
 				return -1;
 		}

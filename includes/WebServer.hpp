@@ -39,6 +39,7 @@ public:
 	int		handle_client_data(int client);
 	void	free_all();
 	void	free_all_addrinfos();
+	int		close_connection(int fd);
 };
 
 int	listen_socket(struct addrinfo *addr, int listen_num);
