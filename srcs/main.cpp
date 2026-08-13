@@ -49,7 +49,7 @@ int	main(int ac, char **av)
 
 	/* ************************************************************* */
 	t_listen	listen;
-	listen.host = "localhost";
+	listen.host = "0.0.0.0";
 	listen.port = "9999";
 
 	ServerConfig server;
@@ -85,6 +85,8 @@ int	main(int ac, char **av)
 		num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events, MAX_CONNECTIONS, -1);
 		if (num_events < 0)
 		{
+			if (errno == EINTR)
+				break;
 			webserv.free_all();
 			return error_msg(errno, "epoll_wait", NULL);
 		}
