@@ -2,9 +2,11 @@
 #include <cstring>
 
 /* outputs error message if msg is not NULL (else, picks from strerror) and return -err_code */
-int	error_msg(int err_code, const char *msg)
+int	error_msg(int err_code, const char *func, const char *msg)
 {
 	std::cerr << "\033[1;31m[Error] \033[0;31m";
+	if (func)
+		std::cerr << func << ": ";
 	if (msg)
 		std::cerr << msg << "\n";
 	else

@@ -47,4 +47,4 @@ int	listen_socket(struct addrinfo *addr, int listen_num);
 
 /* GENERAL UTILS */
 
-int	error_msg(int err_code, const char *msg);
+int	error_msg(int err_code, const char *func, const char *msg);

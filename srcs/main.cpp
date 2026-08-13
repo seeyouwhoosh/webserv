@@ -70,7 +70,7 @@ int	main(int ac, char **av)
 	if ((webserv.epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
 	{
 		webserv.free_all();
-		return error_msg(errno, NULL);
+		return error_msg(errno, "epoll_create", NULL);
 	}
 	
 	std::cout << "\033[1m[webserv]\33[0m Epoll instance created succesfully" << "\n";
@@ -87,7 +87,7 @@ int	main(int ac, char **av)
 		if (num_events < 0)
 		{
 			webserv.free_all();
-			return error_msg(errno, NULL);
+			return error_msg(errno, "epoll_wait", NULL);
 		}
 		if (num_events == 0)
 			continue;
