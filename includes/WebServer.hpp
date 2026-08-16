@@ -30,6 +30,7 @@ public:
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
 
+	int		epoll_loop();
 	int		prepare_listeners();
 	int		epoll_add_listens();
 	int		process_connections(int num_events);
