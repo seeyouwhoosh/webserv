@@ -242,16 +242,17 @@ int	WebServer::handle_new_connection(int listener)
 // HANDLE CLIENT REQUESTS
 int	WebServer::handle_client_data(int client)
 {
-	std::string			&client_buffer = client_buffers[client];
+	HTTPmessage			&client_buffer = client_buffers[client];
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
 
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
 	if (read_size > 0)
 	{
-		client_buffer.append(buff, read_size);
+		client_buffer.write(buff, read_size);
 		/***************** TO ERASE ************** */
-		ss << "Client fd " << client << ": " << client_buffer;
+		buff[BUFFER_SIZE] = '\0';
+		ss << "Client fd " << client << ": " << buff;
 		std::cout << ss.str() << std::flush;
 
 		for (size_t i = 0; i < clients.size(); i++)
