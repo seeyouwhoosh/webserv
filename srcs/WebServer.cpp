@@ -198,6 +198,7 @@ int	WebServer::handle_new_connection(int listener)
 		return error_msg(errno, "fcntl", NULL);
 	}
 
+	/******************** TO ERASE ******************* */
 	char str[INET6_ADDRSTRLEN] = {0};
 	int port = 0;
 
@@ -213,15 +214,16 @@ int	WebServer::handle_new_connection(int listener)
 		inet_ntop(AF_INET6, &addr6->sin6_addr, str, sizeof(str));
 		port = ntohs(addr6->sin6_port);
 	}
+	
+	std::cout << "\033[1m[webserv]\33[0m: new incoming connection from " 
+				<< str << ":" << port << std::endl;
+	/******************** TO ERASE ******************* */
 
 	if (epoll_add_fd(clientsock) < 0)
 	{
 		close(clientsock);
 		return -1;
 	}
-
-	std::cout << "\033[1m[webserv]\33[0m: new incoming connection from " 
-				<< str << ":" << port << std::endl;
 
 	if (send(clientsock, msg, std::strlen(msg), 0) < 0)
 	{
@@ -240,14 +242,16 @@ int	WebServer::handle_new_connection(int listener)
 // HANDLE CLIENT REQUESTS
 int	WebServer::handle_client_data(int client)
 {
+	std::string			&client_buffer = client_buffers[client];
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
 
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
 	if (read_size > 0)
 	{
-		buff[read_size] = '\0';
-		ss << "Client fd " << client << ": " << buff;
+		client_buffer.append(buff, read_size);
+		/***************** TO ERASE ************** */
+		ss << "Client fd " << client << ": " << client_buffer;
 		std::cout << ss.str() << std::flush;
 
 		for (size_t i = 0; i < clients.size(); i++)
@@ -257,6 +261,7 @@ int	WebServer::handle_client_data(int client)
 			if (send(clients[i], ss.str().c_str(), ss.str().length(), 0) < 0)
 				return error_msg(errno, "send", NULL);
 		}
+		/******************************************** */
 	}
 	else if (read_size == 0)
 	{
@@ -266,15 +271,10 @@ int	WebServer::handle_client_data(int client)
 			free_all();
 			return error_msg(errno, "epoll_ctl", NULL);
 		}
-		close(client);
+		client_buffers.erase(client);
 		clients.erase(std::find(clients.begin(), clients.end(), client));
+		close(client);
 		num_connections--;
-	}
-	else
-	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return 0;
-		return error_msg(errno, "recv", NULL);
 	}
 	return 0;
 }

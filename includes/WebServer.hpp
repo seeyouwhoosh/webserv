@@ -8,6 +8,7 @@
 #include <sys/epoll.h>
 
 #include "Config.hpp"
+//#include "HTTPmessage.hpp"
 
 #define MAX_CONNECTIONS	512
 
@@ -27,10 +28,10 @@ public:
 	int							epoll_instance;
 	std::vector<int>			listeners;
 	std::vector<int>			clients;
+	std::map<int, std::string>	client_buffers;
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
 
-	int		epoll_loop();
 	int		prepare_listeners();
 	int		epoll_add_listens();
 	int		process_connections(int num_events);
