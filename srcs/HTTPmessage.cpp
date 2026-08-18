@@ -23,7 +23,7 @@ std::ostream	&HTTPmessage::write(const char *buf, size_t n)
 	return client_buffer.write(buf, n);
 }
 
-int	method_match(std::string &s)
+int	HTTPmessage::method_match(std::string &s)
 {
 	std::string	methods[] = {
 		"GET",
@@ -175,10 +175,35 @@ int	HTTPmessage::http_get()
 
 	char	*buff;
 	fs.read(buff, rs_content_length);
-	rs_body = std::string(buff);
 	if (fs.fail() == true)
 	{
 		rs_startline.status_code = INTERNAL_SERVER_ERROR;
 		return -1;
 	}
+	rs_body = std::string(buff);
+}
+
+int	HTTPmessage::generate_response(std::string &s)
+{
+	rs_startline.protocol = "HTTP/1.1";
+
+	int	method = method_match(s);
+	switch (method)
+	{
+	case GET:
+		http_get();
+		break;
+	case POST:
+		http_post();
+		break;
+	case DELETE:
+		http_delete();
+	case HEAD:
+		http_head();
+	case TRACE:
+		http_trace();
+	default:
+		return BAD_METHOD;
+	}
+	rs_startline.reason_phrase = std::string(response[rs_startline.status_code]);
 }

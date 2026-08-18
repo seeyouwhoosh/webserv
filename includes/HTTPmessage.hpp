@@ -19,7 +19,7 @@ enum	e_status_codes
 	INTERNAL_SERVER_ERROR	= 500
 };
 
-std::map<e_status_codes, const char *>	response = {
+std::map<int, const char *>	response = {
 	{OK, "OK"},
 	{BAD_REQUEST, "Bad Request"},
 	{FORBIDDEN, "Forbidden"},
@@ -68,7 +68,8 @@ private:
 	std::string				rs_body;
 
 	int	method_match(std::string &s);
-
+	LocationConfig	&get_file_path(std::string &file);
+	int		open_file(std::string file, std::fstream &fs, LocationConfig &locationconf);
 public:
 	HTTPmessage();
 	HTTPmessage(const HTTPmessage &other);
@@ -79,6 +80,7 @@ public:
 	std::string		rq_host;
 	int				rq_keep_alive;
 	std::string		rq_content_type;
+	bool			rq_chunked;
 	size_t			rq_content_length;
 	
 	/* Response headers */
@@ -89,10 +91,10 @@ public:
 	
 	int				request_is_valid();
 
-	LocationConfig	&get_file_path(std::string &file);
-	int		open_file(std::string file, std::fstream &fs, LocationConfig &locationconf);
+
 	int		http_get();
 
+	int	generate_response(std::string &s);
 /* 
 	http_post();
 	http_delete();
