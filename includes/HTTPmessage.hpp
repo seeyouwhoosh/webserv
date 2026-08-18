@@ -4,22 +4,29 @@
 #include <map>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <sys/stat.h>
 
 #include "Config.hpp"
 
 enum	e_status_codes
 {
-	OK					= 200,
-	BAD_REQUEST			= 400,
-	FORBIDDEN			= 403,
-	NOT_FOUND			= 404,
-	METHOD_NOT_ALLOWED	= 405,
+	OK						= 200,
+	BAD_REQUEST				= 400,
+	FORBIDDEN				= 403,
+	NOT_FOUND				= 404,
+	METHOD_NOT_ALLOWED		= 405,
+	UNSUPPORTED_MEDIA_TYPE	= 415,
+	INTERNAL_SERVER_ERROR	= 500
 };
 
 std::map<e_status_codes, const char *>	response = {
+	{OK, "OK"},
 	{BAD_REQUEST, "Bad Request"},
+	{FORBIDDEN, "Forbidden"},
+	{NOT_FOUND, "Not Found"},
 	{METHOD_NOT_ALLOWED, "Method Not Allowed"},
+	{UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type"},
+	{INTERNAL_SERVER_ERROR, "Internal Server Error"}
 };
 
 enum	e_request_method
@@ -49,16 +56,16 @@ typedef	struct response_startline_t
 class HTTPmessage
 {
 private:
-	ServerConfig			*serverconf;
+	ServerConfig			&serverconf;
 	std::stringstream		client_buffer;
 
-	request_startline_t		request_startline;
-	std::string				request_header;
-	std::string				request_body;
+	request_startline_t		rq_startline;
+	std::string				rq_header;
+	std::string				rq_body;
 
-	response_startline_t	response_startline;
-	std::string				response_header;
-	std::string				response_body;
+	response_startline_t	rs_startline;
+	std::string				rs_header;
+	std::string				rs_body;
 
 	int	method_match(std::string &s);
 
@@ -69,21 +76,22 @@ public:
 	~HTTPmessage();
 
 	/* Request headers */
-	std::string		q_host;
-	int				q_keep_alive;
-	std::string		q_content_type;
-	size_t			q_content_length;
+	std::string		rq_host;
+	int				rq_keep_alive;
+	std::string		rq_content_type;
+	size_t			rq_content_length;
 	
 	/* Response headers */
-	std::string		a_location;
-	size_t			a_content_length;
+	std::string		rs_location;
+	size_t			rs_content_length;
 
 	std::ostream	&write(const char *buf, size_t n);
 	
 	int				request_is_valid();
 
-	int get_file(std::string file);
-	int	http_get();
+	LocationConfig	&get_file_path(std::string &file);
+	int		open_file(std::string file, std::fstream &fs, LocationConfig &locationconf);
+	int		http_get();
 
 /* 
 	http_post();

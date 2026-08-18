@@ -1,5 +1,7 @@
-#include "HTTPmessage.hpp"
 #include <cctype>
+#include <fstream>
+
+#include "HTTPmessage.hpp"
 
 HTTPmessage::HTTPmessage() {}
 
@@ -59,7 +61,7 @@ static bool	all_whitespace(std::string s)
 	return true;
 }
 
-/* see if request is valid, if it is, returns 0, else return -1 and sets status_code */
+/* See if request is valid, if it is, returns 0, else return -1 and sets status_code */
 int	HTTPmessage::request_is_valid()
 {
 	std::string			s;
@@ -67,14 +69,14 @@ int	HTTPmessage::request_is_valid()
 
 	if (all_whitespace(client_buffer.str()))
 	{
-		response_startline.status_code = BAD_REQUEST;
+		rs_startline.status_code = BAD_REQUEST;
 		return -1;
 	}
 
 	client_buffer >> s;
-	if ((request_startline.method = method_match(s)) == BAD_METHOD)
+	if ((rq_startline.method = method_match(s)) == BAD_METHOD)
 	{
-		response_startline.status_code = METHOD_NOT_ALLOWED;
+		rs_startline.status_code = METHOD_NOT_ALLOWED;
 		return -1;
 	}
 }
@@ -103,15 +105,48 @@ static int	get_location(std::vector<LocationConfig> locations, std::string file)
 	else
 		return location_pos;
 }
+/* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
+int	HTTPmessage::open_file(std::string file, std::fstream &fs, LocationConfig &locationconf)
+{
+	struct stat	st;
 
-//check if it exists 
-//check if it is a file or directory
-// check that the size is countable
-// returns fd if it's a feasible file, 0 if it is a directory, -error if its's error
-int HTTPmessage::get_file(std::string file)
+	if (stat(file.c_str(), &st) < 0)
+		return NOT_FOUND;
+	else
+	{
+		if (st.st_mode & S_IFMT == S_IFREG)
+		{
+			if (access(file.c_str(), F_OK | R_OK) < 0)
+				return FORBIDDEN;
+			fs.open(file.c_str(), std::fstream::in);
+			if (fs.fail() == true)
+				return INTERNAL_SERVER_ERROR;
+			rs_content_length = st.st_size;
+		}
+		else if (st.st_mode & S_IFMT == S_IFDIR)
+		{
+			if (locationconf.autoindex == AUTOINDEX_OFF)
+				return NOT_FOUND;
+			for (size_t i = 0; i < locationconf.indexes.size(); i++)
+			{
+				std::string	tmp = file + "/" + locationconf.indexes[i];
+				if (access(tmp.c_str(), F_OK | R_OK) < 0)
+					continue;
+				fs.open(tmp.c_str(), std::fstream::in);
+				if (fs.fail() == true)
+					return INTERNAL_SERVER_ERROR;
+				break;
+			}
+		}
+	}
+	return OK;
+}
+
+/* Constructs the full path of file or directory into string file and returns the current location */
+LocationConfig	&HTTPmessage::get_file_path(std::string &file)
 {
 	size_t query_pos = file.find('?');
-	std::string query;
+	std::string query; // decide what to do with query after
 
 	if (query_pos != std::string::npos)
 	{
@@ -119,36 +154,31 @@ int HTTPmessage::get_file(std::string file)
 		file = file.substr(0, query_pos);
 	}
 
-	int	location_pos = get_location(serverconf->locations, file);
+	int	location_pos = get_location(serverconf.locations, file);
+	LocationConfig	&locationconf = serverconf.locations[location_pos];
 	if (location_pos < 0)
-		file = serverconf->root + file;
+		file = serverconf.root + file;
 	else
-		file = serverconf->locations[location_pos].root + file;
-
-	struct stat	st;
-
-	if (stat(file.c_str(), &st) < 0)
-		return -NOT_FOUND;
-	else
-	{
-		if (st.st_mode & S_IFMT == S_IFREG)
-		{
-			if (access(file.c_str(), F_OK | R_OK) < 0)
-				return -FORBIDDEN;
-
-		}
-		if (st.st_mode & S_IFMT == S_IFDIR)
-		{
-
-		}
-	}
-
-
+		file = locationconf.root + file;
 }
 
 
-/* get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
+/* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
 int	HTTPmessage::http_get()
 {
-	get_file(request_startline.target);
+	std::string		file = rq_startline.target;
+	std::fstream	fs;
+
+	LocationConfig	&locationconf = get_file_path(file);
+	if ((rs_startline.status_code = open_file(file, fs, locationconf)) != OK)
+		return -1;
+
+	char	*buff;
+	fs.read(buff, rs_content_length);
+	rs_body = std::string(buff);
+	if (fs.fail() == true)
+	{
+		rs_startline.status_code = INTERNAL_SERVER_ERROR;
+		return -1;
+	}
 }
