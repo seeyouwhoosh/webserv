@@ -107,7 +107,7 @@ static int	get_location(std::vector<LocationConfig> locations, std::string file)
 //check if it exists 
 //check if it is a file or directory
 // check that the size is countable
-// returns fd if it's a feasible file, 0 if it is a directory, -1 if its's error
+// returns fd if it's a feasible file, 0 if it is a directory, -error if its's error
 int HTTPmessage::get_file(std::string file)
 {
 	size_t query_pos = file.find('?');
@@ -128,11 +128,13 @@ int HTTPmessage::get_file(std::string file)
 	struct stat	st;
 
 	if (stat(file.c_str(), &st) < 0)
-		return -1;
+		return -NOT_FOUND;
 	else
 	{
 		if (st.st_mode & S_IFMT == S_IFREG)
 		{
+			if (access(file.c_str(), F_OK | R_OK) < 0)
+				return -FORBIDDEN;
 
 		}
 		if (st.st_mode & S_IFMT == S_IFDIR)
@@ -144,6 +146,8 @@ int HTTPmessage::get_file(std::string file)
 
 }
 
+
+/* get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
 int	HTTPmessage::http_get()
 {
 	get_file(request_startline.target);

@@ -3,6 +3,8 @@
 #include <sstream>
 #include <map>
 #include <fcntl.h>
+#include <unistd.h>
+
 
 #include "Config.hpp"
 
@@ -10,6 +12,8 @@ enum	e_status_codes
 {
 	OK					= 200,
 	BAD_REQUEST			= 400,
+	FORBIDDEN			= 403,
+	NOT_FOUND			= 404,
 	METHOD_NOT_ALLOWED	= 405,
 };
 
