@@ -77,5 +77,74 @@ int	HTTPmessage::request_is_valid()
 		response_startline.status_code = METHOD_NOT_ALLOWED;
 		return -1;
 	}
-	
+}
+
+static int	get_location(std::vector<LocationConfig> locations, std::string file)
+{
+	std::string	location_name;
+	size_t		len;
+	size_t		max_len = 0;
+	size_t		location_pos = 0;
+
+	for (size_t i = 0; i < locations.size(); i++)
+	{
+		len = locations[i].name.length();
+		if (!file.find(locations[i].name))
+		{
+			if (len > max_len)
+			{
+				location_pos = i;
+				max_len = len;
+			}
+		}
+	}
+	if (!max_len)
+		return -1;
+	else
+		return location_pos;
+}
+
+//check if it exists 
+//check if it is a file or directory
+// check that the size is countable
+// returns fd if it's a feasible file, 0 if it is a directory, -1 if its's error
+int HTTPmessage::get_file(std::string file)
+{
+	size_t query_pos = file.find('?');
+	std::string query;
+
+	if (query_pos != std::string::npos)
+	{
+		query = file.substr(query_pos + 1);
+		file = file.substr(0, query_pos);
+	}
+
+	int	location_pos = get_location(serverconf->locations, file);
+	if (location_pos < 0)
+		file = serverconf->root + file;
+	else
+		file = serverconf->locations[location_pos].root + file;
+
+	struct stat	st;
+
+	if (stat(file.c_str(), &st) < 0)
+		return -1;
+	else
+	{
+		if (st.st_mode & S_IFMT == S_IFREG)
+		{
+
+		}
+		if (st.st_mode & S_IFMT == S_IFDIR)
+		{
+
+		}
+	}
+
+
+}
+
+int	HTTPmessage::http_get()
+{
+	get_file(request_startline.target);
 }

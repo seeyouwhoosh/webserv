@@ -60,6 +60,7 @@ public:
 	LocationConfig(const LocationConfig &other);
 	LocationConfig	&operator=(const LocationConfig &other);
 
+	std::string					name;
 	std::string					root;
 	std::vector<std::string>	indexes;
 	bool						autoindex;

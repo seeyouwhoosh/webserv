@@ -2,11 +2,15 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <fcntl.h>
+
+#include "Config.hpp"
 
 enum	e_status_codes
 {
-	BAD_REQUEST = 400,
-	METHOD_NOT_ALLOWED = 405,
+	OK					= 200,
+	BAD_REQUEST			= 400,
+	METHOD_NOT_ALLOWED	= 405,
 };
 
 std::map<e_status_codes, const char *>	response = {
@@ -41,7 +45,9 @@ typedef	struct response_startline_t
 class HTTPmessage
 {
 private:
+	ServerConfig			*serverconf;
 	std::stringstream		client_buffer;
+
 	request_startline_t		request_startline;
 	std::string				request_header;
 	std::string				request_body;
@@ -50,7 +56,7 @@ private:
 	std::string				response_header;
 	std::string				response_body;
 
-	bool	method_match(std::string &s);
+	int	method_match(std::string &s);
 
 public:
 	HTTPmessage();
@@ -71,7 +77,11 @@ public:
 	std::ostream	&write(const char *buf, size_t n);
 	
 	int				request_is_valid();
-/* 	http_get();
+
+	int get_file(std::string file);
+	int	http_get();
+
+/* 
 	http_post();
 	http_delete();
 	http_head();
