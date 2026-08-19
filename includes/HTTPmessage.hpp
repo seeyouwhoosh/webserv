@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <vector>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -39,14 +40,16 @@ enum	e_request_method
 	TRACE
 };
 
-typedef	struct request_startline_t
+
+
+typedef	struct t_rq_startline
 {
 	int			method;
 	std::string	target;
 	std::string	protocol;
 };
 
-typedef	struct response_startline_t
+typedef	struct t_rs_startline
 {
 	std::string	protocol;
 	int			status_code;
@@ -56,20 +59,32 @@ typedef	struct response_startline_t
 class HTTPmessage
 {
 private:
-	ServerConfig			&serverconf;
-	std::stringstream		client_buffer;
+	ServerConfig						&serverconf;
+	std::stringstream					client_buffer;
+	std::vector<std::string>			allowed_methods;
+	// std::map<std::string, std::string>	cache_control;
+	// std::map<std::string, std::string>	cookies;
+	// std::vecto<std::string>				clear_site_data;
 
-	request_startline_t		rq_startline;
-	std::string				rq_header;
-	std::string				rq_body;
+	t_rq_startline	rq_startline;
+	std::string		rq_header;
+	std::string		rq_body;
 
-	response_startline_t	rs_startline;
-	std::string				rs_header;
-	std::string				rs_body;
+	t_rs_startline	rs_startline;
+	std::string		rs_header;
+	std::string		rs_body;
 
-	int	method_match(std::string &s);
+	/* Response headers */
+	std::string		rs_location; // 3XX or 201
+	size_t			rs_content_length;
+	std::string		rs_date;
+	std::string		rs_content_type;
+	std::string		rs_allowed_methods; //solo se usa si es 405
+	std::string		rs_last_modified;
+
+	int				method_match(std::string &s);
 	LocationConfig	&get_file_path(std::string &file);
-	int		open_file(std::string file, std::fstream &fs, LocationConfig &locationconf);
+	int				open_file(std::string file, std::fstream &fs, LocationConfig &locationconf);
 public:
 	HTTPmessage();
 	HTTPmessage(const HTTPmessage &other);
@@ -77,15 +92,14 @@ public:
 	~HTTPmessage();
 
 	/* Request headers */
-	std::string		rq_host;
-	int				rq_keep_alive;
-	std::string		rq_content_type;
-	bool			rq_chunked;
-	size_t			rq_content_length;
+	std::string							rq_host;
+	int									rq_keep_alive;
+	std::map<std::string, std::vector>	rq_accept;
+	std::string							rq_content_type;
+	bool								rq_chunked;
+	size_t								rq_content_length;
 	
-	/* Response headers */
-	std::string		rs_location;
-	size_t			rs_content_length;
+
 
 	std::ostream	&write(const char *buf, size_t n);
 	

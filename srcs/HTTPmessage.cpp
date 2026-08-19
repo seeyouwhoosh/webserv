@@ -3,7 +3,10 @@
 
 #include "HTTPmessage.hpp"
 
-HTTPmessage::HTTPmessage() {}
+HTTPmessage::HTTPmessage()
+{
+	allowed_methods = {"GET", "POST", "DELETE", "HEAD", "TRACE"};
+}
 
 HTTPmessage::~HTTPmessage() {}
 

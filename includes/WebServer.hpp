@@ -6,11 +6,19 @@
 #include <string>
 #include <cstring>
 #include <sys/epoll.h>
+#include <ctime>
 
 #include "Config.hpp"
 #include "HTTPmessage.hpp"
 
 #define MAX_CONNECTIONS	512
+
+typedef	struct t_client
+{
+	int		fd;
+	time_t	last_activity;
+	int		n_request;
+};
 
 class WebServer
 {
@@ -27,7 +35,7 @@ public:
 
 	int							epoll_instance;
 	std::vector<int>			listeners;
-	std::vector<int>			clients;
+	std::vector<t_client>			clients;
 	std::map<int, HTTPmessage>	client_buffers;
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;

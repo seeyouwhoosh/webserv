@@ -233,8 +233,12 @@ int	WebServer::handle_new_connection(int listener)
 			return error_msg(errno, "send", NULL);
 		}
 	}
+	t_client	new_client;
+	new_client.fd = clientsock;
+	new_client.last_activity = std::time(NULL);
+	new_client.n_request = 0;
 
-	clients.push_back(clientsock);
+	clients.push_back(new_client);
 	num_connections++;
 
 	return 0;
@@ -257,9 +261,9 @@ int	WebServer::handle_client_data(int client)
 
 		for (size_t i = 0; i < clients.size(); i++)
 		{
-			if (clients[i] == client)
+			if (clients[i].fd == client)
 				continue;
-			if (send(clients[i], ss.str().c_str(), ss.str().length(), 0) < 0)
+			if (send(clients[i].fd, ss.str().c_str(), ss.str().length(), 0) < 0)
 				return error_msg(errno, "send", NULL);
 		}
 		/******************************************** */
