@@ -68,7 +68,7 @@ static bool	all_whitespace(std::string s)
 int	HTTPmessage::request_is_valid()
 {
 	std::string			s;
-	request_startline_t	r;
+	t_rq_startline	r;
 
 	if (all_whitespace(client_buffer.str()))
 	{

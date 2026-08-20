@@ -40,7 +40,7 @@ enum	e_request_method
 	TRACE
 };
 
-
+typedef t_accept std::map<std::string, std::vector<std::string>>;
 
 typedef	struct t_rq_startline
 {
@@ -92,12 +92,12 @@ public:
 	~HTTPmessage();
 
 	/* Request headers */
-	std::string							rq_host;
-	int									rq_keep_alive;
-	std::map<std::string, std::vector>	rq_accept;
-	std::string							rq_content_type;
-	bool								rq_chunked;
-	size_t								rq_content_length;
+	std::string	rq_host;
+	int			rq_keep_alive;
+	t_accept	rq_accept;
+	std::string	rq_content_type;
+	bool		rq_chunked;
+	size_t		rq_content_length;
 	
 
 
