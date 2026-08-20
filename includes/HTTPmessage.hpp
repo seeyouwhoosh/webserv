@@ -9,7 +9,7 @@
 
 #include "Config.hpp"
 
-enum	e_status_codes
+enum	StatusCodes
 {
 	OK						= 200,
 	BAD_REQUEST				= 400,
@@ -30,7 +30,7 @@ std::map<int, const char *>	response = {
 	{INTERNAL_SERVER_ERROR, "Internal Server Error"}
 };
 
-enum	e_request_method
+enum	RequestMethod
 {
 	BAD_METHOD = -1,
 	GET,
@@ -40,10 +40,9 @@ enum	e_request_method
 	TRACE
 };
 
-
 typedef	struct t_rq_startline
 {
-	int			method;
+	std::string	method;
 	std::string	path;
 	std::string	version;
 };
@@ -109,7 +108,7 @@ private:
 
 	std::ostream	&write(const char *buf, size_t n);
 	int				httpGET();
-	int				generateResponse(std::string &method);
+	int				generateResponse(std::string &m);
 
 /* 
 	http_post();

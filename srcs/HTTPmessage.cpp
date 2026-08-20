@@ -5,7 +5,7 @@
 
 HTTPmessage::HTTPmessage()
 {
-	allowedMethods = {"GET", "POST", "DELETE", "HEAD", "TRACE"};
+	allowedMethods = {"GET", "POST", "DELETE"};
 }
 
 HTTPmessage::~HTTPmessage() {}
@@ -69,15 +69,6 @@ std::ostream	&HTTPmessage::write(const char *buf, size_t n)
 
 int	HTTPmessage::matchMethod(std::string &method)
 {
-	std::string	methods[] = {
-		"GET",
-		"POST",
-		"DELETE",
-		"HEAD",
-		"TRACE",
-		""
-	};
-
 	int	e_methods[] = {
 		GET,
 		POST,
@@ -87,9 +78,9 @@ int	HTTPmessage::matchMethod(std::string &method)
 		BAD_METHOD,
 	};
 
-	for (size_t i = 0; methods[i] != ""; i++)
+	for (size_t i = 0; i < allowedMethods.size(); i++)
 	{
-		if (method == methods[i])
+		if (method == allowedMethods[i])
 			return e_methods[i];
 	}
 	return BAD_METHOD;
@@ -129,6 +120,7 @@ static int	get_location(std::vector<LocationConfig> locations, std::string file)
 	else
 		return location_pos;
 }
+
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
 int	HTTPmessage::openFile(std::string file, std::fstream &fs, LocationConfig &locationconf)
 {
@@ -204,27 +196,27 @@ int	HTTPmessage::httpGET()
 		return -1;
 	}
 	rs_body = std::string(buff);
+	rs_startline.status_code = OK;
+	rs_startline.reason_phrase = response[OK];
+	return 0;
 }
 
-int	HTTPmessage::generateResponse(std::string &s)
+int	HTTPmessage::generateResponse(std::string &m)
 {
 	rs_startline.method = "HTTP/1.1";
 
-	int	method = matchMethod(s);
-	switch (method)
+	int	e_method = matchMethod(m);
+	switch (e_method)
 	{
 	case GET:
-		httpGET();
-		break;
+		if (httpGET() < 0)
+			break;
 	case POST:
-		http_post();
-		break;
+		if (httpPOST() < 0)
+			break;
 	case DELETE:
-		http_delete();
-	case HEAD:
-		http_head();
-	case TRACE:
-		http_trace();
+		if (httpDELETE() < 0)
+			break;
 	default:
 		return BAD_METHOD;
 	}

@@ -12,9 +12,22 @@ Parser::~Parser()
 {
 }
 
+Parser::Parser(const Parser &other)
+{
+	*this = other;
+}
+
+Parser	&Parser::operator=(const Parser &other)
+{
+	this->_state = other._state;
+	this->_contentLength = other._contentLength;
+	this->_bodyReceived = other._bodyReceived;
+	return *this;
+}
+
 //1.Request Line
 
-bool Parser::parseRequestLine(const std::string& line, Request& request)
+bool Parser::parseRequestLine(const std::string& line, HTTPmessage& request)
 {
 	std::istringstream stream(line); //return the string so it can be read with >>
 
@@ -34,9 +47,9 @@ bool Parser::parseRequestLine(const std::string& line, Request& request)
 	if (!isValidPath(path))
 		return false;
 
-	request.setMethod(method);
-	request.setPath(path);
-	request.setVersion(version);
+	request.rq_startline.method = method;
+	request.rq_startline.path = path;
+	request.rq_startline.version = version;
 
 	return true;
 }
@@ -70,7 +83,7 @@ bool Parser::isValidPath(const std::string& path) const
 
 //2.Headers
 
-bool Parser::parseHeader(const std::string& line, Request& request)
+bool Parser::parseHeader(const std::string& line, HTTPmessage& request)
 {
 	std::string::size_type separator = line.find(':');
 
@@ -98,7 +111,7 @@ bool Parser::hasCompleteLine() const
 	return _buffer.find("\r\n") != std::string::npos;
 }
 
-bool Parser::parseContentLength(const Request& request)
+bool Parser::parseContentLength(const HTTPmessage& request)
 {
 	std::map<std::string, std::string>::const_iterator it;
 
@@ -141,7 +154,7 @@ bool Parser::getNextLine(std::string& line)
 	return true;
 }
 
-bool Parser::parseBody(Request& request)
+bool Parser::parseBody(HTTPmessage& request)
 {
 	std::size_t remaining = _contentLength - _bodyReceived;
 	std::size_t toRead = std::min(remaining, _buffer.size());
@@ -158,7 +171,7 @@ bool Parser::parseBody(Request& request)
 	return true;
 }
 
-ParseResult Parser::parse(Request& request)
+ParseResult Parser::parseRequest(HTTPmessage& request)
 {
 	if (_state == REQUEST_LINE)
 	{

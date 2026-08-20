@@ -1,6 +1,6 @@
 #include "WebServer.hpp"
-#include <unistd.h> // close
-#include <fcntl.h> // fcntl
+#include <unistd.h>
+#include <fcntl.h>
 #include <algorithm>
 #include <sstream>
 #include <cerrno>
@@ -252,8 +252,15 @@ int	WebServer::handle_client_data(int client)
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
 	if (read_size > 0)
 	{
-		clientBuffer.write(buff, read_size);
+		Parser	parser;
+	
+		if (parser.parseRequest(clientBuffer) == PARSE_ERROR)
+		{
+			clientBuffer.setStatusCode(BAD_REQUEST);
+			clientBuffer.generateResponse(BAD_REQUEST);
+		}
 		/***************** TO ERASE ************** */
+		clientBuffer.write(buff, read_size);
 		buff[BUFFER_SIZE] = '\0';
 		ss << "Client fd " << client << ": " << buff;
 		std::cout << ss.str() << std::flush;

@@ -2,7 +2,7 @@
 #define PARSER_HPP
 
 #include <string>
-#include "Request.hpp"
+#include "HTTPmessage.hpp"
 
 enum ParseState
 {
@@ -23,14 +23,13 @@ class Parser
 {
 public:
 	Parser();
+	Parser(const Parser &other);
+	Parser	&operator=(const Parser &other);
 	~Parser();
 
-	void appendData(const std::string& data); //buffer
-	ParseResult parse(Request& request);
-
-	bool parseRequestLine(const std::string& line, Request& request);
-
-private:
+	ParseResult parseRequest(HTTPmessage& request);
+	
+	private:
 	std::string _buffer;
 	ParseState _state;
 	std::size_t _contentLength;
@@ -39,13 +38,15 @@ private:
 	bool isValidMethod(const std::string& method) const;
 	bool isValidVersion(const std::string& version) const;
 	bool isValidPath(const std::string& path) const;
-
-	bool parseHeader(const std::string& line, Request& request);
+	
+	void appendData(const std::string& data); //buffer
+	bool parseRequestLine(const std::string& line, HTTPmessage& request);
+	bool parseHeader(const std::string& line, HTTPmessage& request);
 	bool hasCompleteLine() const;
-	bool parseContentLength(const Request& request);
+	bool parseContentLength(const HTTPmessage& request);
 	bool getNextLine(std::string& line);
 	
-	bool parseBody(Request& request);
+	bool parseBody(HTTPmessage& request);
 };
 
 #endif
