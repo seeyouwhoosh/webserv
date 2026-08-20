@@ -157,3 +157,52 @@ bool Parser::parseBody(Request& request)
 
 	return true;
 }
+
+ParseResult Parser::parse(Request& request)
+{
+	if (_state == REQUEST_LINE)
+	{
+		std::string line;
+
+		if (!getNextLine(line))
+			return PARSE_INCOMPLETE;
+
+		if (!parseRequestLine(line, request))
+			return PARSE_ERROR;
+
+		_state = HEADERS;
+	}
+	if (_state == HEADERS)
+	{
+		std::string line;
+
+		while (getNextLine(line))
+		{
+			if (line.empty())
+			{
+				if (!parseContentLength(request))
+					return PARSE_ERROR;
+
+				if (_contentLength == 0)
+					_state = COMPLETE;
+				else
+					_state = BODY;
+
+				break;
+			}
+
+			if (!parseHeader(line, request))
+				return PARSE_ERROR;
+		}
+	}
+	if (_state == BODY)
+	{
+		if (!parseBody(request))
+			return PARSE_ERROR;
+	}
+
+	if (_state == COMPLETE)
+		return PARSE_COMPLETE;
+
+	return PARSE_INCOMPLETE;
+}
