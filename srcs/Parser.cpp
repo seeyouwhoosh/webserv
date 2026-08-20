@@ -76,7 +76,14 @@ bool Parser::parseHeader(const std::string& line, Request& request)
 
 	if (separator == std::string::npos)
 		return false;
-	
+	if (separator == 0)
+		return false;
+	for (std::string::size_type i = 0; i < separator; i++)
+	{
+		if (line[i] == ' ' || line[i] == '\t')
+			return false;
+	}
+
 	std::string name = line.substr(0, separator);
 	std::string value = line.substr(separator + 1);
 
@@ -109,6 +116,10 @@ bool Parser::parseContentLength(const Request& request)
 		_contentLength = 0;
 		return true;
 	}
+	if (it->second.empty())
+		return false;
+	if (it->second[0] == '-')
+		return false;
 
 	std::istringstream stream(it->second);
 
@@ -117,7 +128,6 @@ bool Parser::parseContentLength(const Request& request)
 
 	if (!(stream >> length))
 		return false;
-
 	if (stream >> extra)
 		return false;
 
