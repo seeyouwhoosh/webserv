@@ -40,38 +40,39 @@ enum	e_request_method
 	TRACE
 };
 
-typedef t_accept std::map<std::string, std::vector<std::string>>;
 
 typedef	struct t_rq_startline
 {
 	int			method;
-	std::string	target;
-	std::string	protocol;
+	std::string	path;
+	std::string	version;
 };
 
 typedef	struct t_rs_startline
 {
-	std::string	protocol;
+	std::string	method;
 	int			status_code;
 	std::string	reason_phrase;
 };
 
+typedef std::map<std::string, std::vector<std::string>> t_accept;
+typedef	std::map<std::string, std::string> stringmap;
+
 class HTTPmessage
 {
 private:
-	ServerConfig						&serverconf;
-	std::stringstream					client_buffer;
-	std::vector<std::string>			allowed_methods;
-	// std::map<std::string, std::string>	cache_control;
-	// std::map<std::string, std::string>	cookies;
-	// std::vecto<std::string>				clear_site_data;
 
-	t_rq_startline	rq_startline;
-	std::string		rq_header;
-	std::string		rq_body;
+	/* General variables */
+	ServerConfig				&serverconf;
+	std::stringstream			clientBuffer;
+	std::vector<std::string>	allowedMethods;
+	// stringmap	cache_control;
+	// stringmap	cookies;
+	// std::vecto<std::string>	clear_site_data;
 
+	/* Response message */
 	t_rs_startline	rs_startline;
-	std::string		rs_header;
+	stringmap	rs_headers;
 	std::string		rs_body;
 
 	/* Response headers */
@@ -79,17 +80,23 @@ private:
 	size_t			rs_content_length;
 	std::string		rs_date;
 	std::string		rs_content_type;
-	std::string		rs_allowed_methods; //solo se usa si es 405
+	std::string		rs_clientBuffer; //solo se usa si es 405
 	std::string		rs_last_modified;
 
-	int				method_match(std::string &s);
-	LocationConfig	&get_file_path(std::string &file);
-	int				open_file(std::string file, std::fstream &fs, LocationConfig &locationconf);
-public:
+	int				matchMethod(std::string &method);
+	LocationConfig	&getPathfile(std::string &file);
+	int				openFile(std::string file, std::fstream &fs, LocationConfig &locationconf);
+
+	public:
 	HTTPmessage();
 	HTTPmessage(const HTTPmessage &other);
 	HTTPmessage	&operator=(const HTTPmessage &other);
 	~HTTPmessage();
+
+	/* Request message */
+	t_rq_startline	rq_startline;
+	stringmap		rq_headers;
+	std::string		rq_body;
 
 	/* Request headers */
 	std::string	rq_host;
@@ -100,22 +107,24 @@ public:
 	size_t		rq_content_length;
 	
 
-
 	std::ostream	&write(const char *buf, size_t n);
-	
-	int				request_is_valid();
+	int				httpGET();
+	int				generateResponse(std::string &method);
 
-
-	int		http_get();
-
-	int	generate_response(std::string &s);
 /* 
 	http_post();
 	http_delete();
 	http_head();
+*/
+	const std::string&	getMethod() const;
+	int					getStatusCode() const;
+	const stringmap&	getHeaders() const;
+	const std::string&	getBody() const;
 
-	;
-	generate_response(); */
+	void	setMethod(const std::string& method);
+	void	setStatusCode(const int code);
+	void	setHeader(const std::string& name, const std::string& value);
+	void	setBody(const std::string& body); //content-length
 };
 
 

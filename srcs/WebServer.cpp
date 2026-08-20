@@ -181,7 +181,6 @@ int	WebServer::epoll_add_fd(int fd)
 	return 0;
 }
 
-#include <arpa/inet.h>
 int	WebServer::handle_new_connection(int listener)
 {
 	struct sockaddr_storage	clientaddr;
@@ -246,14 +245,14 @@ int	WebServer::handle_new_connection(int listener)
 // HANDLE CLIENT REQUESTS
 int	WebServer::handle_client_data(int client)
 {
-	HTTPmessage			&client_buffer = client_buffers[client];
+	HTTPmessage			&clientBuffer = clientBuffers[client];
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
 
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
 	if (read_size > 0)
 	{
-		client_buffer.write(buff, read_size);
+		clientBuffer.write(buff, read_size);
 		/***************** TO ERASE ************** */
 		buff[BUFFER_SIZE] = '\0';
 		ss << "Client fd " << client << ": " << buff;
@@ -276,7 +275,7 @@ int	WebServer::handle_client_data(int client)
 			free_all();
 			return error_msg(errno, "epoll_ctl", NULL);
 		}
-		client_buffers.erase(client);
+		clientBuffers.erase(client);
 		clients.erase(std::find(clients.begin(), clients.end(), client));
 		close(client);
 		num_connections--;
