@@ -71,7 +71,7 @@ private:
 
 	/* Response message */
 	t_rs_startline	rs_startline;
-	stringmap	rs_headers;
+	stringmap		rs_headers;
 	std::string		rs_body;
 
 	/* Response headers */
@@ -79,7 +79,7 @@ private:
 	size_t			rs_content_length;
 	std::string		rs_date;
 	std::string		rs_content_type;
-	std::string		rs_clientBuffer; //solo se usa si es 405
+	std::string		rs_methods_allowed; //solo se usa si es 405
 	std::string		rs_last_modified;
 
 	int				matchMethod(std::string &method);

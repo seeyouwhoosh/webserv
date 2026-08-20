@@ -257,7 +257,7 @@ int	WebServer::handle_client_data(int client)
 		if (parser.parseRequest(clientBuffer) == PARSE_ERROR)
 		{
 			clientBuffer.setStatusCode(BAD_REQUEST);
-			clientBuffer.generateResponse(BAD_REQUEST);
+			clientBuffer.generateResponse();
 		}
 		/***************** TO ERASE ************** */
 		clientBuffer.write(buff, read_size);

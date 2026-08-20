@@ -43,7 +43,6 @@ public:
 	void appendData(const std::string& data); //buffer
 	bool parseRequestLine(const std::string& line, HTTPmessage& request);
 	bool parseHeader(const std::string& line, HTTPmessage& request);
-	bool hasCompleteLine() const;
 	bool hasChunkedEncoding(const HTTPmessage& request) const;
 	bool parseContentLength(const HTTPmessage& request);
 	bool getNextLine(std::string& line);
