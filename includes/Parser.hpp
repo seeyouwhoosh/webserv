@@ -9,6 +9,8 @@ enum ParseState
 	REQUEST_LINE,
 	HEADERS,
 	BODY,
+	CHUNK_SIZE,
+	CHUNK_DATA,
 	COMPLETE
 };
 
@@ -41,8 +43,8 @@ private:
 	bool isValidPath(const std::string& path) const;
 
 	bool parseHeader(const std::string& line, Request& request);
-	bool hasCompleteLine() const;
 	bool parseContentLength(const Request& request);
+	bool hasChunkedEncoding(const Request& request) const;
 	bool getNextLine(std::string& line);
 	
 	bool parseBody(Request& request);
