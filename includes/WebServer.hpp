@@ -7,6 +7,7 @@
 #include <cstring>
 #include <sys/epoll.h>
 #include <ctime>
+#include <arpa/inet.h>
 
 #include "Config.hpp"
 #include "HTTPmessage.hpp"
@@ -36,7 +37,7 @@ public:
 	int							epoll_instance;
 	std::vector<int>			listeners;
 	std::vector<t_client>			clients;
-	std::map<int, HTTPmessage>	client_buffers;
+	std::map<int, HTTPmessage>	clientBuffers;
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
 

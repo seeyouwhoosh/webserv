@@ -5,7 +5,7 @@
 
 HTTPmessage::HTTPmessage()
 {
-	allowed_methods = {"GET", "POST", "DELETE", "HEAD", "TRACE"};
+	allowedMethods = {"GET", "POST", "DELETE", "HEAD", "TRACE"};
 }
 
 HTTPmessage::~HTTPmessage() {}
@@ -21,12 +21,53 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 	return *this;
 }
 
-std::ostream	&HTTPmessage::write(const char *buf, size_t n)
+const std::string&	HTTPmessage::getMethod() const
 {
-	return client_buffer.write(buf, n);
+	return rs_startline.method;
 }
 
-int	HTTPmessage::method_match(std::string &s)
+int	HTTPmessage::getStatusCode() const
+{
+	return rs_startline.status_code;
+}
+
+void HTTPmessage::setMethod(const std::string& method)
+{
+	rs_startline.method = method;
+}
+
+void HTTPmessage::setStatusCode(const int code)
+{
+	this->rs_startline.status_code = code;
+	this->rs_startline.reason_phrase = response[code];
+}
+
+void HTTPmessage::setHeader(const std::string& name, const std::string& value)
+{
+	rs_headers[name] = value;
+}
+
+const std::map<std::string, std::string>& HTTPmessage::getHeaders() const
+{
+	return rs_headers;
+}
+
+void HTTPmessage::setBody(const std::string& body)
+{
+	this->rs_body = body;
+}
+
+const std::string& HTTPmessage::getBody() const
+{
+	return rs_body;
+}
+
+std::ostream	&HTTPmessage::write(const char *buf, size_t n)
+{
+	return clientBuffer.write(buf, n);
+}
+
+int	HTTPmessage::matchMethod(std::string &method)
 {
 	std::string	methods[] = {
 		"GET",
@@ -48,7 +89,7 @@ int	HTTPmessage::method_match(std::string &s)
 
 	for (size_t i = 0; methods[i] != ""; i++)
 	{
-		if (s == methods[i])
+		if (method == methods[i])
 			return e_methods[i];
 	}
 	return BAD_METHOD;
@@ -62,26 +103,6 @@ static bool	all_whitespace(std::string s)
 			return false;
 	}
 	return true;
-}
-
-/* See if request is valid, if it is, returns 0, else return -1 and sets status_code */
-int	HTTPmessage::request_is_valid()
-{
-	std::string			s;
-	t_rq_startline	r;
-
-	if (all_whitespace(client_buffer.str()))
-	{
-		rs_startline.status_code = BAD_REQUEST;
-		return -1;
-	}
-
-	client_buffer >> s;
-	if ((rq_startline.method = method_match(s)) == BAD_METHOD)
-	{
-		rs_startline.status_code = METHOD_NOT_ALLOWED;
-		return -1;
-	}
 }
 
 static int	get_location(std::vector<LocationConfig> locations, std::string file)
@@ -109,7 +130,7 @@ static int	get_location(std::vector<LocationConfig> locations, std::string file)
 		return location_pos;
 }
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
-int	HTTPmessage::open_file(std::string file, std::fstream &fs, LocationConfig &locationconf)
+int	HTTPmessage::openFile(std::string file, std::fstream &fs, LocationConfig &locationconf)
 {
 	struct stat	st;
 
@@ -146,7 +167,7 @@ int	HTTPmessage::open_file(std::string file, std::fstream &fs, LocationConfig &l
 }
 
 /* Constructs the full path of file or directory into string file and returns the current location */
-LocationConfig	&HTTPmessage::get_file_path(std::string &file)
+LocationConfig	&HTTPmessage::getPathfile(std::string &file)
 {
 	size_t query_pos = file.find('?');
 	std::string query; // decide what to do with query after
@@ -165,15 +186,14 @@ LocationConfig	&HTTPmessage::get_file_path(std::string &file)
 		file = locationconf.root + file;
 }
 
-
 /* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
-int	HTTPmessage::http_get()
+int	HTTPmessage::httpGET()
 {
-	std::string		file = rq_startline.target;
+	std::string		file = rq_startline.path;
 	std::fstream	fs;
 
-	LocationConfig	&locationconf = get_file_path(file);
-	if ((rs_startline.status_code = open_file(file, fs, locationconf)) != OK)
+	LocationConfig	&locationconf = getPathfile(file);
+	if ((rs_startline.status_code = openFile(file, fs, locationconf)) != OK)
 		return -1;
 
 	char	*buff;
@@ -186,15 +206,15 @@ int	HTTPmessage::http_get()
 	rs_body = std::string(buff);
 }
 
-int	HTTPmessage::generate_response(std::string &s)
+int	HTTPmessage::generateResponse(std::string &s)
 {
-	rs_startline.protocol = "HTTP/1.1";
+	rs_startline.method = "HTTP/1.1";
 
-	int	method = method_match(s);
+	int	method = matchMethod(s);
 	switch (method)
 	{
 	case GET:
-		http_get();
+		httpGET();
 		break;
 	case POST:
 		http_post();
