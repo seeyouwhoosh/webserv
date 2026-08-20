@@ -89,12 +89,21 @@ bool Parser::parseHeader(const std::string& line, HTTPmessage& request)
 
 	if (separator == std::string::npos)
 		return false;
-	
+	if (separator == 0)
+		return false;
+	for (std::string::size_type i = 0; i < separator; i++)
+	{
+		if (line[i] == ' ' || line[i] == '\t')
+			return false;
+	}
+
 	std::string name = line.substr(0, separator);
 	std::string value = line.substr(separator + 1);
 
 	while (!value.empty() && value[0] == ' ')
 		value.erase(0, 1);
+	if (request.getHeaders().find(name) != request.getHeaders().end())
+		return false;
 
 	request.setHeader(name, value);
 
@@ -104,11 +113,6 @@ bool Parser::parseHeader(const std::string& line, HTTPmessage& request)
 void Parser::appendData(const std::string& data)
 {
 	_buffer += data;
-}
-
-bool Parser::hasCompleteLine() const
-{
-	return _buffer.find("\r\n") != std::string::npos;
 }
 
 bool Parser::parseContentLength(const HTTPmessage& request)
@@ -122,6 +126,10 @@ bool Parser::parseContentLength(const HTTPmessage& request)
 		_contentLength = 0;
 		return true;
 	}
+	if (it->second.empty())
+		return false;
+	if (it->second[0] == '-')
+		return false;
 
 	std::istringstream stream(it->second);
 
@@ -130,7 +138,6 @@ bool Parser::parseContentLength(const HTTPmessage& request)
 
 	if (!(stream >> length))
 		return false;
-
 	if (stream >> extra)
 		return false;
 
@@ -171,6 +178,30 @@ bool Parser::parseBody(HTTPmessage& request)
 	return true;
 }
 
+bool Parser::hasChunkedEncoding(const Request& request) const
+{
+	std::map<std::string, std::string>::const_iterator it;
+
+	it = request.getHeaders().find("Transfer-Encoding");
+
+	if (it == request.getHeaders().end())
+		return false;
+
+	return it->second == "chunked";
+}
+
+bool Parser::hasChunkedEncoding(const HTTPmessage& request) const
+{
+	std::map<std::string, std::string>::const_iterator it;
+
+	it = request.getHeaders().find("Transfer-Encoding");
+
+	if (it == request.getHeaders().end())
+		return false;
+
+	return it->second == "chunked";
+}
+
 ParseResult Parser::parseRequest(HTTPmessage& request)
 {
 	if (_state == REQUEST_LINE)
@@ -193,17 +224,21 @@ ParseResult Parser::parseRequest(HTTPmessage& request)
 		{
 			if (line.empty())
 			{
-				if (!parseContentLength(request))
-					return PARSE_ERROR;
-
-				if (_contentLength == 0)
-					_state = COMPLETE;
+				if (hasChunkedEncoding(request))
+				{
+					_state = CHUNK_SIZE;
+				}
 				else
-					_state = BODY;
-
+				{
+					if (!parseContentLength(request))
+						return PARSE_ERROR;
+					if (_contentLength == 0)
+						_state = COMPLETE;
+					else
+						_state = BODY;
+				}
 				break;
 			}
-
 			if (!parseHeader(line, request))
 				return PARSE_ERROR;
 		}
