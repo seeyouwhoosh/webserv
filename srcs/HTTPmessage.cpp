@@ -122,7 +122,7 @@ static int	get_location(std::vector<LocationConfig> locations, std::string file)
 }
 
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
-int	HTTPmessage::openFile(std::string file, std::fstream &fs, LocationConfig &locationconf)
+int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf)
 {
 	struct stat	st;
 
@@ -151,6 +151,7 @@ int	HTTPmessage::openFile(std::string file, std::fstream &fs, LocationConfig &lo
 				fs.open(tmp.c_str(), std::fstream::in);
 				if (fs.fail() == true)
 					return INTERNAL_SERVER_ERROR;
+				file = tmp;
 				break;
 			}
 		}
@@ -200,45 +201,82 @@ int	HTTPmessage::httpGET()
 	rs_body = std::string(buff);
 	rs_startline.status_code = OK;
 	rs_startline.reason_phrase = responses[OK];
+	rs_content_type = getMIMEtype(getFileExtension(file));
 	return 0;
+}
+
+int	HTTPmessage::getErrorFile(int error)
+{
+	std::stringstream error_str;
+	error_str << error;
+	std::map<int, std::string> &error_pages = serverconf->error_pages;
+	std::string	file;
+	std::map<int, std::string>::iterator it = error_pages.begin();
+	for (; it != error_pages.end(); it++)
+	{
+		if (it->first == error)
+		{
+			file = it->second;
+			break;
+		}
+	}
+	if (it == error_pages.end())
+		file = std::string(ERRPAGE_DIR) + "/" + error_str.str();
+	
 }
 
 int	HTTPmessage::generateResponse()
 {
-	if (rs_startline.status_code == BAD_REQUEST)
+	int	error = 0;
+
+	if (rs_startline.status_code != BAD_REQUEST)
 	{
-		rs_startline.reason_phrase = std::string(responses[rs_startline.status_code]);
-		rs_headers["Content-Type"] = "text/html";
-		rs_headers[""] = "";
+		std::string	m = rq_startline.method;
+		int	e_method = matchMethod(m);
+		switch (e_method)
+		{
+		case GET:
+			httpGET() < 0;
+			break;
+	/* 	case POST:
+			if (httpPOST() < 0)
+				break;
+		case DELETE:
+			if (httpDELETE() < 0)
+				break; */
+		default:
+			break;
+		}
+	}
+	if (error)
+	{
+		std::fstream	fs;
 	}
 
-	std::string	m = rq_startline.method;
-	int	error = 0;
-	int	e_method = matchMethod(m);
-	switch (e_method)
-	{
-	case GET:
-		if (httpGET() < 0)
-			error = 1;
-		break;
-/* 	case POST:
-		if (httpPOST() < 0)
-			break;
-	case DELETE:
-		if (httpDELETE() < 0)
-			break; */
-	default:
-		return BAD_METHOD;
-	}
 	rs_startline.reason_phrase = std::string(responses[rs_startline.status_code]);
-	if (!error)
+	std::stringstream	response_buff;
+	response_buff << rs_startline.version << " ";
+	response_buff << rs_startline.status_code << " " << rs_startline.reason_phrase << "\n";
+
+	response_buff << "Date: " << rs_date << "\n";
+	if (rs_startline.status_code == 201 || (rs_startline.status_code / 100) == 3)
+		response_buff << "Location: " << rs_location << "\n";
+	if (!rs_body.empty())
 	{
-		// proceed normally
-		return 0;
+		response_buff << "Content-Type: " << rs_content_type << "\n";
+		response_buff << "Content-Length: " << rs_content_length << "\n";
 	}
-	else
+	if (rs_startline.status_code == 405)
 	{
-		// do error stuff
-		return 1;
+		response_buff << "Allow: " << rs_content_type << "\n";
+		for (size_t i = 0; i < allowedMethods.size(); i++)
+		{
+			response_buff << allowedMethods[i];
+			if (i != allowedMethods.size() - 1)
+				response_buff << ", ";
+			else
+				response_buff << "\n";
+		}
 	}
+	return 0;
 }

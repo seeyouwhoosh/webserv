@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 
 #include "Config.hpp"
+#define ERRPAGE_DIR	"error_pages"
 
 enum	StatusCodes
 {
@@ -63,7 +64,6 @@ private:
 
 	/* Response message */
 	t_rs_startline	rs_startline;
-	stringmap		rs_headers;
 	std::string		rs_body;
 
 	/* Response headers */
@@ -76,8 +76,10 @@ private:
 
 	int				matchMethod(std::string &method);
 	LocationConfig	&getPathfile(std::string &file);
-	int				openFile(std::string file, std::fstream &fs, LocationConfig &locationconf);
+	int				getErrorFile(int error);
+	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
 
+	int				httpGET();
 	public:
 	HTTPmessage();
 	HTTPmessage(const HTTPmessage &other);
@@ -100,7 +102,6 @@ private:
 	
 
 	std::ostream	&write(const char *buf, size_t n);
-	int				httpGET();
 	int				generateResponse();
 
 /* 
@@ -119,6 +120,7 @@ private:
 	void	setBody(const std::string& body); //content-length
 };
 
-void	init_responses();
-
-void	init_MIMEtypes();
+void		init_responses();
+void		init_MIMEtypes();
+std::string	getFileExtension(std::string file);
+std::string	getMIMEtype(std::string ext);
