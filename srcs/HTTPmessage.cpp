@@ -207,11 +207,10 @@ int	HTTPmessage::httpGET()
 
 int	HTTPmessage::getErrorFile(int error)
 {
-	std::stringstream error_str;
-	error_str << error;
 	std::map<int, std::string> &error_pages = serverconf->error_pages;
 	std::string	file;
 	std::map<int, std::string>::iterator it = error_pages.begin();
+
 	for (; it != error_pages.end(); it++)
 	{
 		if (it->first == error)
@@ -220,9 +219,12 @@ int	HTTPmessage::getErrorFile(int error)
 			break;
 		}
 	}
-	if (it == error_pages.end())
+
+	struct stat	st;
+	std::stringstream error_str;
+	error_str << error;
+	if (it == error_pages.end() || stat(file.c_str(), &st) < 0 || (st.st_mode & S_IFMT) != S_IFREG || access(file.c_str(), F_OK | R_OK) < 0)
 		file = std::string(ERRPAGE_DIR) + "/" + error_str.str();
-	
 }
 
 int	HTTPmessage::generateResponse()
