@@ -19,7 +19,9 @@ typedef	struct t_client
 {
 	int		fd;
 	time_t	last_activity;
-	int		n_request;
+	int		keep_alive;
+	int		max_requests;
+	int		n_requests;
 };
 
 class WebServer
@@ -48,6 +50,7 @@ public:
 	bool	is_listener(int fd);
 	int		epoll_add_fd(int fd);
 	int		handle_new_connection(int listener);
+	int		keep_alive_client(int fd);
 	int		handle_client_data(int client);
 	void	free_all();
 	void	free_all_addrinfos();

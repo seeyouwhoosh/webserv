@@ -20,16 +20,6 @@ enum	StatusCodes
 	INTERNAL_SERVER_ERROR	= 500
 };
 
-std::map<int, const char *>	response = {
-	{OK, "OK"},
-	{BAD_REQUEST, "Bad Request"},
-	{FORBIDDEN, "Forbidden"},
-	{NOT_FOUND, "Not Found"},
-	{METHOD_NOT_ALLOWED, "Method Not Allowed"},
-	{UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type"},
-	{INTERNAL_SERVER_ERROR, "Internal Server Error"}
-};
-
 enum	RequestMethod
 {
 	BAD_METHOD = -1,
@@ -49,13 +39,16 @@ typedef	struct t_rq_startline
 
 typedef	struct t_rs_startline
 {
-	std::string	method;
+	std::string	version;
 	int			status_code;
 	std::string	reason_phrase;
 };
 
 typedef std::map<std::string, std::vector<std::string>> t_accept;
 typedef	std::map<std::string, std::string> stringmap;
+
+stringmap					mime_types;
+std::map<int, const char *>	responses;
 
 class HTTPmessage
 {
@@ -108,7 +101,7 @@ private:
 
 	std::ostream	&write(const char *buf, size_t n);
 	int				httpGET();
-	int				generateResponse(std::string &m);
+	int				generateResponse();
 
 /* 
 	http_post();
@@ -125,5 +118,3 @@ private:
 	void	setHeader(const std::string& name, const std::string& value);
 	void	setBody(const std::string& body); //content-length
 };
-
-

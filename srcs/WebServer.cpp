@@ -181,6 +181,15 @@ int	WebServer::epoll_add_fd(int fd)
 	return 0;
 }
 
+static void	init_new_client(t_client	&new_client)
+{
+	new_client.fd = clientsock;
+	new_client.last_activity = std::time(NULL);
+	new_client.keep_alive = 0;
+	new_client.max_requests = -1;
+	new_client.n_requests = 0;
+}
+
 int	WebServer::handle_new_connection(int listener)
 {
 	struct sockaddr_storage	clientaddr;
@@ -232,33 +241,51 @@ int	WebServer::handle_new_connection(int listener)
 			return error_msg(errno, "send", NULL);
 		}
 	}
+
 	t_client	new_client;
-	new_client.fd = clientsock;
-	new_client.last_activity = std::time(NULL);
-	new_client.n_request = 0;
+	init_new_client(new_client);
 
 	clients.push_back(new_client);
 	num_connections++;
 
 	return 0;
 }
+
+/* Return 1 if the server should keep the connection alive, 0 otherwise */
+int	WebServer::keep_alive_client(int fd)
+{
+	t_client	client;
+	for (size_t i = 0; i < clients.size(); i++)
+	{
+		if (fd == clients[i].fd)
+			client = clients[i].fd;
+	}
+
+	if (client.keep_alive < 1)
+		return 1
+	time_t		now = time(NULL);
+	if ((keep_alive > 0 && (now - client.last_activity > client.keep_alive)) || (client.max_requests > 0 && client.n_requests <= client.max_requests))
+		return 1;
+	return 0;
+}
+
 // HANDLE CLIENT REQUESTS
 int	WebServer::handle_client_data(int client)
 {
 	HTTPmessage			&clientBuffer = clientBuffers[client];
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
+	bool				close_connection = false;
 
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
 	if (read_size > 0)
 	{
 		Parser	parser;
-	
+
 		if (parser.parseRequest(clientBuffer) == PARSE_ERROR)
-		{
 			clientBuffer.setStatusCode(BAD_REQUEST);
-			clientBuffer.generateResponse();
-		}
+		
+		clientBuffer.generateResponse();
 		/***************** TO ERASE ************** */
 		clientBuffer.write(buff, read_size);
 		buff[BUFFER_SIZE] = '\0';
@@ -273,8 +300,10 @@ int	WebServer::handle_client_data(int client)
 				return error_msg(errno, "send", NULL);
 		}
 		/******************************************** */
+		if (!keep_alive_client(client))
+			close_connection = true;
 	}
-	else if (read_size == 0)
+	if (read_size == 0 || close_connection)
 	{
 		std::cout << "Client closed connection\n";
 		if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, client, 0) < 0)
