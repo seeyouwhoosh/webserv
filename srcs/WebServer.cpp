@@ -181,7 +181,7 @@ int	WebServer::epoll_add_fd(int fd)
 	return 0;
 }
 
-static void	init_new_client(t_client	&new_client)
+static void	init_new_client(t_client &new_client, int clientsock)
 {
 	new_client.fd = clientsock;
 	new_client.last_activity = std::time(NULL);
@@ -243,7 +243,7 @@ int	WebServer::handle_new_connection(int listener)
 	}
 
 	t_client	new_client;
-	init_new_client(new_client);
+	init_new_client(new_client, clientsock);
 
 	clients.push_back(new_client);
 	num_connections++;
@@ -251,20 +251,25 @@ int	WebServer::handle_new_connection(int listener)
 	return 0;
 }
 
+static std::vector<t_client>::iterator	find_client(int fd, std::vector<t_client> clients)
+{
+	for (std::vector<t_client>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		if (fd == it->fd)
+			return it;
+	}
+	return clients.end();
+}
+
 /* Return 1 if the server should keep the connection alive, 0 otherwise */
 int	WebServer::keep_alive_client(int fd)
 {
-	t_client	client;
-	for (size_t i = 0; i < clients.size(); i++)
-	{
-		if (fd == clients[i].fd)
-			client = clients[i].fd;
-	}
+	t_client	client = *find_client(fd, clients);
 
 	if (client.keep_alive < 1)
-		return 1
+		return 1;
 	time_t		now = time(NULL);
-	if ((keep_alive > 0 && (now - client.last_activity > client.keep_alive)) || (client.max_requests > 0 && client.n_requests <= client.max_requests))
+	if ((client.keep_alive > 0 && (now - client.last_activity > client.keep_alive)) || (client.max_requests > 0 && client.n_requests <= client.max_requests))
 		return 1;
 	return 0;
 }
@@ -312,7 +317,7 @@ int	WebServer::handle_client_data(int client)
 			return error_msg(errno, "epoll_ctl", NULL);
 		}
 		clientBuffers.erase(client);
-		clients.erase(std::find(clients.begin(), clients.end(), client));
+		clients.erase(find_client(client, clients));
 		close(client);
 		num_connections--;
 	}

@@ -22,7 +22,7 @@ typedef	struct t_client
 	int		keep_alive;
 	int		max_requests;
 	int		n_requests;
-};
+}	t_client;
 
 class WebServer
 {
@@ -59,7 +59,8 @@ public:
 
 int	listen_socket(struct addrinfo *addr, int listen_num);
 
-
-/* GENERAL UTILS */
-
 int	error_msg(int err_code, const char *func, const char *msg);
+
+int	start_epoll_instance(WebServer &webserv);
+
+

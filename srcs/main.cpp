@@ -45,7 +45,7 @@ int	main(int ac, char **av)
 	WebServer	webserv;
 	int			num_events;
 
-	/* ************************************************************* */
+	/* ************************** ERASE ************************** */
 	t_listen	listen;
 	listen.host = "0.0.0.0";
 	listen.port = "9999";
@@ -55,30 +55,20 @@ int	main(int ac, char **av)
 	server.listens.push_back(listen);
 	webserv.servers.push_back(server);
 
-	/* ************************************************************* */
+	/* ************************** ERASE *************************** */
 
 	if (parse_file(av[1]) < 0)
 		return 1;
-
 	if (webserv.prepare_listeners() < 0)
 	{
 		webserv.free_all();
 		return 1;
 	}
-
-	if ((webserv.epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
-	{
-		webserv.free_all();
-		return error_msg(errno, "epoll_create", NULL);
-	}
-	
-	std::cout << "\033[1m[webserv]\33[0m Epoll instance created succesfully" << "\n";
-	
-	if (webserv.epoll_add_listens() < 0)
+	if (start_epoll_instance(webserv) < 0)
 		return 1;
 
-	std::cout << "\033[1m[webserv]\33[0m Epoll added listeners to watch. Total connections: " << webserv.num_connections << "\n";
-
+	init_MIMEtypes();
+	init_responses();
 	while (g_signal)
 	{
 		num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events, MAX_CONNECTIONS, -1);

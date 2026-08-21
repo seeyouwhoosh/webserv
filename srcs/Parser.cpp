@@ -102,11 +102,10 @@ bool Parser::parseHeader(const std::string& line, HTTPmessage& request)
 
 	while (!value.empty() && value[0] == ' ')
 		value.erase(0, 1);
-	if (request.getHeaders().find(name) != request.getHeaders().end())
+	if (request.rq_headers.find(name) != request.rq_headers.end())
 		return false;
 
-	request.setHeader(name, value);
-
+	request.rq_headers[name] = value;
 	return true;
 }
 
@@ -119,9 +118,9 @@ bool Parser::parseContentLength(const HTTPmessage& request)
 {
 	std::map<std::string, std::string>::const_iterator it;
 
-	it = request.getHeaders().find("Content-Length");
+	it = request.rq_headers.find("Content-Length");
 
-	if (it == request.getHeaders().end())
+	if (it == request.rq_headers.end())
 	{
 		_contentLength = 0;
 		return true;
@@ -166,7 +165,7 @@ bool Parser::parseBody(HTTPmessage& request)
 	std::size_t remaining = _contentLength - _bodyReceived;
 	std::size_t toRead = std::min(remaining, _buffer.size());
 
-	request.setBody(request.getBody() + _buffer.substr(0, toRead));
+	request.rq_body += _buffer.substr(0, toRead);
 
 	_bodyReceived += toRead;
 
@@ -178,25 +177,13 @@ bool Parser::parseBody(HTTPmessage& request)
 	return true;
 }
 
-bool Parser::hasChunkedEncoding(const Request& request) const
-{
-	std::map<std::string, std::string>::const_iterator it;
-
-	it = request.getHeaders().find("Transfer-Encoding");
-
-	if (it == request.getHeaders().end())
-		return false;
-
-	return it->second == "chunked";
-}
-
 bool Parser::hasChunkedEncoding(const HTTPmessage& request) const
 {
 	std::map<std::string, std::string>::const_iterator it;
 
-	it = request.getHeaders().find("Transfer-Encoding");
+	it = request.rq_headers.find("Transfer-Encoding");
 
-	if (it == request.getHeaders().end())
+	if (it == request.rq_headers.end())
 		return false;
 
 	return it->second == "chunked";

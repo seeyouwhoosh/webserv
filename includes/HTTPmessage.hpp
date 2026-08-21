@@ -35,27 +35,26 @@ typedef	struct t_rq_startline
 	std::string	method;
 	std::string	path;
 	std::string	version;
-};
+}	t_rq_startline;
 
 typedef	struct t_rs_startline
 {
 	std::string	version;
 	int			status_code;
 	std::string	reason_phrase;
-};
+}	t_rs_startline;
 
-typedef std::map<std::string, std::vector<std::string>> t_accept;
-typedef	std::map<std::string, std::string> stringmap;
+typedef std::map<std::string, std::vector<std::string> > t_accept;
+typedef std::map<std::string, std::string> stringmap;
 
-stringmap					mime_types;
-std::map<int, const char *>	responses;
+extern stringmap					mime_types;
+extern std::map<int, const char *>	responses;
 
 class HTTPmessage
 {
-private:
-
+private:	
 	/* General variables */
-	ServerConfig				&serverconf;
+	ServerConfig				*serverconf;
 	std::stringstream			clientBuffer;
 	std::vector<std::string>	allowedMethods;
 	// stringmap	cache_control;
@@ -82,6 +81,7 @@ private:
 	public:
 	HTTPmessage();
 	HTTPmessage(const HTTPmessage &other);
+	HTTPmessage(ServerConfig &server);
 	HTTPmessage	&operator=(const HTTPmessage &other);
 	~HTTPmessage();
 
@@ -113,8 +113,12 @@ private:
 	const stringmap&	getHeaders() const;
 	const std::string&	getBody() const;
 
-	void	setMethod(const std::string& method);
+	void	setVersion(const std::string& method);
 	void	setStatusCode(const int code);
 	void	setHeader(const std::string& name, const std::string& value);
 	void	setBody(const std::string& body); //content-length
 };
+
+void	init_responses();
+
+void	init_MIMEtypes();

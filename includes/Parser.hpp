@@ -1,7 +1,6 @@
-#ifndef PARSER_HPP
-#define PARSER_HPP
-
+#pragma once
 #include <string>
+
 #include "HTTPmessage.hpp"
 
 enum ParseState
@@ -49,5 +48,3 @@ public:
 	
 	bool parseBody(HTTPmessage& request);
 };
-
-#endif
