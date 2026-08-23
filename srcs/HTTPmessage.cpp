@@ -194,10 +194,10 @@ int	HTTPmessage::generateResponse()
 			break;
 	/* 	case POST:
 			if (httpPOST() < 0)
-				break;
+				break; */
 		case DELETE:
 			if (httpDELETE() < 0)
-				break; */
+				break;
 		default:
 			break;
 		}

@@ -72,32 +72,30 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 
 	if (stat(file.c_str(), &st) < 0)
 		return NOT_FOUND;
-	else
+
+	if ((st.st_mode & S_IFMT) == S_IFREG)
 	{
-		if ((st.st_mode & S_IFMT) == S_IFREG)
+		if (access(file.c_str(), F_OK | R_OK) < 0)
+			return FORBIDDEN;
+		fs.open(file.c_str(), std::fstream::in);
+		if (fs.fail() == true)
+			return INTERNAL_SERVER_ERROR;
+		rs_content_length = st.st_size;
+	}
+	else if ((st.st_mode & S_IFMT) == S_IFDIR)
+	{
+		if (serverconf.autoindex == AUTOINDEX_OFF)
+			return NOT_FOUND;
+		for (size_t i = 0; i < serverconf.indexes.size(); i++)
 		{
-			if (access(file.c_str(), F_OK | R_OK) < 0)
-				return FORBIDDEN;
-			fs.open(file.c_str(), std::fstream::in);
+			std::string	tmp = file + "/" + serverconf.indexes[i];
+			if (access(tmp.c_str(), F_OK | R_OK) < 0)
+				continue;
+			fs.open(tmp.c_str(), std::fstream::in);
 			if (fs.fail() == true)
 				return INTERNAL_SERVER_ERROR;
-			rs_content_length = st.st_size;
-		}
-		else if ((st.st_mode & S_IFMT) == S_IFDIR)
-		{
-			if (serverconf.autoindex == AUTOINDEX_OFF)
-				return NOT_FOUND;
-			for (size_t i = 0; i < serverconf.indexes.size(); i++)
-			{
-				std::string	tmp = file + "/" + serverconf.indexes[i];
-				if (access(tmp.c_str(), F_OK | R_OK) < 0)
-					continue;
-				fs.open(tmp.c_str(), std::fstream::in);
-				if (fs.fail() == true)
-					return INTERNAL_SERVER_ERROR;
-				file = tmp;
-				break;
-			}
+			file = tmp;
+			break;
 		}
 	}
 	return OK;
@@ -158,5 +156,34 @@ int	HTTPmessage::httpGET()
 	rs_startline.status_code = OK;
 	rs_startline.reason_phrase = responses[OK];
 	rs_content_type = getMIMEtype(getFileExtension(file));
+	return 0;
+}
+
+int	HTTPmessage::httpDELETE()
+{
+	std::string		file = rq_startline.path;
+	LocationConfig	*locationconf = getPathfile(file);
+
+	struct stat	st;
+	if (stat(file.c_str(), &st) < 0)
+	{
+		rs_startline.status_code = NOT_FOUND;
+		rs_startline.reason_phrase = responses[NOT_FOUND];
+		return -1;
+	}
+	if ((st.st_mode & S_IFMT) == S_IFDIR)
+	{
+		rs_startline.status_code = NOT_IMPLEMENTED;
+		rs_startline.reason_phrase = responses[NOT_IMPLEMENTED];
+		return -1;
+	}
+
+	if (access(file.c_str(), F_OK | R_OK |X_OK) < 0 || std::remove(file.c_str()) != 0)
+	{
+		rs_startline.status_code = FORBIDDEN;
+		rs_startline.reason_phrase = responses[FORBIDDEN];
+		return -1;
+	}
+
 	return 0;
 }
