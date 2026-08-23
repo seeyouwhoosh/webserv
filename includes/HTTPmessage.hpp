@@ -81,7 +81,8 @@ private:
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
 
 	int				httpGET();
-	public:
+
+public:
 	HTTPmessage();
 	HTTPmessage(const HTTPmessage &other);
 	HTTPmessage(ServerConfig &server);
@@ -101,24 +102,17 @@ private:
 	bool		rq_chunked;
 	size_t		rq_content_length;
 	
-
-	std::ostream	&write(const char *buf, size_t n);
 	int				generateResponse();
 
-/* 
-	http_post();
-	http_delete();
-	http_head();
-*/
 	const std::string&	getMethod() const;
 	int					getStatusCode() const;
 	const stringmap&	getHeaders() const;
 	const std::string&	getBody() const;
-
 	void	setVersion(const std::string& method);
 	void	setStatusCode(const int code);
 	void	setHeader(const std::string& name, const std::string& value);
-	void	setBody(const std::string& body); //content-length
+	void	setBody(const std::string& body);
+	std::ostream	&write(const char *buf, size_t n);
 };
 
 void		init_responses();
