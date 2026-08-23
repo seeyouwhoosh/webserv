@@ -75,9 +75,10 @@ private:
 	std::string		rs_last_modified;
 
 	int				matchMethod(std::string &method);
-	LocationConfig	&getPathfile(std::string &file);
-	int				getErrorFile(int error);
+	LocationConfig	*getPathfile(std::string &file);
+	int				openErrorFile(int error, std::fstream &fs);
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
+	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
 
 	int				httpGET();
 	public:
