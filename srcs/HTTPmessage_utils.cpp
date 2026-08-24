@@ -82,6 +82,7 @@ void	init_MIMEtypes()
 void	init_responses()
 {
 	responses[OK]						= "OK";
+	responses[CREATED]					= "Created";
 	responses[BAD_REQUEST]				= "Bad Request";
 	responses[FORBIDDEN]				= "Forbidden";
 	responses[NOT_FOUND]				= "Not Found";

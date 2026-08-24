@@ -314,3 +314,36 @@ A layered model more consistent with Unix might be:
 A packet is born, the packet is wrapped (“encapsulated”) in a header (and rarely a footer) by the first protocol (say, the TFTP protocol), then the whole thing (TFTP header included) is encapsulated again by the next protocol (say, UDP), then again by the next (IP), then again by the final protocol on the hardware (physical) layer (say, Ethernet).
 
 When another computer receives the packet, the hardware strips the Ethernet header, the kernel strips the IP and UDP headers, the TFTP program strips the TFTP header, and it finally has the data.
+
+## Apuntes para el método GET
+
+```html
+    <form action="./submit_page" method="get"> <!-- Un environment para todos los inputs del usuario -->
+      <h2>Subscribe to our newsletter</h2>
+      <p>
+        <label for="name">Name (required):</label> <!-- Básicamente el nombre de la cosa que se pide, con el for, se identifica el nombre de la "variable" pedida (o en otras palabras, el id) -->
+        <input type="text" name="name" id="name" required /> <!-- Para exitosamente recibir el input asociado a la variable con el id; explícitamente. EL name al parecer es solo el nombre del elemento input-->
+      </p>
+      <p>
+        <label for="email">Email (required):</label>
+        <input type="email" name="email" id="email" required />
+      </p>
+      <p>
+        <button>Sign me up!</button>
+      </p>
+    </form>
+```
+
+### Forma implícita de recoger el input
+```html
+<label>
+  I like peas.
+  <input type="checkbox" name="peas" />
+</label>
+```
+
+Dentro del form vemos `action` y `method`, que básicamente, cuando se termina de hacer el request, el servidor enviará un `method action`. Concretamente:
+
+```
+/some/url/submit_page?name=Bob&email=bob%40bob.com
+```

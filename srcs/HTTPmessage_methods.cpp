@@ -40,8 +40,8 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &l
 		{
 			if (access(file.c_str(), F_OK | R_OK) < 0)
 				return FORBIDDEN;
-			fs.open(file.c_str(), std::fstream::in);
-			if (fs.fail() == true)
+			fs.open(file.c_str(), std::ios::in | std::ios::binary);
+			if (!fs.is_open())
 				return INTERNAL_SERVER_ERROR;
 			rs_content_length = st.st_size;
 		}
@@ -54,8 +54,8 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &l
 				std::string	tmp = file + "/" + locationconf.indexes[i];
 				if (access(tmp.c_str(), F_OK | R_OK) < 0)
 					continue;
-				fs.open(tmp.c_str(), std::fstream::in);
-				if (fs.fail() == true)
+				fs.open(tmp.c_str(), std::ios::in | std::ios::binary);
+				if (!fs.is_open())
 					return INTERNAL_SERVER_ERROR;
 				file = tmp;
 				break;
@@ -77,8 +77,8 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 	{
 		if (access(file.c_str(), F_OK | R_OK) < 0)
 			return FORBIDDEN;
-		fs.open(file.c_str(), std::fstream::in);
-		if (fs.fail() == true)
+		fs.open(file.c_str(), std::ios::in | std::ios::binary);
+		if (!fs.is_open())
 			return INTERNAL_SERVER_ERROR;
 		rs_content_length = st.st_size;
 	}
@@ -91,8 +91,8 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 			std::string	tmp = file + "/" + serverconf.indexes[i];
 			if (access(tmp.c_str(), F_OK | R_OK) < 0)
 				continue;
-			fs.open(tmp.c_str(), std::fstream::in);
-			if (fs.fail() == true)
+			fs.open(tmp.c_str(), std::ios::in | std::ios::binary);
+			if (!fs.is_open())
 				return INTERNAL_SERVER_ERROR;
 			file = tmp;
 			break;
@@ -147,41 +147,81 @@ int	HTTPmessage::httpGET()
 
 	rs_body.resize(rs_content_length);
 	fs.read(&rs_body[0], rs_content_length);
-	if (fs.fail() == true)
+	if (fs.fail())
 	{
 		rs_body.clear();
-		rs_startline.status_code = INTERNAL_SERVER_ERROR;
+		setStatusCode(INTERNAL_SERVER_ERROR);
 		return -1;
 	}
-	rs_startline.status_code = OK;
-	rs_startline.reason_phrase = responses[OK];
+	setStatusCode(OK);
 	rs_content_type = getMIMEtype(getFileExtension(file));
+	return 0;
+}
+
+int	HTTPmessage::httpPOST()
+{
+	std::string		file = rq_startline.path;
+	bool			create = false;
+
+	if (rq_body.size() != rq_content_length)
+	{
+		setStatusCode(BAD_REQUEST);
+		return -1;
+	}
+	
+	struct stat	st;
+
+	getPathfile(file);
+	if (stat(file.c_str(), &st) < 0)
+		create = true;
+	return 0;
+
+	std::fstream	fs;
+
+	fs.open(file.c_str(), std::ios::out | std::ios::binary);
+	if (!fs.is_open())
+	{
+		setStatusCode(FORBIDDEN);
+		return -1;
+	}
+	file.write(rs_body.c_str(), content_length);
+
+	if (file.fail())
+	{
+		file.close();
+		setStatusCode(INTERNAL_SERVER_ERROR);
+		return -1;
+	}
+	file.close();
+
+	if (create)
+		setStatusCode(CREATED);
+	else
+		setStatusCode(OK);
+
 	return 0;
 }
 
 int	HTTPmessage::httpDELETE()
 {
 	std::string		file = rq_startline.path;
-	LocationConfig	*locationconf = getPathfile(file);
+	getPathfile(file);
 
 	struct stat	st;
 	if (stat(file.c_str(), &st) < 0)
 	{
-		rs_startline.status_code = NOT_FOUND;
-		rs_startline.reason_phrase = responses[NOT_FOUND];
+		setStatusCode(NOT_FOUND);
 		return -1;
 	}
 	if ((st.st_mode & S_IFMT) == S_IFDIR)
 	{
-		rs_startline.status_code = NOT_IMPLEMENTED;
-		rs_startline.reason_phrase = responses[NOT_IMPLEMENTED];
+		setStatusCode(NOT_IMPLEMENTED);
 		return -1;
 	}
 
 	if (access(file.c_str(), F_OK | R_OK |X_OK) < 0 || std::remove(file.c_str()) != 0)
 	{
-		rs_startline.status_code = FORBIDDEN;
-		rs_startline.reason_phrase = responses[FORBIDDEN];
+		setStatusCode(FORBIDDEN);
 		return -1;
 	}
 

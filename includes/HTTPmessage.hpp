@@ -14,6 +14,7 @@
 enum	StatusCodes
 {
 	OK						= 200,
+	CREATED					= 201,
 	BAD_REQUEST				= 400,
 	FORBIDDEN				= 403,
 	NOT_FOUND				= 404,
@@ -104,17 +105,17 @@ public:
 	bool		rq_chunked;
 	size_t		rq_content_length;
 	
-	int				generateResponse();
+	int					generateResponse();
 
 	const std::string&	getMethod() const;
 	int					getStatusCode() const;
 	const stringmap&	getHeaders() const;
 	const std::string&	getBody() const;
-	void	setVersion(const std::string& method);
-	void	setStatusCode(const int code);
-	void	setHeader(const std::string& name, const std::string& value);
-	void	setBody(const std::string& body);
-	std::ostream	&write(const char *buf, size_t n);
+	void				setVersion(const std::string& method);
+	void				setStatusCode(const int code);
+	void				setHeader(const std::string& name, const std::string& value);
+	void				setBody(const std::string& body);
+	std::ostream		&write(const char *buf, size_t n);
 };
 
 void		init_responses();

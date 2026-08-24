@@ -143,7 +143,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 			return -1;
 		try
 		{
-			fs.open(file.c_str(), std::fstream::in);
+			fs.open(file.c_str(), std::ios::in | std::ios::binary);
 		}
 		catch(const std::exception& e)
 		{
@@ -160,6 +160,8 @@ static long	generateErrorFile(int error, std::string phrase, std::fstream &fs)
 	std::stringstream	error_str;
 	error_str << error;
 	std::string			file;
+	long				count;
+
 	file = ERRPAGE_DIR + error_str.str() + ".html";
 	try
 	{
@@ -175,7 +177,9 @@ static long	generateErrorFile(int error, std::string phrase, std::fstream &fs)
 	fs << error_str << " " << phrase; 
 	fs << "</h1>\n  </body>\n</html>";
 
-	return fs.gcount();
+	count = fs.gcount();
+	fs.close();
+	return count;
 }
 
 int	HTTPmessage::generateResponse()
@@ -210,7 +214,7 @@ int	HTTPmessage::generateResponse()
 			long	len = generateErrorFile(error, rs_startline.reason_phrase, err_file);
 			if (len < 0)
 			{
-				rs_startline.status_code = INTERNAL_SERVER_ERROR;
+				setStatusCode(INTERNAL_SERVER_ERROR);
 				return -1;
 			}
 			rs_body.resize(len);
@@ -218,7 +222,7 @@ int	HTTPmessage::generateResponse()
 			if (err_file.fail() == true)
 			{
 				rs_body.clear();
-				rs_startline.status_code = INTERNAL_SERVER_ERROR;
+				setStatusCode(INTERNAL_SERVER_ERROR);
 				return -1;
 			}
 			rs_content_length = len;
