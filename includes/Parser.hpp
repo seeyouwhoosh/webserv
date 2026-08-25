@@ -48,3 +48,5 @@ public:
 	
 	bool parseBody(HTTPmessage& request);
 };
+
+std::vector<std::pair<std::string, std::string> >	parseQuery(std::string query);

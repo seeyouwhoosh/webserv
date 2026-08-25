@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <fstream>
 #include <sstream>
 #include <map>
 #include <vector>
@@ -84,6 +85,8 @@ private:
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
 
 	int				httpGET();
+	int				httpPOST();
+	int				httpDELETE();
 
 public:
 	HTTPmessage();

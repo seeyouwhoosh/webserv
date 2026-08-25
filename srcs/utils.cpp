@@ -45,3 +45,8 @@ int	start_epoll_instance(WebServer &webserv)
 	std::cout << "\033[1m[webserv]\33[0m Epoll added listeners to watch. Total connections: " << webserv.num_connections << "\n";
 	return 0;
 }
+
+int	hexToAscii(char s[2])
+{
+	;
+}

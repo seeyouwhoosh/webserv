@@ -21,7 +21,8 @@ INCLUDES	= -I$(INCLUDE_DIR)
 # Sources
 SRC_DIR		= srcs
 SOURCES		= main.cpp \
-				WebServer.cpp utils.cpp Config.cpp HTTPmessage.cpp Parser.cpp 
+				HTTPmessage.cpp HTTPmessage_methods.cpp HTTPmessage_utils.cpp \
+				WebServer.cpp utils.cpp Config.cpp Parser.cpp 
 
 # Objects
 OBJ_DIR		= objs

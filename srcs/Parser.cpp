@@ -241,3 +241,25 @@ ParseResult Parser::parseRequest(HTTPmessage& request)
 
 	return PARSE_INCOMPLETE;
 }
+
+std::vector<std::pair<std::string, std::string> >	parseQuery(std::string query)
+{
+	size_t		keyval_pos;
+	size_t		last_pos = 0;
+	std::string	key;
+	std::string	value;
+	int			subst_val;
+
+	while ((keyval_pos = query.find('&')) != std::string::npos)
+	{
+		size_t	equal = query.find('=', last_pos);
+		key = query.substr(last_pos, equal);
+		value = query.substr(equal, keyval_pos);
+
+		while ((subst_val = value.find('%')) != std::string::npos)
+		{
+			int	character = std::hex
+			value.replace()
+		}
+	}
+}
