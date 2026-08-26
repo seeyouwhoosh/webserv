@@ -174,7 +174,6 @@ int	HTTPmessage::httpPOST()
 	getPathfile(file);
 	if (stat(file.c_str(), &st) < 0)
 		create = true;
-	return 0;
 
 	std::fstream	fs;
 
