@@ -172,9 +172,9 @@ static long	generateErrorFile(int error, std::string phrase, std::fstream &fs)
 		return -1;
 	}
 	fs << "<!DOCTYPE html>\n<html>\n  <head>\n    <title>";
-	fs << error_str << " " << phrase;
+	fs << error_str.str() << " " << phrase;
 	fs << "\n/title>\n  </head>\n  <body>\n    <h1>";
-	fs << error_str << " " << phrase; 
+	fs << error_str.str() << " " << phrase; 
 	fs << "</h1>\n  </body>\n</html>";
 
 	count = fs.gcount();
@@ -196,9 +196,9 @@ int	HTTPmessage::generateResponse()
 			if (httpGET() < 0)
 				error = rs_startline.status_code;
 			break;
-	/* 	case POST:
+		case POST:
 			if (httpPOST() < 0)
-				break; */
+				break;
 		case DELETE:
 			if (httpDELETE() < 0)
 				break;

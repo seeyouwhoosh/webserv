@@ -131,9 +131,9 @@ LocationConfig	*HTTPmessage::getPathfile(std::string &file)
 int	HTTPmessage::httpGET()
 {
 	std::string		file = rq_startline.path;
-	std::fstream	fs;
 	LocationConfig	*locationconf = getPathfile(file);
-
+	
+	std::fstream	fs;
 	if (!locationconf)
 	{
 		if ((rs_startline.status_code = openFile(file, fs, *serverconf)) != OK)
@@ -183,15 +183,15 @@ int	HTTPmessage::httpPOST()
 		setStatusCode(FORBIDDEN);
 		return -1;
 	}
-	file.write(rs_body.c_str(), content_length);
+	fs.write(rs_body.c_str(), rq_content_length);
 
-	if (file.fail())
+	if (fs.fail())
 	{
-		file.close();
+		fs.close();
 		setStatusCode(INTERNAL_SERVER_ERROR);
 		return -1;
 	}
-	file.close();
+	fs.close();
 
 	if (create)
 		setStatusCode(CREATED);

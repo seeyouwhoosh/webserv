@@ -37,6 +37,7 @@ void	init_MIMEtypes()
 	mime_types["pdf"]   = "application/pdf";
 	mime_types["rtf"]   = "application/rtf";
 	mime_types["zip"]   = "application/zip";
+	mime_types["cgi"]   = "application/cgi";
 
 	mime_types["aac"]   = "audio/aac";
 	mime_types["midi"]  = "audio/midi";
@@ -89,7 +90,7 @@ void	init_responses()
 	responses[METHOD_NOT_ALLOWED]		= "Method Not Allowed";
 	responses[UNSUPPORTED_MEDIA_TYPE]	= "Unsupported Media Type";
 	responses[INTERNAL_SERVER_ERROR]	= "Internal Server Error";
-	responses[NOT_IMPLEMENTED]			= "Not Implemented"
+	responses[NOT_IMPLEMENTED]			= "Not Implemented";
 }
 
 int	HTTPmessage::matchMethod(std::string &method)
