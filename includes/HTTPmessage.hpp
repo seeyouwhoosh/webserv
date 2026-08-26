@@ -39,6 +39,7 @@ typedef	struct t_rq_startline
 {
 	std::string	method;
 	std::string	path;
+	std::string	query;
 	std::string	version;
 }	t_rq_startline;
 
@@ -62,6 +63,8 @@ private:
 	ServerConfig				*serverconf;
 	std::stringstream			clientBuffer;
 	std::vector<std::string>	allowedMethods;
+	std::vector<std::string>	cgi_env;
+	std::string					full_path;
 	// stringmap	cache_control;
 	// stringmap	cookies;
 	// std::vecto<std::string>	clear_site_data;
@@ -83,6 +86,7 @@ private:
 	int				openErrorFile(int error, std::fstream &fs);
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
+	int				fillCGIenv();
 
 	int				httpGET();
 	int				httpPOST();
@@ -94,6 +98,8 @@ public:
 	HTTPmessage(ServerConfig &server);
 	HTTPmessage	&operator=(const HTTPmessage &other);
 	~HTTPmessage();
+
+	std::string	server_port;
 
 	/* Request message */
 	t_rq_startline	rq_startline;
@@ -107,6 +113,7 @@ public:
 	std::string	rq_content_type;
 	bool		rq_chunked;
 	size_t		rq_content_length;
+	std::string	rq_user_agent;
 	
 	int					generateResponse();
 
@@ -119,6 +126,7 @@ public:
 	void				setHeader(const std::string& name, const std::string& value);
 	void				setBody(const std::string& body);
 	std::ostream		&write(const char *buf, size_t n);
+	
 };
 
 void		init_responses();

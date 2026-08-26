@@ -34,7 +34,7 @@ BSRC_DIR	= srcs
 BSOURCES	= 
 
 # Bonus objects
-BOBJ_DIR	= objs
+BOBJ_DIR	= objs_bonus
 BOBJECTS	= $(addprefix $(BOBJ_DIR)/, $(BSOURCES:.cpp=.o))
 
 all: $(NAME)

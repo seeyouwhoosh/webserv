@@ -17,11 +17,12 @@
 
 typedef	struct t_client
 {
-	int		fd;
-	time_t	last_activity;
-	int		keep_alive;
-	int		max_requests;
-	int		n_requests;
+	int			fd;
+	time_t		last_activity;
+	int			keep_alive;
+	int			max_requests;
+	int			n_requests;
+	std::string	server_port;
 }	t_client;
 
 class WebServer
@@ -55,6 +56,8 @@ public:
 	void	free_all();
 	void	free_all_addrinfos();
 	int		close_connection(int fd);
+	
+	int		getPort(int listener);
 };
 
 int	listen_socket(struct addrinfo *addr, int listen_num);

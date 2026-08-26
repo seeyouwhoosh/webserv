@@ -109,8 +109,9 @@ LocationConfig	*HTTPmessage::getPathfile(std::string &file)
 
 	if (query_pos != std::string::npos)
 	{
-		query = file.substr(query_pos + 1);
+		rq_startline.query = file.substr(query_pos + 1);
 		file = file.substr(0, query_pos);
+		rq_startline.path = file;
 	}
 
 	int	location_pos = get_location(serverconf->locations, file);
@@ -128,20 +129,20 @@ LocationConfig	*HTTPmessage::getPathfile(std::string &file)
 }
 
 /* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
-int	HTTPmessage::httpGET()
+int	HTTPmessage::httpGET() //implementar cgi
 {
-	std::string		file = rq_startline.path;
-	LocationConfig	*locationconf = getPathfile(file);
+	full_path = rq_startline.path;
+	LocationConfig	*locationconf = getPathfile(full_path);
 	
 	std::fstream	fs;
 	if (!locationconf)
 	{
-		if ((rs_startline.status_code = openFile(file, fs, *serverconf)) != OK)
+		if ((rs_startline.status_code = openFile(full_path, fs, *serverconf)) != OK)
 			return -1;
 	}
 	else
 	{
-		if ((rs_startline.status_code = openFile(file, fs, *locationconf)) != OK)
+		if ((rs_startline.status_code = openFile(full_path, fs, *locationconf)) != OK)
 			return -1;
 	}
 
@@ -158,9 +159,9 @@ int	HTTPmessage::httpGET()
 	return 0;
 }
 
-int	HTTPmessage::httpPOST()
+int	HTTPmessage::httpPOST() // implementar cgi
 {
-	std::string		file = rq_startline.path;
+	full_path = rq_startline.path;
 	bool			create = false;
 
 	if (rq_body.size() != rq_content_length)
@@ -171,13 +172,13 @@ int	HTTPmessage::httpPOST()
 	
 	struct stat	st;
 
-	getPathfile(file);
-	if (stat(file.c_str(), &st) < 0)
+	getPathfile(full_path);
+	if (stat(full_path.c_str(), &st) < 0)
 		create = true;
 
 	std::fstream	fs;
 
-	fs.open(file.c_str(), std::ios::out | std::ios::binary);
+	fs.open(full_path.c_str(), std::ios::out | std::ios::binary);
 	if (!fs.is_open())
 	{
 		setStatusCode(FORBIDDEN);
@@ -203,11 +204,11 @@ int	HTTPmessage::httpPOST()
 
 int	HTTPmessage::httpDELETE()
 {
-	std::string		file = rq_startline.path;
-	getPathfile(file);
+	full_path = rq_startline.path;
+	getPathfile(full_path);
 
 	struct stat	st;
-	if (stat(file.c_str(), &st) < 0)
+	if (stat(full_path.c_str(), &st) < 0)
 	{
 		setStatusCode(NOT_FOUND);
 		return -1;
@@ -218,7 +219,7 @@ int	HTTPmessage::httpDELETE()
 		return -1;
 	}
 
-	if (access(file.c_str(), F_OK | R_OK |X_OK) < 0 || std::remove(file.c_str()) != 0)
+	if (access(full_path.c_str(), F_OK | R_OK |X_OK) < 0 || std::remove(full_path.c_str()) != 0)
 	{
 		setStatusCode(FORBIDDEN);
 		return -1;

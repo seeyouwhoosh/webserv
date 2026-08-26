@@ -18,3 +18,7 @@
 * https://httpwg.org/specs/rfc9112.html
 * https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
 * https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods 
+
+### CGI
+* https://www6.uniovi.es/~antonio/ncsa_httpd/cgi/env.html
+* http://www.mnuwer.dbasedeveloper.co.uk/dlearn/web/session03.htm

@@ -198,10 +198,12 @@ int	HTTPmessage::generateResponse()
 			break;
 		case POST:
 			if (httpPOST() < 0)
-				break;
+				error = rs_startline.status_code;
+			break;
 		case DELETE:
 			if (httpDELETE() < 0)
-				break;
+				error = rs_startline.status_code;
+			break;
 		default:
 			break;
 		}

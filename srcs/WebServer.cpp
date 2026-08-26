@@ -181,13 +181,24 @@ int	WebServer::epoll_add_fd(int fd)
 	return 0;
 }
 
-static void	init_new_client(t_client &new_client, int clientsock)
+static void	init_new_client(t_client &new_client, int clientsock, std::string server_port)
 {
 	new_client.fd = clientsock;
 	new_client.last_activity = std::time(NULL);
 	new_client.keep_alive = 0;
 	new_client.max_requests = -1;
 	new_client.n_requests = 0;
+	new_client.server_port = server_port;
+}
+
+std::string	WebServer::getPort(int listener)
+{
+	for (size_t i = 0; i < listeners.size(); i++)
+	{
+		if (listener == listeners[i].fd)
+			return listeners[i].port;
+	}
+	return "";
 }
 
 int	WebServer::handle_new_connection(int listener)
@@ -243,7 +254,7 @@ int	WebServer::handle_new_connection(int listener)
 	}
 
 	t_client	new_client;
-	init_new_client(new_client, clientsock);
+	init_new_client(new_client, clientsock, getPort(listener));
 
 	clients.push_back(new_client);
 	num_connections++;
@@ -266,8 +277,10 @@ int	WebServer::keep_alive_client(int fd)
 {
 	t_client	client = *find_client(fd, clients);
 
-	if (client.keep_alive < 1)
+	if (client.keep_alive < 0)
 		return 1;
+	if (!client.keep_alive)
+		return 0;
 	time_t		now = time(NULL);
 	if ((client.keep_alive > 0 && (now - client.last_activity > client.keep_alive)) || (client.max_requests > 0 && client.n_requests <= client.max_requests))
 		return 1;
@@ -290,6 +303,7 @@ int	WebServer::handle_client_data(int client)
 		if (parser.parseRequest(clientBuffer) == PARSE_ERROR)
 			clientBuffer.setStatusCode(BAD_REQUEST);
 		
+		clientBuffer.server_port = find_client(client, clients)->server_port;
 		clientBuffer.generateResponse();
 		/***************** TO ERASE ************** */
 		clientBuffer.write(buff, read_size);
