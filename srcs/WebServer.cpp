@@ -350,8 +350,8 @@ int	WebServer::handle_client_data(int client)
 			free_all();
 			return error_msg(errno, "epoll_ctl", NULL);
 		}
-		clientBuffers.erase(client);
-		clients.erase(find_client(client, clients));
+		clientBuffers.erase(client); // falla aquí
+		clients.erase(find_client(client, clients)); //o aquí
 		close(client);
 		num_connections--;
 	}
