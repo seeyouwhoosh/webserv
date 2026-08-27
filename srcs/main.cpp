@@ -51,7 +51,17 @@ int	main(int ac, char **av)
 	listen.port = "9999";
 
 	ServerConfig server;
-
+	LocationConfig	location;
+	
+	location.name = "/test";
+	location.root = "/test";
+	location.autoindex = AUTOINDEX_ON;
+	location.error_pages[NOT_FOUND] = "404.html";
+	
+	server.autoindex = AUTOINDEX_OFF;
+	server.root = "/";
+	server.server_name = "prueba.com";
+	server.locations.push_back(location);
 	server.listens.push_back(listen);
 	webserv.servers.push_back(server);
 

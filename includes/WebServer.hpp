@@ -1,13 +1,20 @@
 #pragma once
+#include <netdb.h>
+#include <sys/epoll.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#include <cstring>
+#include <cerrno>
+#include <ctime>
+
 #include <vector>
 #include <sstream>
 #include <iostream>
-#include <netdb.h>
 #include <string>
-#include <cstring>
-#include <sys/epoll.h>
-#include <ctime>
-#include <arpa/inet.h>
+#include <algorithm>
+#include <sstream>
 
 #include "Config.hpp"
 #include "HTTPmessage.hpp"
@@ -22,8 +29,9 @@ typedef	struct t_client
 	int			keep_alive;
 	int			max_requests;
 	int			n_requests;
-	std::string	server_port;
 }	t_client;
+
+class HTTPmessage;
 
 class WebServer
 {
@@ -45,19 +53,20 @@ public:
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
 
-	int		prepare_listeners();
-	int		epoll_add_listens();
-	int		process_connections(int num_events);
-	bool	is_listener(int fd);
-	int		epoll_add_fd(int fd);
-	int		handle_new_connection(int listener);
-	int		keep_alive_client(int fd);
-	int		handle_client_data(int client);
-	void	free_all();
-	void	free_all_addrinfos();
-	int		close_connection(int fd);
+	int			prepare_listeners();
+	int			epoll_add_listens();
+	int			process_connections(int num_events);
+	bool		is_listener(int fd);
+	int			epoll_add_fd(int fd);
+	int			handle_new_connection(int listener);
+	void		create_new_client(int clientsock, int listener);
+	int			keep_alive_client(int fd);
+	int			handle_client_data(int client);
+	void		free_all();
+	void		free_all_addrinfos();
+	int			close_connection(int fd);
 	
-	int		getPort(int listener);
+	std::string	getPort(int listener);
 };
 
 int	listen_socket(struct addrinfo *addr, int listen_num);

@@ -112,7 +112,7 @@ int	HTTPmessage::matchMethod(std::string &method)
 	return BAD_METHOD;
 }
 
-int	HTTPmessage::fillCGIenv()
+void	HTTPmessage::fillCGIenv()
 {
 	/* ALL REQUESTS */
 	cgi_env.push_back(std::string("SERVER_SOFTWARE=") + "Custom/1.0");
@@ -126,8 +126,8 @@ int	HTTPmessage::fillCGIenv()
 
 	cgi_env.push_back("CONTENT_LENGTH=" + rq_content_length);
 	cgi_env.push_back("CONTENT_TYPE=" + rq_content_type);
-	cgi_env.push_back("PATH_INFO=" + parseURL());
-	cgi_env.push_back("PATH_TRANSLATED=" + full_path);
+	cgi_env.push_back("PATH_INFO=");
+	cgi_env.push_back("PATH_TRANSLATED=");
 
 	cgi_env.push_back("AUTH_TYPE=");
 	cgi_env.push_back("REMOTE_ADDR=");

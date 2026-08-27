@@ -72,6 +72,11 @@ const std::string& HTTPmessage::getBody() const
 	return rs_body;
 }
 
+void	HTTPmessage::setServerConf(ServerConfig& serverconf)
+{
+	this->serverconf = &serverconf;
+}
+
 std::ostream	&HTTPmessage::write(const char *buf, size_t n)
 {
 	return clientBuffer.write(buf, n);
@@ -256,5 +261,13 @@ int	HTTPmessage::generateResponse()
 				response_buff << "\n";
 		}
 	}
+
+	return 0;
+}
+
+int	HTTPmessage::sendResponse(int client)
+{
+	if (send(client, responseStream.str().c_str(), responseStream.str().length(), 0) < 0)
+		return error_msg(errno, "send", NULL);
 	return 0;
 }

@@ -241,7 +241,7 @@ ParseResult Parser::parseRequest(HTTPmessage& request)
 
 	return PARSE_INCOMPLETE;
 }
-
+/* 
 std::vector<std::pair<std::string, std::string> >	parseQuery(std::string query)
 {
 	size_t		keyval_pos;
@@ -262,4 +262,4 @@ std::vector<std::pair<std::string, std::string> >	parseQuery(std::string query)
 			value.replace()
 		}
 	}
-}
+} */

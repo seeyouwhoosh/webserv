@@ -1,9 +1,4 @@
 #include "WebServer.hpp"
-#include <unistd.h>
-#include <fcntl.h>
-#include <algorithm>
-#include <sstream>
-#include <cerrno>
 
 #define BUFFER_SIZE 1024
 
@@ -131,7 +126,7 @@ int	WebServer::prepare_listeners()
 				free_all();
 				return servers[i].listens[j].sockfd;
 			}
-			std::cout << "\033[1m[webserv]\33[0m Listening on " << servers[i].listens[j].host << ":" << servers[i].listens[j].port << "\n";
+			std::cout << "\033[1m[webserv]\33[0m " << servers[i].server_name << " listening on " << servers[i].listens[j].host << ":" << servers[i].listens[j].port << "\n";
 			listeners.push_back(servers[i].listens[j].sockfd);
 		}
 	}
@@ -181,22 +176,43 @@ int	WebServer::epoll_add_fd(int fd)
 	return 0;
 }
 
-static void	init_new_client(t_client &new_client, int clientsock, std::string server_port)
+void	WebServer::create_new_client(int clientsock, int listener)
 {
+	t_client	new_client;
+	
 	new_client.fd = clientsock;
 	new_client.last_activity = std::time(NULL);
 	new_client.keep_alive = 0;
 	new_client.max_requests = -1;
 	new_client.n_requests = 0;
-	new_client.server_port = server_port;
+	
+	HTTPmessage	client_message;
+	for (size_t i = 0; i < servers.size() ; i++)
+	{
+		for (size_t j = 0; j < servers[i].listens.size(); j++)
+		{
+			if (listener == servers[i].listens[j].sockfd)
+			{
+				HTTPmessage client_message(servers[i]);
+				client_message.server_port = servers[i].listens[j].port;
+				this->clientBuffers.insert(std::pair<int, HTTPmessage>(clientsock, client_message));
+				clients.push_back(new_client);
+				return;
+			}
+		}
+	}
+	return;
 }
 
 std::string	WebServer::getPort(int listener)
 {
-	for (size_t i = 0; i < listeners.size(); i++)
+	for (size_t i = 0; i < servers.size() ; i++)
 	{
-		if (listener == listeners[i].fd)
-			return listeners[i].port;
+		for (size_t j = 0; j < servers[i].listens.size(); j++)
+		{
+			if (listener == servers[i].listens[j].sockfd)
+				return servers[i].listens[j].port;
+		}
 	}
 	return "";
 }
@@ -234,7 +250,7 @@ int	WebServer::handle_new_connection(int listener)
 		port = ntohs(addr6->sin6_port);
 	}
 	
-	std::cout << "\033[1m[webserv]\33[0m: new incoming connection from " 
+	std::cout << "\033[1m[webserv]\33[0m New incoming connection from " 
 				<< str << ":" << port << std::endl;
 	/******************** TO ERASE ******************* */
 
@@ -252,11 +268,8 @@ int	WebServer::handle_new_connection(int listener)
 			return error_msg(errno, "send", NULL);
 		}
 	}
+	create_new_client(clientsock, listener);
 
-	t_client	new_client;
-	init_new_client(new_client, clientsock, getPort(listener));
-
-	clients.push_back(new_client);
 	num_connections++;
 
 	return 0;
@@ -288,6 +301,7 @@ int	WebServer::keep_alive_client(int fd)
 }
 
 // HANDLE CLIENT REQUESTS
+
 int	WebServer::handle_client_data(int client)
 {
 	HTTPmessage			&clientBuffer = clientBuffers[client];
@@ -295,37 +309,43 @@ int	WebServer::handle_client_data(int client)
 	std::stringstream	ss;
 	bool				close_connection = false;
 
+	if (!keep_alive_client(client))
+		close_connection = true;
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
 	if (read_size > 0)
 	{
-		Parser	parser;
-
-		if (parser.parseRequest(clientBuffer) == PARSE_ERROR)
-			clientBuffer.setStatusCode(BAD_REQUEST);
-		
-		clientBuffer.server_port = find_client(client, clients)->server_port;
-		clientBuffer.generateResponse();
-		/***************** TO ERASE ************** */
-		clientBuffer.write(buff, read_size);
 		buff[BUFFER_SIZE] = '\0';
-		ss << "Client fd " << client << ": " << buff;
-		std::cout << ss.str() << std::flush;
+		
+/* 		Parser	parser;
+		int		parse_status;
 
-		for (size_t i = 0; i < clients.size(); i++)
+		if ((parse_status = parser.parseRequest(clientBuffer)) == PARSE_ERROR)
+			clientBuffer.setStatusCode(BAD_REQUEST);
+		else if (parse_status == PARSE_INCOMPLETE)
+			return 0;
+		else if (parse_status == PARSE_COMPLETE)
 		{
-			if (clients[i].fd == client)
-				continue;
-			if (send(clients[i].fd, ss.str().c_str(), ss.str().length(), 0) < 0)
-				return error_msg(errno, "send", NULL);
-		}
-		/******************************************** */
-		if (!keep_alive_client(client))
-			close_connection = true;
+			clientBuffer.generateResponse();
+			clientBuffer.sendResponse(client);
+		} */
+		
+
+
+	/* ************************** ERASE ************************** */
+	clientBuffer.rq_startline.method = "GET";
+	clientBuffer.rq_startline.path = "/";
+	clientBuffer.rq_startline.version = "HTTP/1.1";
+	clientBuffer.setStatusCode(OK);
+	/* ************************** ERASE *************************** */
+
+		clientBuffer.generateResponse();
+		clientBuffer.sendResponse(client);
+
 	}
-	if (read_size == 0 || close_connection)
+	if (!read_size || close_connection)
 	{
 		std::cout << "Client closed connection\n";
-		if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, client, 0) < 0)
+		if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, client, NULL) < 0)
 		{
 			free_all();
 			return error_msg(errno, "epoll_ctl", NULL);

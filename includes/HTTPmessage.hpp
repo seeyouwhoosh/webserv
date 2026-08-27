@@ -8,8 +8,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <cstdio>
+#include <netdb.h>
 
 #include "Config.hpp"
+#include "WebServer.hpp"
 #define ERRPAGE_DIR	"error_pages"
 
 enum	StatusCodes
@@ -65,6 +67,7 @@ private:
 	std::vector<std::string>	allowedMethods;
 	std::vector<std::string>	cgi_env;
 	std::string					full_path;
+	std::stringstream			responseStream;
 	// stringmap	cache_control;
 	// stringmap	cookies;
 	// std::vecto<std::string>	clear_site_data;
@@ -86,7 +89,7 @@ private:
 	int				openErrorFile(int error, std::fstream &fs);
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
-	int				fillCGIenv();
+	void			fillCGIenv();
 
 	int				httpGET();
 	int				httpPOST();
@@ -116,6 +119,7 @@ public:
 	std::string	rq_user_agent;
 	
 	int					generateResponse();
+	int				sendResponse(int client);
 
 	const std::string&	getMethod() const;
 	int					getStatusCode() const;
@@ -125,6 +129,7 @@ public:
 	void				setStatusCode(const int code);
 	void				setHeader(const std::string& name, const std::string& value);
 	void				setBody(const std::string& body);
+	void				setServerConf(ServerConfig& serverconf);
 	std::ostream		&write(const char *buf, size_t n);
 	
 };

@@ -155,7 +155,7 @@ int	HTTPmessage::httpGET() //implementar cgi
 		return -1;
 	}
 	setStatusCode(OK);
-	rs_content_type = getMIMEtype(getFileExtension(file));
+	rs_content_type = getMIMEtype(getFileExtension(full_path));
 	return 0;
 }
 

@@ -20,6 +20,8 @@ enum ParseResult
 	PARSE_ERROR
 };
 
+class HTTPmessage;
+
 class Parser
 {
 public:

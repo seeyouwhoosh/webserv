@@ -51,7 +51,7 @@ int	hexToAscii(std::string s)
 	int result = 0;
 	int base = 1;
 
-	for (std::string::const_reverse_iterator it = s.crbegin(); it != s.crend(); ++it)
+	for (std::string::reverse_iterator it = s.rbegin(); it != s.rend(); ++it)
 	{
 		char c = std::toupper(static_cast<unsigned char>(*it));
 		int val = 0;
@@ -68,7 +68,7 @@ int	hexToAscii(std::string s)
 	return result;
 }
 
-static int	valid_ip(int af, const char *src)
+/* static int	valid_ip(int af, const char *src)
 {
 	size_t	char_count = 0;
 
@@ -113,13 +113,13 @@ std::string	parseIPv6(const char *src)
 		int to_add = 8 - (dotdot - 1);
 		std::string blank = ":";
 		for (int i = 0; i < to_add; ++i)
-			blank += "0:";
-		
+			blank += "0:";	
 		ip.replace(pos, 2, blank);
+	}
 	return ip;
 }
 
-/* convert IPv4 and IPv6 addresses from text to binary form */
+//convert IPv4 and IPv6 addresses from text to binary form
 int inet_pton(int af, const char *src, void *dst)
 {
 	if (valid_ip(af, src))
@@ -159,7 +159,7 @@ int inet_pton(int af, const char *src, void *dst)
 		return -1;
 }
 
-/* convert IPv4 and IPv6 addresses from binary to text form */
+// convert IPv4 and IPv6 addresses from binary to text form
 const char	*inet_ntop(int af, const void *src, char dst[size], socklen_t size)
 {
 	std::stringstream ss;
@@ -195,3 +195,4 @@ const char	*inet_ntop(int af, const void *src, char dst[size], socklen_t size)
 	std::strcpy(dst, s);
 	return dst;
 }
+*/
