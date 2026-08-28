@@ -1,7 +1,13 @@
 # Apuntes de webserv
 
 ## Notas
-* Gestionar que el archivo no tenga bytes ilimitados, like el archivo este de /dev/urandom
+- [ ] Gestionar las páginas de error (buscar y crear páginas de error)
+- [ ] Crear funciones para generar fechas
+- [ ] cambiar `std::vector<t_client>` por `std::map<int, t_client>` porque lo que está dando problemas al parecer es la liberación de eso o algo así
+- [ ] Está habiendo un problema de doble free cuando se hace ctrlC después de enviar un request
+- [ ] Crear función para clear() el httpmessage si el cliente va a estar conectado
+- [ ] Gestionar la petición del cliente del close connection
+- [ ] Terminar de implementar el cgi a los demás métodos
 
 ## Estructura del archivo de configuración
 *Ejemplo:*
