@@ -101,6 +101,7 @@ void	init_allowedMethods()
 	allowedMethods.push_back("DELETE");
 }
 
+/* Match method given in parameters. If non matches, returns -1, else returns method enum */
 int	HTTPmessage::matchMethod(std::string &method)
 {
 	int	e_methods[] = {

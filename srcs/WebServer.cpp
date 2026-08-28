@@ -178,13 +178,13 @@ int	WebServer::epoll_add_fd(int fd)
 
 void	WebServer::create_new_client(int clientsock, int listener)
 {
-	t_client	new_client;
-	
-	new_client.fd = clientsock;
-	new_client.last_activity = std::time(NULL);
-	new_client.keep_alive = 0;
-	new_client.max_requests = -1;
-	new_client.n_requests = 0;
+	t_client	new_client = {
+		.fd = clientsock,
+		.last_activity = std::time(NULL),
+		.keep_alive = 0,
+		.max_requests = -1,
+		.n_requests = 0
+	};
 	
 	for (size_t i = 0; i < servers.size() ; i++)
 	{
@@ -193,7 +193,7 @@ void	WebServer::create_new_client(int clientsock, int listener)
 			if (listener == servers[i].listens[j].sockfd)
 			{
 				HTTPmessage client_message(servers[i]);
-				client_message.server_port = servers[i].listens[j].port;
+				client_message.setServerPort(servers[i].listens[j].port);
 				this->clientBuffers[clientsock] = client_message;
 				clients.push_back(new_client);
 				return;
@@ -346,8 +346,7 @@ int	WebServer::handle_client_data(int client)
 			free_all();
 			return error_msg(errno, "epoll_ctl", NULL);
 		}
-		clientBuffers.erase(client); // falla aquí
-
+		clientBuffers.erase(client);
 		std::vector<t_client>::iterator it = find_client(client, clients);
 		if (it != clients.end())
 			clients.erase(it);

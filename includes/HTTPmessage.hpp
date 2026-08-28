@@ -1,18 +1,22 @@
 #pragma once
+
+#include <netdb.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+#include <cstdio>
+
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <map>
 #include <vector>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <cstdio>
-#include <netdb.h>
 
 #include "Config.hpp"
 #include "WebServer.hpp"
-#define ERRPAGE_DIR	"error_pages"
+
+#define ERRPAGE_DIR	"error_pages" //por cambiar
 
 enum	StatusCodes
 {
@@ -59,7 +63,6 @@ extern stringmap					mime_types;
 extern std::map<int, const char *>	responses;
 extern std::vector<std::string>		allowedMethods;
 
-
 class HTTPmessage
 {
 private:	
@@ -68,61 +71,57 @@ private:
 	std::vector<std::string>	cgi_env;
 	std::string					full_path;
 	std::stringstream			responseStream;
-	// stringmap	cache_control;
-	// stringmap	cookies;
-	// std::vecto<std::string>	clear_site_data;
+	std::string					server_port;
 
-	/* Response message */
+
+	/* Response variables */
 	t_rs_startline	rs_startline;
-	std::string		rs_body;
-
-	/* Response headers */
-	std::string		rs_location; // 3XX or 201
-	size_t			rs_content_length;
 	std::string		rs_date;
-	std::string		rs_content_type;
-	std::string		rs_methods_allowed; //solo se usa si es 405
-	std::string		rs_last_modified;
+	std::string		rs_location;		/* Only used if status code is 3XX or 201 */
+	std::string		rs_methods_allowed;	/* Only used if status code is 405 */
+	std::string		rs_body;			/* Used if it's a GET request or error response */
+	size_t			rs_content_length;	/* Only used if there is a body */
+	std::string		rs_content_type;	/* Only used if there is a body. Format: type/extension_type */
+
+
+	/* Helper functions */
 
 	int				matchMethod(std::string &method);
 	LocationConfig	*getPathfile(std::string &file);
+	int				generateErrorResponse(int error);
 	int				openErrorFile(int error, std::fstream &fs);
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
 	void			fillCGIenv();
 
+	/* HTTP methods */
 	int				httpGET();
 	int				httpPOST();
 	int				httpDELETE();
 
 public:
+	/* Orthodox Canonical Form */
 	HTTPmessage();
 	HTTPmessage(const HTTPmessage &other);
 	HTTPmessage(ServerConfig &server);
 	HTTPmessage	&operator=(const HTTPmessage &other);
 	~HTTPmessage();
 
-	std::string	server_port;
-
-	/* Request message */
+	/* Request variables */
 	t_rq_startline	rq_startline;
 	stringmap		rq_headers;
 	std::string		rq_body;
+	std::string		rq_host;
+	int				rq_keep_alive;
+	t_accept		rq_accept;
+	std::string		rq_content_type;
+	bool			rq_chunked;
+	size_t			rq_content_length;
+	std::string		rq_user_agent;
 
-	/* Request headers */
-	std::string	rq_host;
-	int			rq_keep_alive;
-	t_accept	rq_accept;
-	std::string	rq_content_type;
-	bool		rq_chunked;
-	size_t		rq_content_length;
-	std::string	rq_user_agent;
-	
-	int					generateResponse();
-	void				getResponse();
-	int					sendResponse(int client);
+	/* Getters and setters */
 
-	const std::string&	getMethod() const;
+	const std::string&	getVersion() const;
 	int					getStatusCode() const;
 	const stringmap&	getHeaders() const;
 	const std::string&	getBody() const;
@@ -131,11 +130,30 @@ public:
 	void				setStatusCode(const int code);
 	void				setHeader(const std::string& name, const std::string& value);
 	void				setBody(const std::string& body);
-	void				setServerConf(ServerConfig& serverconf);	
+	void				setServerConf(ServerConfig& serverconf);
+	void				setServerPort(std::string serverPort);
+	std::string			getServerPort();
+
+
+	/* Main user functions */
+
+	int					generateResponse();
+	void				setResponse();
+	int					sendResponse(int client);
 };
 
+/* INITs */
+
 void		init_responses();
+
 void		init_MIMEtypes();
+
 void		init_allowedMethods();
+
+/* Miscelaneous helper functions */
+
 std::string	getFileExtension(std::string file);
+
 std::string	getMIMEtype(std::string ext);
+
+int	get_location(std::vector<LocationConfig> locations, std::string file);

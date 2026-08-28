@@ -53,13 +53,13 @@ int	main(int ac, char **av)
 	ServerConfig server;
 	LocationConfig	location;
 	
-	location.name = "/mnt/d/Developer/webserv/test";
-	location.root = "/mnt/d/Developer/webserv/test";
+	location.name = "/home/xwu/sgoinfre/webserv/test";
+	location.root = "/home/xwu/sgoinfre/webserv/test";
 	location.autoindex = AUTOINDEX_ON;
 	location.error_pages[NOT_FOUND] = "404.html";
 	
 	server.autoindex = AUTOINDEX_OFF;
-	server.root = "/mnt/d/Developer/webserv/test";
+	server.root = "/home/xwu/sgoinfre/webserv/test";
 	server.server_name = "prueba.com";
 	server.locations.push_back(location);
 	server.listens.push_back(listen);

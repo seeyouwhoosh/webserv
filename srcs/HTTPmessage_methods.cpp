@@ -1,7 +1,7 @@
 #include "HTTPmessage.hpp"
 
 /* Returns location index if it exist, it not, returns -1 */
-static int	get_location(std::vector<LocationConfig> locations, std::string file)
+int	get_location(std::vector<LocationConfig> locations, std::string file)
 {
 	std::string	location_name;
 	size_t		len;
@@ -139,17 +139,23 @@ int	HTTPmessage::httpGET() //implementar cgi
 {
 	full_path = rq_startline.path;
 	LocationConfig	*locationconf = getPathfile(full_path);
-	std::cout << full_path << "\n";
 	std::fstream	fs;
+
 	if (!locationconf)
 	{
 		if ((rs_startline.status_code = openFile(full_path, fs, *serverconf)) != OK)
-		return -1;
+		{
+			setStatusCode(rs_startline.status_code);
+			return -1;
+		}
 	}
 	else
 	{
 		if ((rs_startline.status_code = openFile(full_path, fs, *locationconf)) != OK)
-		return -1;
+		{
+			setStatusCode(rs_startline.status_code);
+			return -1;
+		}
 	}
 
 	rs_body.resize(rs_content_length);
