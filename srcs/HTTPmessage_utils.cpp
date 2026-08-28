@@ -2,6 +2,7 @@
 
 stringmap					mime_types;
 std::map<int, const char *>	responses;
+std::vector<std::string>	allowedMethods;
 
 std::string	getMIMEtype(std::string ext)
 {
@@ -93,14 +94,19 @@ void	init_responses()
 	responses[NOT_IMPLEMENTED]			= "Not Implemented";
 }
 
+void	init_allowedMethods()
+{
+	allowedMethods.push_back("GET");
+	allowedMethods.push_back("POST");
+	allowedMethods.push_back("DELETE");
+}
+
 int	HTTPmessage::matchMethod(std::string &method)
 {
 	int	e_methods[] = {
 		GET,
 		POST,
 		DELETE,
-		HEAD,
-		TRACE,
 		BAD_METHOD,
 	};
 

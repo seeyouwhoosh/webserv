@@ -104,6 +104,12 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 /* Constructs the full path of file or directory into string file and returns the current location */
 LocationConfig	*HTTPmessage::getPathfile(std::string &file)
 {
+	if (serverconf == NULL)
+	{
+		std::cerr << "\033[1m[webserv]\33[0m serverconf is NULL\n";
+		setStatusCode(INTERNAL_SERVER_ERROR);
+		return NULL;
+	}
 	size_t query_pos = file.find('?');
 	std::string query; // decide what to do with query after
 
@@ -117,13 +123,13 @@ LocationConfig	*HTTPmessage::getPathfile(std::string &file)
 	int	location_pos = get_location(serverconf->locations, file);
 	if (location_pos < 0)
 	{
-		file = serverconf->root + file;
+		file = file == "/" ? serverconf->root : serverconf->root + file;
 		return NULL;
 	}
 	else
 	{
 		LocationConfig	&locationconf = serverconf->locations[location_pos];
-		file = locationconf.root + file;
+		file = file == "/" ? locationconf.root : locationconf.root + file;
 		return &locationconf;
 	}
 }
@@ -133,17 +139,17 @@ int	HTTPmessage::httpGET() //implementar cgi
 {
 	full_path = rq_startline.path;
 	LocationConfig	*locationconf = getPathfile(full_path);
-	
+	std::cout << full_path << "\n";
 	std::fstream	fs;
 	if (!locationconf)
 	{
 		if ((rs_startline.status_code = openFile(full_path, fs, *serverconf)) != OK)
-			return -1;
+		return -1;
 	}
 	else
 	{
 		if ((rs_startline.status_code = openFile(full_path, fs, *locationconf)) != OK)
-			return -1;
+		return -1;
 	}
 
 	rs_body.resize(rs_content_length);

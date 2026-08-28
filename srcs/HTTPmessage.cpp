@@ -5,16 +5,13 @@
 
 HTTPmessage::HTTPmessage()
 {
-	allowedMethods.push_back("GET");
-	allowedMethods.push_back("POST");
-	allowedMethods.push_back("DELETE");
-
 	rs_startline.version = "HTTP/1.1";
+	serverconf = NULL;
 }
 
 HTTPmessage::HTTPmessage(ServerConfig &server)
 {
-	HTTPmessage();
+	rs_startline.version = "HTTP/1.1";
 	serverconf = &server;
 }
 
@@ -27,7 +24,10 @@ HTTPmessage::HTTPmessage(const HTTPmessage &other)
 
 HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 {
-	(void)other;
+	if (this == &other)
+		return *this;
+	rs_startline.version = other.rs_startline.version;
+	serverconf = other.serverconf;
 	return *this;
 }
 
@@ -76,10 +76,9 @@ void	HTTPmessage::setServerConf(ServerConfig& serverconf)
 {
 	this->serverconf = &serverconf;
 }
-
-std::ostream	&HTTPmessage::write(const char *buf, size_t n)
+ServerConfig	*HTTPmessage::getServerConf() const
 {
-	return clientBuffer.write(buf, n);
+	return this->serverconf;
 }
 
 /* Searches for error.html in the location corresponding to the current path.
@@ -234,40 +233,45 @@ int	HTTPmessage::generateResponse()
 			}
 			rs_content_length = len;
 		}
+		setStatusCode(error);
 	}
-
-	rs_startline.reason_phrase = std::string(responses[rs_startline.status_code]);
-	std::stringstream	response_buff;
-	response_buff << rs_startline.version << " ";
-	response_buff << rs_startline.status_code << " " << rs_startline.reason_phrase << "\n";
-
-	response_buff << "Date: " << rs_date << "\n";
-	if (rs_startline.status_code == 201 || (rs_startline.status_code / 100) == 3)
-		response_buff << "Location: " << rs_location << "\n";
-	if (!rs_body.empty())
-	{
-		response_buff << "Content-Type: " << rs_content_type << "\n";
-		response_buff << "Content-Length: " << rs_content_length << "\n";
-	}
-	if (rs_startline.status_code == 405)
-	{
-		response_buff << "Allow: " << rs_content_type << "\n";
-		for (size_t i = 0; i < allowedMethods.size(); i++)
-		{
-			response_buff << allowedMethods[i];
-			if (i != allowedMethods.size() - 1)
-				response_buff << ", ";
-			else
-				response_buff << "\n";
-		}
-	}
-
 	return 0;
 }
 
-int	HTTPmessage::sendResponse(int client)
+int	HTTPmessage::sendResponse(int client) //
 {
+	getResponse();
+
 	if (send(client, responseStream.str().c_str(), responseStream.str().length(), 0) < 0)
 		return error_msg(errno, "send", NULL);
 	return 0;
+}
+
+void	HTTPmessage::getResponse()
+{
+	responseStream << rs_startline.version << " " << rs_startline.status_code << " " << rs_startline.reason_phrase << "\r\n";
+
+	responseStream << "Date: " << rs_date << "\r\n";
+	if (rs_startline.status_code == 201 || (rs_startline.status_code / 100) == 3)
+		responseStream << "Location: " << rs_location << "\r\n";
+	if (!rs_body.empty())
+	{
+		responseStream << "Content-Type: " << rs_content_type << "\r\n";
+		responseStream << "Content-Length: " << rs_content_length << "\r\n";
+	}
+	if (rs_startline.status_code == 405)
+	{
+		responseStream << "Allow: ";
+		for (size_t i = 0; i < allowedMethods.size(); i++)
+		{
+			responseStream << allowedMethods[i];
+			if (i != allowedMethods.size() - 1)
+				responseStream << ", ";
+			else
+				responseStream << "\r\n";
+		}
+	}
+
+	if (!rs_body.empty())
+		responseStream << "\r\n" << rs_body << "\r\n" ;
 }

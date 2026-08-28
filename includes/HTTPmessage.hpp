@@ -57,14 +57,14 @@ typedef std::map<std::string, std::string> stringmap;
 
 extern stringmap					mime_types;
 extern std::map<int, const char *>	responses;
+extern std::vector<std::string>		allowedMethods;
+
 
 class HTTPmessage
 {
 private:	
 	/* General variables */
 	ServerConfig				*serverconf;
-	std::stringstream			clientBuffer;
-	std::vector<std::string>	allowedMethods;
 	std::vector<std::string>	cgi_env;
 	std::string					full_path;
 	std::stringstream			responseStream;
@@ -119,22 +119,23 @@ public:
 	std::string	rq_user_agent;
 	
 	int					generateResponse();
-	int				sendResponse(int client);
+	void				getResponse();
+	int					sendResponse(int client);
 
 	const std::string&	getMethod() const;
 	int					getStatusCode() const;
 	const stringmap&	getHeaders() const;
 	const std::string&	getBody() const;
+	ServerConfig		*getServerConf() const;
 	void				setVersion(const std::string& method);
 	void				setStatusCode(const int code);
 	void				setHeader(const std::string& name, const std::string& value);
 	void				setBody(const std::string& body);
-	void				setServerConf(ServerConfig& serverconf);
-	std::ostream		&write(const char *buf, size_t n);
-	
+	void				setServerConf(ServerConfig& serverconf);	
 };
 
 void		init_responses();
 void		init_MIMEtypes();
+void		init_allowedMethods();
 std::string	getFileExtension(std::string file);
 std::string	getMIMEtype(std::string ext);

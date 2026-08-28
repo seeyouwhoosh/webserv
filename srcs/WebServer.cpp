@@ -186,7 +186,6 @@ void	WebServer::create_new_client(int clientsock, int listener)
 	new_client.max_requests = -1;
 	new_client.n_requests = 0;
 	
-	HTTPmessage	client_message;
 	for (size_t i = 0; i < servers.size() ; i++)
 	{
 		for (size_t j = 0; j < servers[i].listens.size(); j++)
@@ -195,13 +194,12 @@ void	WebServer::create_new_client(int clientsock, int listener)
 			{
 				HTTPmessage client_message(servers[i]);
 				client_message.server_port = servers[i].listens[j].port;
-				this->clientBuffers.insert(std::pair<int, HTTPmessage>(clientsock, client_message));
+				this->clientBuffers[clientsock] = client_message;
 				clients.push_back(new_client);
 				return;
 			}
 		}
 	}
-	return;
 }
 
 std::string	WebServer::getPort(int listener)
@@ -307,14 +305,12 @@ int	WebServer::handle_client_data(int client)
 	HTTPmessage			&clientBuffer = clientBuffers[client];
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
-	bool				close_connection = false;
+	bool				close_connection = !keep_alive_client(client);
 
-	if (!keep_alive_client(client))
-		close_connection = true;
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
 	if (read_size > 0)
 	{
-		buff[BUFFER_SIZE] = '\0';
+		buff[read_size] = '\0';
 		
 /* 		Parser	parser;
 		int		parse_status;
@@ -351,7 +347,10 @@ int	WebServer::handle_client_data(int client)
 			return error_msg(errno, "epoll_ctl", NULL);
 		}
 		clientBuffers.erase(client); // falla aquí
-		clients.erase(find_client(client, clients)); //o aquí
+
+		std::vector<t_client>::iterator it = find_client(client, clients);
+		if (it != clients.end())
+			clients.erase(it);
 		close(client);
 		num_connections--;
 	}
