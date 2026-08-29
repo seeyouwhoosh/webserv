@@ -73,6 +73,24 @@ bool is_empty(std::fstream &file)
 	return file.peek() == std::fstream::traits_type::eof();
 }
 
+std::string	getDate()
+{
+	time_t		rawtime;
+	struct tm	*tm;
+
+	time(&rawtime);
+	tm = gmtime(&rawtime);
+
+	if (!tm)
+		return "";
+
+	char buffer[30];
+	if (strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", tm) == 0)
+		return "";
+
+	return std::string(buffer);
+}
+
 /* static int	valid_ip(int af, const char *src)
 {
 	size_t	char_count = 0;

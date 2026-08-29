@@ -69,8 +69,9 @@ public:
 	std::string	getPort(int listener);
 };
 
-int	listen_socket(struct addrinfo *addr, int listen_num);
-int	error_msg(int err_code, const char *func, const char *msg);
-int	start_epoll_instance(WebServer &webserv);
-bool is_empty(std::fstream &file);
+int			listen_socket(struct addrinfo *addr, int listen_num);
+int			error_msg(int err_code, const char *func, const char *msg);
+int			start_epoll_instance(WebServer &webserv);
+bool		is_empty(std::fstream &file);
+std::string	getDate();
 

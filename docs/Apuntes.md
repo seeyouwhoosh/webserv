@@ -1,8 +1,8 @@
 # Apuntes de webserv
 
 ## Notas
-- [ ] Gestionar las páginas de error (buscar y crear páginas de error)
-- [ ] Crear funciones para generar fechas
+- [x] Gestionar las páginas de error (buscar y crear páginas de error)
+- [x] Crear funciones para generar fechas
 - [ ] cambiar `std::vector<t_client>` por `std::map<int, t_client>` porque lo que está dando problemas al parecer es la liberación de eso o algo así
 - [ ] Está habiendo un problema de doble free cuando se hace ctrlC después de enviar un request
 - [ ] Crear función para clear() el httpmessage si el cliente va a estar conectado
@@ -22,6 +22,7 @@ server {
     server_name _; # Sets names of a virtual server such as "example.com". This name is matched with the `Host` header in incoming HTTP requests
 }
 ```
+
 * **Directivas simples**: `coso algo;`
 * **Directivas de bloque**: `server {}`. Si puede tener más directivas dentro, se llama **contexto**. Algunos son: events, http, server y location
 

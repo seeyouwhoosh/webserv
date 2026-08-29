@@ -91,7 +91,6 @@ int	HTTPmessage::generateErrorResponse(int error)
 
 	if (!openErrorFile(error, err_file) && rs_content_length > 0)
 	{
-		std::cout << "he llegado hasta aquí\n";
 		rs_body.resize(rs_content_length);
 		err_file.read(&rs_body[0], rs_content_length);
 		bool read_failed = err_file.fail();
@@ -149,6 +148,7 @@ int	HTTPmessage::generateResponse()
 	}
 	if (error && generateErrorResponse(error) < 0)
 		return -1;
+	rs_date = getDate();
 	return 0;
 }
 
