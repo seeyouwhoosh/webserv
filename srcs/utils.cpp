@@ -68,6 +68,11 @@ int	hexToAscii(std::string s)
 	return result;
 }
 
+bool is_empty(std::fstream &file)
+{
+	return file.peek() == std::fstream::traits_type::eof();
+}
+
 /* static int	valid_ip(int af, const char *src)
 {
 	size_t	char_count = 0;

@@ -12,9 +12,10 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 {
 	std::stringstream			error_str;
 	error_str << error;
-	std::string					file = error_str.str() + ".html";
+	std::string					err_file = error_str.str() + ".html";
 	int							pos = (serverconf) ? get_location(serverconf->locations, rq_startline.path) : -1;
-
+	
+	std::string	file;
 	if (pos >= 0 && pos < static_cast<int>(serverconf->locations.size()))
 	{
 		const LocationConfig &location = serverconf->locations[pos];
@@ -29,9 +30,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 			file = serverconf->root + "/" + it->second;
 	}
 	if (file.empty())
-	{
 		file = std::string(ERRPAGE_DIR) + "/" + error_str.str() + ".html";
-	}
 
 	struct stat	st;
 	if (stat(file.c_str(), &st) < 0)
@@ -44,39 +43,45 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 	fs.open(file.c_str(), std::ios::in | std::ios::binary);
 	if (!fs.is_open() || fs.fail())
 		return -1;
+	if (is_empty(fs))
+	{
+		fs.close();
+		return -1;
+	}
 	rs_content_length = st.st_size;
-
+	rs_content_type = getMIMEtype(getFileExtension(file));
 	return 0;
 }
 
 /* Creates an error file into the default error pages directory established in the header */
-static long	generateErrorFile(int error, std::string phrase, std::fstream &fs)
+static std::string	generateErrorFile(int error, std::string phrase, std::fstream &fs)
 {
 	std::stringstream	error_str;
 	error_str << error;
 	std::string			file;
-	long				count;
 
-	file = ERRPAGE_DIR;
-	file += "/" + error_str.str() + ".html";
-	try
-	{
-		fs.open(file.c_str(), std::fstream::out | std::fstream::in);
-	}
-	catch(const std::exception& e)
-	{
-		return -1;
-	}
+	file = std::string(ERRPAGE_DIR) + "/" + error_str.str() + ".html";
+	fs.open(file.c_str(), std::fstream::out | std::fstream::in | std::fstream::trunc | std::fstream::binary);
+	if (!fs.is_open() || fs.fail())
+		return "";
 
-	fs << "<!DOCTYPE html>\n<html>\n  <head>\n    <title>";
-	fs << error_str.str() << " " << phrase;
-	fs << "\n/title>\n  </head>\n  <body>\n    <h1>";
-	fs << error_str.str() << " " << phrase; 
-	fs << "</h1>\n  </body>\n</html>";
+	std::ostringstream	content;
+	content << "<!DOCTYPE html>\n<html>\n  <head>\n    <title>";
+	content << error_str.str() << " " << phrase;
+	content << "\n</title>\n  </head>\n  <body>\n    <h1>";
+	content << error_str.str() << " " << phrase; 
+	content << "</h1>\n  </body>\n</html>";
+	std::string body = content.str();
 
-	count = fs.gcount();
-	fs.close();
-	return count;
+	fs << body;
+	bool read_failed = fs.fail();
+
+	if (fs.is_open())
+		fs.close();
+
+	if (read_failed)
+		return "";
+	return body;
 }
 
 /* Given a int error, try to open in, if there is no problem, pass it to the response body. Else, generate own error file in the default error pages directory */
@@ -84,35 +89,33 @@ int	HTTPmessage::generateErrorResponse(int error)
 {
 	std::fstream	err_file;
 
-	if (openErrorFile(error, err_file) < 0)
+	if (!openErrorFile(error, err_file) && rs_content_length > 0)
 	{
-		long	len = generateErrorFile(error, rs_startline.reason_phrase, err_file);
-		if (len < 0)
-		{
-			setStatusCode(INTERNAL_SERVER_ERROR);
-			return -1;
-		}
-		rs_body.resize(len);
-		err_file.read(&rs_body[0], len);
-		if (err_file.fail() == true)
+		std::cout << "he llegado hasta aquí\n";
+		rs_body.resize(rs_content_length);
+		err_file.read(&rs_body[0], rs_content_length);
+		bool read_failed = err_file.fail();
+
+		if (err_file.is_open())
+			err_file.close();
+
+		if (read_failed)
 		{
 			rs_body.clear();
 			setStatusCode(INTERNAL_SERVER_ERROR);
 			return -1;
 		}
-		rs_content_length = len;
+		return 0;
 	}
-	if (rs_content_length > 0)
+
+	rs_body = generateErrorFile(error, rs_startline.reason_phrase, err_file);
+	rs_content_length = rs_body.size();
+	if (!rs_content_length)
 	{
-		rs_body.resize(rs_content_length);
-		err_file.read(&rs_body[0], rs_content_length);
-	}
-	if (err_file.fail() == true)
-	{
-		rs_body.clear();
 		setStatusCode(INTERNAL_SERVER_ERROR);
 		return -1;
 	}
+	rs_content_type = getMIMEtype("html");
 	return 0;
 }
 

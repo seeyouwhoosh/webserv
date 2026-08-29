@@ -156,4 +156,4 @@ std::string	getFileExtension(std::string file);
 
 std::string	getMIMEtype(std::string ext);
 
-int	get_location(std::vector<LocationConfig> locations, std::string file);
+int			get_location(std::vector<LocationConfig> locations, std::string file);
