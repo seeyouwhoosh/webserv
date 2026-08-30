@@ -87,7 +87,7 @@ private:
 	/* Helper functions */
 
 	int				matchMethod(std::string &method);
-	LocationConfig	*getPathfile(std::string &file);
+	LocationConfig	*getPathLocation(std::string &file);
 	int				generateErrorResponse(int error);
 	int				openErrorFile(int error, std::fstream &fs);
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
@@ -103,7 +103,7 @@ public:
 	/* Orthodox Canonical Form */
 	HTTPmessage();
 	HTTPmessage(const HTTPmessage &other);
-	HTTPmessage(ServerConfig &server);
+	HTTPmessage(ServerConfig *server);
 	HTTPmessage	&operator=(const HTTPmessage &other);
 	~HTTPmessage();
 
@@ -156,4 +156,4 @@ std::string	getFileExtension(std::string file);
 
 std::string	getMIMEtype(std::string ext);
 
-int			get_location(std::vector<LocationConfig> locations, std::string file);
+int			get_location(std::vector<LocationConfig> &locations, std::string file);

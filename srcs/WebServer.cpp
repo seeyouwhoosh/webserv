@@ -179,7 +179,7 @@ int	WebServer::epoll_add_fd(int fd)
 void	WebServer::create_new_client(int clientsock, int listener)
 {
 	t_client	new_client = {
-		.fd = clientsock,
+		.fd = clientsock, // creo que esto se puede borrar
 		.last_activity = std::time(NULL),
 		.keep_alive = 0,
 		.max_requests = -1,
@@ -192,10 +192,10 @@ void	WebServer::create_new_client(int clientsock, int listener)
 		{
 			if (listener == servers[i].listens[j].sockfd)
 			{
-				HTTPmessage client_message(servers[i]);
+				HTTPmessage client_message(&servers[i]);
 				client_message.setServerPort(servers[i].listens[j].port);
 				this->clientBuffers[clientsock] = client_message;
-				clients.push_back(new_client);
+				clients[clientsock] = new_client;
 				return;
 			}
 		}
@@ -273,20 +273,10 @@ int	WebServer::handle_new_connection(int listener)
 	return 0;
 }
 
-static std::vector<t_client>::iterator	find_client(int fd, std::vector<t_client> clients)
-{
-	for (std::vector<t_client>::iterator it = clients.begin(); it != clients.end(); it++)
-	{
-		if (fd == it->fd)
-			return it;
-	}
-	return clients.end();
-}
-
 /* Return 1 if the server should keep the connection alive, 0 otherwise */
 int	WebServer::keep_alive_client(int fd)
 {
-	t_client	client = *find_client(fd, clients);
+	t_client	client = clients[fd];
 
 	if (client.keep_alive < 0)
 		return 1;
@@ -347,9 +337,7 @@ int	WebServer::handle_client_data(int client)
 			return error_msg(errno, "epoll_ctl", NULL);
 		}
 		clientBuffers.erase(client);
-		std::vector<t_client>::iterator it = find_client(client, clients);
-		if (it != clients.end())
-			clients.erase(it);
+		clients.erase(client);
 		close(client);
 		num_connections--;
 	}

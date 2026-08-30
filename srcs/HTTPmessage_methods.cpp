@@ -1,17 +1,17 @@
 #include "HTTPmessage.hpp"
 
 /* Returns location index if it exist, it not, returns -1 */
-int	get_location(std::vector<LocationConfig> locations, std::string file)
+int	get_location(std::vector<LocationConfig> &locations, std::string file)
 {
-	std::string	location_name;
-	size_t		len;
 	size_t		max_len = 0;
-	size_t		location_pos = 0;
+	size_t		location_pos = -1;
 
 	for (size_t i = 0; i < locations.size(); i++)
 	{
-		len = locations[i].name.length();
-		if (!file.find(locations[i].name))
+		size_t	len = locations[i].name.length();
+		std::cout << "Inside the function: " << locations[i].name << " " << len << "\n";
+
+		if (file.find(locations[i].name) == 0)
 		{
 			if (len > max_len)
 			{
@@ -21,7 +21,7 @@ int	get_location(std::vector<LocationConfig> locations, std::string file)
 		}
 	}
 
-	if (!max_len)
+	if (max_len)
 		return -1;
 	else
 		return location_pos;
@@ -102,7 +102,7 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 }
 
 /* Constructs the full path of file or directory into string file and returns the current location */
-LocationConfig	*HTTPmessage::getPathfile(std::string &file)
+LocationConfig	*HTTPmessage::getPathLocation(std::string &file)
 {
 	if (serverconf == NULL)
 	{
@@ -117,28 +117,39 @@ LocationConfig	*HTTPmessage::getPathfile(std::string &file)
 	{
 		rq_startline.query = file.substr(query_pos + 1);
 		file = file.substr(0, query_pos);
-		rq_startline.path = file;
 	}
+	rq_startline.path = file;
 
+	std::cout << "Outside the function: " << serverconf->locations[0].name << " " << serverconf->locations.size() << "\n";
 	int	location_pos = get_location(serverconf->locations, file);
+
 	if (location_pos < 0)
 	{
-		file = file == "/" ? serverconf->root : serverconf->root + file;
+		std::string root = serverconf->root;
+		file = (file == "/") ? root : (root.empty() || root[root.size() - 1] == '/' ? root + file : root + "/" + file);
 		return NULL;
 	}
+
+	LocationConfig	&locationconf = serverconf->locations[location_pos];
+	std::string root = locationconf.root.empty() ? serverconf->root : locationconf.root;
+
+	if (!root.empty() && root[root.size() - 1] == '/')
+		root.erase(root.size() - 1);
+
+	if (file == "/")
+		file = root + "/";
+	else if (!file.empty() && file[0] != '/')
+		file = root + "/" + file;
 	else
-	{
-		LocationConfig	&locationconf = serverconf->locations[location_pos];
-		file = file == "/" ? locationconf.root : locationconf.root + file;
-		return &locationconf;
-	}
+		file = root + file;
+	return &locationconf;
 }
 
 /* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
 int	HTTPmessage::httpGET() //implementar cgi
 {
 	full_path = rq_startline.path;
-	LocationConfig	*locationconf = getPathfile(full_path);
+	LocationConfig	*locationconf = getPathLocation(full_path);
 	std::fstream	fs;
 
 	if (!locationconf)
@@ -184,7 +195,7 @@ int	HTTPmessage::httpPOST() // implementar cgi
 	
 	struct stat	st;
 
-	getPathfile(full_path);
+	getPathLocation(full_path);
 	if (stat(full_path.c_str(), &st) < 0)
 		create = true;
 
@@ -217,7 +228,7 @@ int	HTTPmessage::httpPOST() // implementar cgi
 int	HTTPmessage::httpDELETE()
 {
 	full_path = rq_startline.path;
-	getPathfile(full_path);
+	getPathLocation(full_path);
 
 	struct stat	st;
 	if (stat(full_path.c_str(), &st) < 0)

@@ -8,10 +8,10 @@ HTTPmessage::HTTPmessage()
 	serverconf = NULL;
 }
 
-HTTPmessage::HTTPmessage(ServerConfig &server)
+HTTPmessage::HTTPmessage(ServerConfig *server)
 {
 	rs_startline.version = "HTTP/1.1";
-	serverconf = &server;
+	serverconf = server;
 }
 
 HTTPmessage::~HTTPmessage() {}

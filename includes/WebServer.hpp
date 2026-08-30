@@ -48,7 +48,7 @@ public:
 
 	int							epoll_instance;
 	std::vector<int>			listeners;
-	std::vector<t_client>		clients;
+	std::map<int, t_client>		clients;
 	std::map<int, HTTPmessage>	clientBuffers;
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
