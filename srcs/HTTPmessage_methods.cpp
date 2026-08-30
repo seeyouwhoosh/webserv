@@ -1,5 +1,24 @@
 #include "HTTPmessage.hpp"
 
+/* Appends path with file, manages primarily backslashes. Modifies file */
+static void	refactorFile(std::string &path, std::string &file)
+{
+	if (path.empty())
+		return;
+	if (path[path.size() - 1] == '/')
+		path.erase(path.size() - 1);
+	if (file == "/")
+	{
+		file = path;
+		return;
+	}
+	if (file[0] == '/')
+		file = path + file;
+	else
+		file = path + "/" + file;
+	return;
+}
+
 /* Returns location index if it exist, it not, returns -1 */
 int	get_location(std::vector<LocationConfig> &locations, std::string file)
 {
@@ -9,9 +28,8 @@ int	get_location(std::vector<LocationConfig> &locations, std::string file)
 	for (size_t i = 0; i < locations.size(); i++)
 	{
 		size_t	len = locations[i].name.length();
-		std::cout << "Inside the function: " << locations[i].name << " " << len << "\n";
-
-		if (file.find(locations[i].name) == 0)
+		
+		if (!file.find(locations[i].name))
 		{
 			if (len > max_len)
 			{
@@ -21,7 +39,7 @@ int	get_location(std::vector<LocationConfig> &locations, std::string file)
 		}
 	}
 
-	if (max_len)
+	if (!max_len)
 		return -1;
 	else
 		return location_pos;
@@ -47,10 +65,12 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &l
 		}
 		else if ((st.st_mode & S_IFMT) == S_IFDIR)
 		{
-			if (locationconf.autoindex == AUTOINDEX_OFF)
+			if (locationconf.autoindex == AUTOINDEX_OFF || !locationconf.indexes.size())
 				return NOT_FOUND;
 			for (size_t i = 0; i < locationconf.indexes.size(); i++)
 			{
+				if (locationconf.indexes[i].empty())
+					return NOT_FOUND;
 				std::string	tmp = file + "/" + locationconf.indexes[i];
 				if (access(tmp.c_str(), F_OK | R_OK) < 0)
 					continue;
@@ -88,7 +108,8 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 			return NOT_FOUND;
 		for (size_t i = 0; i < serverconf.indexes.size(); i++)
 		{
-			std::string	tmp = file + "/" + serverconf.indexes[i];
+			std::string	tmp = serverconf.indexes[i];
+			refactorFile(file, tmp);
 			if (access(tmp.c_str(), F_OK | R_OK) < 0)
 				continue;
 			fs.open(tmp.c_str(), std::ios::in | std::ios::binary);
@@ -106,7 +127,6 @@ LocationConfig	*HTTPmessage::getPathLocation(std::string &file)
 {
 	if (serverconf == NULL)
 	{
-		std::cerr << "\033[1m[webserv]\33[0m serverconf is NULL\n";
 		setStatusCode(INTERNAL_SERVER_ERROR);
 		return NULL;
 	}
@@ -120,28 +140,19 @@ LocationConfig	*HTTPmessage::getPathLocation(std::string &file)
 	}
 	rq_startline.path = file;
 
-	std::cout << "Outside the function: " << serverconf->locations[0].name << " " << serverconf->locations.size() << "\n";
 	int	location_pos = get_location(serverconf->locations, file);
 
 	if (location_pos < 0)
 	{
 		std::string root = serverconf->root;
-		file = (file == "/") ? root : (root.empty() || root[root.size() - 1] == '/' ? root + file : root + "/" + file);
+		refactorFile(root, file);
 		return NULL;
 	}
 
 	LocationConfig	&locationconf = serverconf->locations[location_pos];
 	std::string root = locationconf.root.empty() ? serverconf->root : locationconf.root;
+	refactorFile(root, file);
 
-	if (!root.empty() && root[root.size() - 1] == '/')
-		root.erase(root.size() - 1);
-
-	if (file == "/")
-		file = root + "/";
-	else if (!file.empty() && file[0] != '/')
-		file = root + "/" + file;
-	else
-		file = root + file;
 	return &locationconf;
 }
 
@@ -171,6 +182,7 @@ int	HTTPmessage::httpGET() //implementar cgi
 
 	rs_body.resize(rs_content_length);
 	fs.read(&rs_body[0], rs_content_length);
+	std::cout << full_path << "\n";
 	if (fs.fail())
 	{
 		rs_body.clear();
