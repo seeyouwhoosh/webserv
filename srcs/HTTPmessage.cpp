@@ -49,10 +49,11 @@ void HTTPmessage::setVersion(const std::string& version)
 }
 
 /* Set HTTP response status code and phrase */
-void HTTPmessage::setStatusCode(const int code)
+int HTTPmessage::setStatusCode(const int code)
 {
 	this->rs_startline.status_code = code;
 	this->rs_startline.reason_phrase = responses[code];
+	return code;
 }
 
 /* Set HTTP request headers */

@@ -149,20 +149,41 @@ int	HTTPmessage::generateResponse()
 	if (error && generateErrorResponse(error) < 0)
 		return -1;
 	rs_date = getDate();
+	setResponse();
 	return 0;
 }
 
-int	HTTPmessage::sendResponse(int client) //
+int	HTTPmessage::sendResponse(int client)
 {
-	setResponse();
+	size_t		header_len = rs_header.length();
+	size_t		body_len = rs_body.length();
+	size_t		total_to_send = header_len + body_len;
+	long long	sent = 0;
 
-	if (send(client, responseStream.str().c_str(), responseStream.str().length(), 0) < 0)
+	if (totalSent < rs_header.size())
+		sent = send(client, rs_header.c_str() + totalSent, header_len - totalSent, MSG_NOSIGNAL);
+	else if (totalSent < total_to_send)
+	{
+		size_t	body_offset = totalSent - header_len;
+		sent = send(client, rs_body.c_str() + body_offset, body_len - body_offset, MSG_NOSIGNAL);
+	}
+	else if (!rs_body.empty() && totalSent < total_to_send + 2)
+	{
+		size_t	end_offset = totalSent - total_to_send;
+		sent = send(client, "\r\n" + end_offset, 2 - end_offset, MSG_NOSIGNAL);
+	}
+	if (sent < 0)
 		return error_msg(errno, "send", NULL);
-	return 0;
+	if (!sent)
+		return 0;
+	totalSent += sent;
+	return sent;
 }
 
 void	HTTPmessage::setResponse()
 {
+	std::stringstream	responseStream;
+
 	responseStream << rs_startline.version << " " << rs_startline.status_code << " " << rs_startline.reason_phrase << "\r\n";
 
 	responseStream << "Date: " << rs_date << "\r\n";
@@ -185,7 +206,8 @@ void	HTTPmessage::setResponse()
 				responseStream << "\r\n";
 		}
 	}
+	responseStream << "\r\n";
 
-	if (!rs_body.empty())
-		responseStream << "\r\n" << rs_body << "\r\n" ;
+	rs_header = responseStream.str();
+	totalSent = 0;
 }

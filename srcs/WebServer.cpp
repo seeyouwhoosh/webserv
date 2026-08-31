@@ -5,6 +5,7 @@
 WebServer::WebServer()
 {
 	epoll_events = new struct epoll_event[MAX_CONNECTIONS];
+	num_connections = 0;
 }
 
 WebServer::~WebServer() {}
@@ -44,12 +45,13 @@ void	WebServer::free_all()
 
 int	WebServer::close_connection(int fd)
 {
-	if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, fd, 0) < 0)
+	if (epoll_del_fd(fd) < 0)
 	{
 		free_all();
-		return error_msg(errno, "epoll_ctl", NULL);
+		return -1;
 	}
 	close(fd);
+	num_connections--;
 	return 0;
 }
 
@@ -133,24 +135,36 @@ int	WebServer::prepare_listeners()
 	return 0;
 }
 
+int	WebServer::epoll_start_instance()
+{
+	if ((epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
+	{
+		free_all();
+		return error_msg(errno, "epoll_create", NULL);
+	}
+	
+	std::cout << "\033[1m[webserv]\33[0m Epoll instance created succesfully" << "\n";
+
+	if (epoll_add_listens() < 0)
+		return -1;
+
+	std::cout << "\033[1m[webserv]\33[0m Epoll added listeners to watch. Total connections: " << num_connections << "\n";
+	return 0;
+}
+
 int	WebServer::epoll_add_listens()
 {
-	struct epoll_event	event;
-
-	event.events = EPOLLIN;
 	for (size_t i = 0; i < servers.size() ; i++)
 	{
 		for (size_t j = 0; j < servers[i].listens.size(); j++)
 		{
-			event.data.fd = servers[i].listens[j].sockfd;
-			if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, servers[i].listens[j].sockfd, &event) < 0)
+			if (epoll_add_fd(servers[i].listens[j].sockfd) < 0)
 			{
 				free_all();
-				return error_msg(errno, "epoll_ctl", NULL);
+				return -1;
 			}
 		}
 	}
-	num_connections = listeners.size();
 	return 0;
 }
 
@@ -173,13 +187,45 @@ int	WebServer::epoll_add_fd(int fd)
 	event.data.fd = fd;
 	if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, fd, &event) < 0)
 		return error_msg(errno, "epoll_ctl", NULL);
+	num_connections++;
+	return 0;
+}
+
+int	WebServer::epoll_del_fd(int fd)
+{
+	if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, fd, NULL) < 0)
+		return error_msg(errno, "epoll_ctl", NULL);
+	return 0;
+}
+
+int	WebServer::epoll_addflag_fd(int fd, int flag)
+{
+	struct epoll_event	event;
+	event.data.fd = fd;
+	event.events = EPOLLIN | flag;
+
+	if (epoll_ctl(epoll_instance, EPOLL_CTL_MOD, fd, &event) < 0)
+		return error_msg(errno, "epoll_ctl", NULL);
+	return 0;
+}
+
+int	WebServer::epoll_delflag_fd(int fd, int flag)
+{
+	struct epoll_event event;
+
+	event.data.fd = fd;
+	event.events = EPOLLIN & ~flag;
+
+	if (epoll_ctl(epoll_instance, EPOLL_CTL_MOD, fd, &event) < 0)
+		return error_msg(errno, "epoll_ctl", NULL);
+		
 	return 0;
 }
 
 void	WebServer::create_new_client(int clientsock, int listener)
 {
 	t_client	new_client = {
-		.fd = clientsock, // creo que esto se puede borrar
+		.fd = clientsock,
 		.last_activity = std::time(NULL),
 		.keep_alive = 0,
 		.max_requests = -1,
@@ -220,7 +266,6 @@ int	WebServer::handle_new_connection(int listener)
 	struct sockaddr_storage	clientaddr;
 	socklen_t				clientlen = sizeof(clientaddr);
 	int						clientsock;
-	const char	*msg = "Connection to some server accepted\n";
 
 	if ((clientsock = accept(listener, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
 		return error_msg(errno, "accept", NULL);
@@ -258,17 +303,7 @@ int	WebServer::handle_new_connection(int listener)
 		return -1;
 	}
 
-	if (send(clientsock, msg, std::strlen(msg), 0) < 0)
-	{
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
-		{
-			close(clientsock); 
-			return error_msg(errno, "send", NULL);
-		}
-	}
 	create_new_client(clientsock, listener);
-
-	num_connections++;
 
 	return 0;
 }
@@ -295,7 +330,6 @@ int	WebServer::handle_client_data(int client)
 	HTTPmessage			&clientBuffer = clientBuffers[client];
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
-	bool				close_connection = !keep_alive_client(client);
 
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
 	if (read_size > 0)
@@ -319,27 +353,30 @@ int	WebServer::handle_client_data(int client)
 
 	/* ************************** ERASE ************************** */
 	clientBuffer.rq_startline.method = "GET";
-	clientBuffer.rq_startline.path = "/";
+	clientBuffer.rq_startline.path = "/picture.jpeg";
 	clientBuffer.rq_startline.version = "HTTP/1.1";
 	clientBuffer.setStatusCode(OK);
 	/* ************************** ERASE *************************** */
 
-		clientBuffer.generateResponse();
-		clientBuffer.sendResponse(client);
-
-	}
-	if (!read_size || close_connection)
-	{
-		std::cout << "Client closed connection\n";
-		if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, client, NULL) < 0)
+		if (clientBuffer.generateResponse() < 0)
 		{
 			free_all();
-			return error_msg(errno, "epoll_ctl", NULL);
+			return error_msg(1, "generateResponse", "couldn't generate response");
 		}
+		if (epoll_addflag_fd(client, EPOLLOUT) < 0)
+		{
+			free_all();
+			return -1;
+		}
+	}
+	if (!read_size)
+	{
+		std::cout << "Client closed connection\n";
+
 		clientBuffers.erase(client);
 		clients.erase(client);
-		close(client);
-		num_connections--;
+		if (close_connection(client) < 0)
+			return -1;
 	}
 	return 0;
 }
@@ -348,17 +385,43 @@ int	WebServer::process_connections(int num_events)
 {
 	for (int i = 0; i < num_events ; i++)
 	{
+		int fd = epoll_events[i].data.fd;
 		if (epoll_events[i].events & EPOLLERR)
 		{
-			close_connection(epoll_events[i].data.fd);
+			if (close_connection(fd) < 0)
+				return -1;
 			std::cout << "Client error\n";
 			continue;
 		}
 		if (epoll_events[i].events & EPOLLHUP)
 		{
-			close_connection(epoll_events[i].data.fd);
+			if (close_connection(fd) < 0)
+				return -1;
 			std::cout << "Client closed connection\n";
 			continue;
+		}
+		if (epoll_events[i].events & EPOLLOUT)
+		{
+			HTTPmessage &clientBuffer = clientBuffers[fd];
+			int	sent_size = clientBuffer.sendResponse(fd);
+
+			if (sent_size < 0)
+			{
+				if (close_connection(fd) < 0)
+					return -1;
+				continue;
+			}
+			if (clientBuffer.isComplete())
+			{
+				epoll_delflag_fd(fd, EPOLLOUT);
+				if (!keep_alive_client(fd))
+				{
+					if (close_connection(fd) < 0)
+						return -1;
+				}
+				else
+					clientBuffer.clear();
+			}
 		}
 		if (epoll_events[i].events & EPOLLIN)
 		{

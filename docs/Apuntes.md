@@ -3,11 +3,14 @@
 ## Notas
 - [x] Gestionar las páginas de error (buscar y crear páginas de error)
 - [x] Crear funciones para generar fechas
-- [ ] cambiar `std::vector<t_client>` por `std::map<int, t_client>` porque lo que está dando problemas al parecer es la liberación de eso o algo así
-- [ ] Está habiendo un problema de doble free cuando se hace ctrlC después de enviar un request
-- [ ] Crear función para clear() el httpmessage si el cliente va a estar conectado
-- [ ] Gestionar la petición del cliente del close connection
-- [ ] Terminar de implementar el cgi a los demás métodos
+- [x] cambiar `std::vector<t_client>` por `std::map<int, t_client>` porque lo que está dando problemas al parecer es la liberación de eso o algo así
+- [x] Gestionar la respuesta para enviarlo non blocking (enviar primero el header y luego el cuerpo a cachos)
+- [ ] Implementar el autoindex
+- [ ] Método GET
+- [ ] Método DELETE
+- [ ] Método POST
+- [ ] Gestionar la petición del cliente del close connection y keep-alive
+- [ ] Implementar CGI
 
 ## Estructura del archivo de configuración
 *Ejemplo:*

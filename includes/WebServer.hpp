@@ -54,10 +54,8 @@ public:
 	struct epoll_event			*epoll_events;
 
 	int			prepare_listeners();
-	int			epoll_add_listens();
 	int			process_connections(int num_events);
 	bool		is_listener(int fd);
-	int			epoll_add_fd(int fd);
 	int			handle_new_connection(int listener);
 	void		create_new_client(int clientsock, int listener);
 	int			keep_alive_client(int fd);
@@ -65,13 +63,19 @@ public:
 	void		free_all();
 	void		free_all_addrinfos();
 	int			close_connection(int fd);
+
+	int			epoll_start_instance();
+	int			epoll_add_fd(int fd);
+	int			epoll_del_fd(int fd);
+	int			epoll_addflag_fd(int fd, int flag);
+	int			epoll_delflag_fd(int fd, int flag);
+	int			epoll_add_listens();
 	
 	std::string	getPort(int listener);
 };
 
 int			listen_socket(struct addrinfo *addr, int listen_num);
 int			error_msg(int err_code, const char *func, const char *msg);
-int			start_epoll_instance(WebServer &webserv);
 bool		is_empty(std::fstream &file);
 std::string	getDate();
 

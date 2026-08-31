@@ -70,12 +70,12 @@ private:
 	ServerConfig				*serverconf;
 	std::vector<std::string>	cgi_env;
 	std::string					full_path;
-	std::stringstream			responseStream;
 	std::string					server_port;
-
-
+	size_t						totalSent;
+	
 	/* Response variables */
 	t_rs_startline	rs_startline;
+	std::string		rs_header;
 	std::string		rs_date;
 	std::string		rs_location;		/* Only used if status code is 3XX or 201 */
 	std::string		rs_methods_allowed;	/* Only used if status code is 405 */
@@ -85,13 +85,14 @@ private:
 
 
 	/* Helper functions */
-
 	int				matchMethod(std::string &method);
 	LocationConfig	*getPathLocation(std::string &file);
 	int				generateErrorResponse(int error);
 	int				openErrorFile(int error, std::fstream &fs);
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
+	int				createAutoindex(std::string dir);
+	void			setResponse();
 	void			fillCGIenv();
 
 	/* HTTP methods */
@@ -120,14 +121,13 @@ public:
 	std::string		rq_user_agent;
 
 	/* Getters and setters */
-
 	const std::string&	getVersion() const;
 	int					getStatusCode() const;
 	const stringmap&	getHeaders() const;
 	const std::string&	getBody() const;
 	ServerConfig		*getServerConf() const;
 	void				setVersion(const std::string& method);
-	void				setStatusCode(const int code);
+	int					setStatusCode(const int code);
 	void				setHeader(const std::string& name, const std::string& value);
 	void				setBody(const std::string& body);
 	void				setServerConf(ServerConfig& serverconf);
@@ -136,10 +136,10 @@ public:
 
 
 	/* Main user functions */
-
 	int					generateResponse();
-	void				setResponse();
+	bool				isComplete() const;
 	int					sendResponse(int client);
+	void				clear();
 };
 
 /* INITs */

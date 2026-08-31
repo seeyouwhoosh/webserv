@@ -53,14 +53,15 @@ int	main(int ac, char **av)
 	ServerConfig server;
 	LocationConfig	location;
 	location.name = "/";
-	location.root = "/workspaces/webserv/test";
+	location.root = "/mnt/d/Developer/webserv/test";
 	location.indexes.push_back("index.html");
 	location.autoindex = AUTOINDEX_ON;
 	location.error_pages[NOT_FOUND] = "404.html";
 	
 	server.autoindex = AUTOINDEX_OFF;
-	server.root = "/workspaces/webserv/test";
+	server.root = "/mnt/d/Developer/webserv/test";
 	server.server_name = "prueba.com";
+	server.indexes.push_back("index.html");
 	server.locations.push_back(location);
 	server.listens.push_back(listen);
 	webserv.servers.push_back(server);
@@ -74,7 +75,7 @@ int	main(int ac, char **av)
 		webserv.free_all();
 		return 1;
 	}
-	if (start_epoll_instance(webserv) < 0)
+	if (webserv.epoll_start_instance() < 0)
 		return 1;
 
 	init_MIMEtypes();

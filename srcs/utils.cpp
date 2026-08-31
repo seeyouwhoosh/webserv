@@ -29,23 +29,6 @@ std::string	getFileExtension(std::string file)
 	return file.substr(dot + 1);
 }
 
-int	start_epoll_instance(WebServer &webserv)
-{
-	if ((webserv.epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
-	{
-		webserv.free_all();
-		return error_msg(errno, "epoll_create", NULL);
-	}
-	
-	std::cout << "\033[1m[webserv]\33[0m Epoll instance created succesfully" << "\n";
-
-	if (webserv.epoll_add_listens() < 0)
-		return -1;
-
-	std::cout << "\033[1m[webserv]\33[0m Epoll added listeners to watch. Total connections: " << webserv.num_connections << "\n";
-	return 0;
-}
-
 int	hexToAscii(std::string s)
 {
 	int result = 0;

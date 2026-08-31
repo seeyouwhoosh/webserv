@@ -145,3 +145,18 @@ void	HTTPmessage::fillCGIenv()
 	cgi_env.push_back("SCRIPT_NAME=" + rq_startline.path);
 	cgi_env.push_back(NULL);
 }
+
+bool	HTTPmessage::isComplete() const
+{
+	size_t total_expected = rs_header.length() + rs_body.length();
+
+	if (!rs_body.empty())
+		total_expected += 2;
+
+	return totalSent >= total_expected;
+}
+
+void	HTTPmessage::clear()
+{
+	;
+}

@@ -45,50 +45,98 @@ int	get_location(std::vector<LocationConfig> &locations, std::string file)
 		return location_pos;
 }
 
+int	HTTPmessage::createAutoindex(std::string dir)
+{
+	(void)dir;
+	return setStatusCode(NOT_IMPLEMENTED);
+	/*
+	DIR *dir = opendir(dir_path.c_str());
+    if (!dir)
+        return "";
+
+    std::ostringstream html;
+    html << "<!DOCTYPE html><html><head><title>Index of " << uri_path << "</title></head><body>"
+         << "<h1>Index of " << uri_path << "</h1><hr><pre>";
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL)
+    {
+        std::string name = entry->d_name;
+        
+        // Opcional: ignorar "." pero dejar ".." para poder subir de directorio
+        if (name == ".")
+            continue;
+
+        // Si es un directorio, le añadimos '/' al final para que el navegador sepa que es una carpeta
+        if (entry->d_type == DT_DIR)
+            name += "/";
+
+        // Formamos la etiqueta <a> con la ruta relativa o absoluta adecuada
+        html << "<a href=\"" << name << "\">" << name << "</a>\n";
+    }
+
+    closedir(dir);
+
+    html << "</pre><hr></body></html>";
+    return html.str();
+	*/
+}
+
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
 int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf)
 {
-	struct stat	st;
+	struct stat							st;
+	struct stat							index_st;
+	std::vector<std::string>::iterator	it;
 
 	if (stat(file.c_str(), &st) < 0)
 		return NOT_FOUND;
-	else
+
+	if ((st.st_mode & S_IFMT) == S_IFREG)
 	{
-		if ((st.st_mode & S_IFMT) == S_IFREG)
+		if (access(file.c_str(), F_OK | R_OK) < 0)
+			return FORBIDDEN;
+		fs.open(file.c_str(), std::ios::in | std::ios::binary);
+		if (!fs.is_open())
+			return INTERNAL_SERVER_ERROR;
+		rs_content_length = st.st_size;
+		return OK;
+	}
+	else if ((st.st_mode & S_IFMT) == S_IFDIR)
+	{
+		for (it = locationconf.indexes.begin(); it != locationconf.indexes.end(); it++)
 		{
-			if (access(file.c_str(), F_OK | R_OK) < 0)
-				return FORBIDDEN;
-			fs.open(file.c_str(), std::ios::in | std::ios::binary);
-			if (!fs.is_open())
-				return INTERNAL_SERVER_ERROR;
-			rs_content_length = st.st_size;
-		}
-		else if ((st.st_mode & S_IFMT) == S_IFDIR)
-		{
-			if (locationconf.autoindex == AUTOINDEX_OFF || !locationconf.indexes.size())
-				return NOT_FOUND;
-			for (size_t i = 0; i < locationconf.indexes.size(); i++)
+			if (it->empty())
+				continue;
+			std::string	tmp = *it;
+			refactorFile(file, tmp);
+
+			if (stat(tmp.c_str(), &index_st) == 0 && (index_st.st_mode & S_IFMT) == S_IFREG)
 			{
-				if (locationconf.indexes[i].empty())
-					return NOT_FOUND;
-				std::string	tmp = file + "/" + locationconf.indexes[i];
-				if (access(tmp.c_str(), F_OK | R_OK) < 0)
-					continue;
+				if (access(tmp.c_str(), R_OK) < 0)
+					return FORBIDDEN;
 				fs.open(tmp.c_str(), std::ios::in | std::ios::binary);
 				if (!fs.is_open())
 					return INTERNAL_SERVER_ERROR;
+				rs_content_length = index_st.st_size;
+
 				file = tmp;
-				break;
+				return OK;
 			}
+			if (locationconf.autoindex == AUTOINDEX_ON)
+				return createAutoindex(file);
+			return FORBIDDEN;
 		}
 	}
-	return OK;
+	return NOT_FOUND;
 }
 
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
 int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf)
 {
-	struct stat	st;
+	struct stat							st;
+	struct stat							index_st;
+	std::vector<std::string>::iterator	it;
 
 	if (stat(file.c_str(), &st) < 0)
 		return NOT_FOUND;
@@ -104,22 +152,31 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 	}
 	else if ((st.st_mode & S_IFMT) == S_IFDIR)
 	{
-		if (serverconf.autoindex == AUTOINDEX_OFF)
-			return NOT_FOUND;
-		for (size_t i = 0; i < serverconf.indexes.size(); i++)
+		for (it = serverconf.indexes.begin(); it != serverconf.indexes.end(); it++)
 		{
-			std::string	tmp = serverconf.indexes[i];
-			refactorFile(file, tmp);
-			if (access(tmp.c_str(), F_OK | R_OK) < 0)
+			if (it->empty())
 				continue;
-			fs.open(tmp.c_str(), std::ios::in | std::ios::binary);
-			if (!fs.is_open())
-				return INTERNAL_SERVER_ERROR;
-			file = tmp;
-			break;
+			std::string	tmp = *it;
+			refactorFile(file, tmp);
+
+			if (stat(tmp.c_str(), &index_st) == 0 && (index_st.st_mode & S_IFMT) == S_IFREG)
+			{
+				if (access(tmp.c_str(), R_OK) < 0)
+					return FORBIDDEN;
+				fs.open(tmp.c_str(), std::ios::in | std::ios::binary);
+				if (!fs.is_open())
+					return INTERNAL_SERVER_ERROR;
+				rs_content_length = index_st.st_size;
+
+				file = tmp;
+				return OK;
+			}
+			if (serverconf.autoindex == AUTOINDEX_ON)
+				return createAutoindex(file);
+			return FORBIDDEN;
 		}
 	}
-	return OK;
+	return NOT_FOUND;
 }
 
 /* Constructs the full path of file or directory into string file and returns the current location */
@@ -163,26 +220,20 @@ int	HTTPmessage::httpGET() //implementar cgi
 	LocationConfig	*locationconf = getPathLocation(full_path);
 	std::fstream	fs;
 
+
 	if (!locationconf)
 	{
 		if ((rs_startline.status_code = openFile(full_path, fs, *serverconf)) != OK)
-		{
-			setStatusCode(rs_startline.status_code);
-			return -1;
-		}
+			return -setStatusCode(rs_startline.status_code);
 	}
 	else
 	{
 		if ((rs_startline.status_code = openFile(full_path, fs, *locationconf)) != OK)
-		{
-			setStatusCode(rs_startline.status_code);
-			return -1;
-		}
+			return -setStatusCode(rs_startline.status_code);
 	}
 
 	rs_body.resize(rs_content_length);
 	fs.read(&rs_body[0], rs_content_length);
-	std::cout << full_path << "\n";
 	if (fs.fail())
 	{
 		rs_body.clear();
