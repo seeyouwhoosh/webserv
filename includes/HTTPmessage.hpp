@@ -15,12 +15,13 @@
 #include "Config.hpp"
 #include "WebServer.hpp"
 
-#define ERRPAGE_DIR	"error_pages" //por cambiar
+#define ERRPAGE_DIR	"error_pages"
 
 enum	StatusCodes
 {
 	OK						= 200,
 	CREATED					= 201,
+	MOVED_PERMANENTLY		= 301,
 	BAD_REQUEST				= 400,
 	FORBIDDEN				= 403,
 	NOT_FOUND				= 404,
@@ -75,24 +76,30 @@ private:
 	/* Response variables */
 	t_rs_startline	rs_startline;
 	std::string		rs_header;
-	std::string		rs_date;
-	std::string		rs_location;		/* Only used if status code is 3XX or 201 */
-	std::string		rs_methods_allowed;	/* Only used if status code is 405 */
 	std::string		rs_body;			/* Used if it's a GET request or error response */
 	size_t			rs_content_length;	/* Only used if there is a body */
-	std::string		rs_content_type;	/* Only used if there is a body. Format: type/extension_type */
-
+	stringmap		rs_headers;
 
 	/* Helper functions */
 	int				matchMethod(std::string &method);
+	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
+	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
+	void			setResponse();
+	void			setAllowHeader();
+	int				getLocation(std::vector<LocationConfig> &locations, std::string file);
+
 	LocationConfig	*getPathLocation(std::string &file);
 	int				generateErrorResponse(int error);
 	int				openErrorFile(int error, std::fstream &fs);
-	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
-	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
+	
+	void			autoindexParentPath(std::stringstream &page);
+	void			autoindexAddElement(std::stringstream &page, std::string dir_path, std::string name);
+	void			autoindexHtmlHead(std::stringstream &page, std::string virtual_path);
 	int				createAutoindex(std::string dir);
-	void			setResponse();
+	
 	void			fillCGIenv();
+
+	int			manageActuallyDir();
 
 	/* HTTP methods */
 	int				httpGET();
@@ -109,15 +116,9 @@ public:
 
 	/* Request variables */
 	t_rq_startline	rq_startline;
-	stringmap		rq_headers;
 	std::string		rq_body;
-	std::string		rq_host;
-	int				rq_keep_alive;
-	t_accept		rq_accept;
-	std::string		rq_content_type;
-	bool			rq_chunked;
 	size_t			rq_content_length;
-	std::string		rq_user_agent;
+	stringmap		rq_headers;
 
 	/* Getters and setters */
 	const std::string&	getVersion() const;
@@ -131,8 +132,7 @@ public:
 	void				setBody(const std::string& body);
 	void				setServerConf(ServerConfig& serverconf);
 	void				setServerPort(std::string serverPort);
-	std::string			getServerPort();
-
+	std::string			getServerPort() const;
 
 	/* Main user functions */
 	int					generateResponse();
@@ -155,4 +155,4 @@ std::string	getFileExtension(std::string file);
 
 std::string	getMIMEtype(std::string ext);
 
-int			get_location(std::vector<LocationConfig> &locations, std::string file);
+int			getLocation(std::vector<LocationConfig> &locations, std::string file);

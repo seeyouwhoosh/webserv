@@ -58,16 +58,16 @@ int HTTPmessage::setStatusCode(const int code)
 	return code;
 }
 
-/* Set HTTP request headers */
+/* Set HTTP response headers */
 void HTTPmessage::setHeader(const std::string& name, const std::string& value)
 {
-	rq_headers[name] = value;
+	rs_headers[name] = value;
 }
 
-/* Get HTTP request headers */
+/* Get HTTP response headers */
 const std::map<std::string, std::string>& HTTPmessage::getHeaders() const
 {
-	return rq_headers;
+	return rs_headers;
 }
 
 /* Set HTTP response body */
@@ -101,7 +101,7 @@ void	HTTPmessage::setServerPort(std::string ServerPort)
 }
 
 /* Get HTTP server port */
-std::string	HTTPmessage::getServerPort()
+std::string	HTTPmessage::getServerPort() const
 {
 	return server_port;
 }

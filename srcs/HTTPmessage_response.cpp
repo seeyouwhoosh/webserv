@@ -12,7 +12,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 	std::stringstream			error_str;
 	error_str << error;
 	std::string					err_file = error_str.str() + ".html";
-	int							pos = (serverconf) ? get_location(serverconf->locations, rq_startline.path) : -1;
+	int							pos = (serverconf) ? getLocation(serverconf->locations, rq_startline.path) : -1;
 	
 	std::string	file;
 	if (pos >= 0 && pos < static_cast<int>(serverconf->locations.size()))
@@ -42,13 +42,13 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 	fs.open(file.c_str(), std::ios::in | std::ios::binary);
 	if (!fs.is_open() || fs.fail())
 		return -1;
-	if (is_empty(fs))
+	if (file_is_empty(fs))
 	{
 		fs.close();
 		return -1;
 	}
 	rs_content_length = st.st_size;
-	rs_content_type = getMIMEtype(getFileExtension(file));
+	rs_headers["Content-type"] = getMIMEtype(getFileExtension(file));
 	return 0;
 }
 
@@ -65,9 +65,9 @@ static std::string	generateErrorFile(int error, std::string phrase, std::fstream
 		return "";
 
 	std::ostringstream	content;
-	content << "<!DOCTYPE html>\n<html>\n  <head>\n    <title>";
+	content << "<!DOCTYPE html>\n<html>\n  <head>\n\t<title>";
 	content << error_str.str() << " " << phrase;
-	content << "\n</title>\n  </head>\n  <body>\n    <h1>";
+	content << "\n</title>\n  </head>\n  <body>\n\t<h1>";
 	content << error_str.str() << " " << phrase; 
 	content << "</h1>\n  </body>\n</html>";
 	std::string body = content.str();
@@ -100,8 +100,7 @@ int	HTTPmessage::generateErrorResponse(int error)
 		if (read_failed)
 		{
 			rs_body.clear();
-			setStatusCode(INTERNAL_SERVER_ERROR);
-			return -1;
+			return -setStatusCode(INTERNAL_SERVER_ERROR);
 		}
 		return 0;
 	}
@@ -109,15 +108,28 @@ int	HTTPmessage::generateErrorResponse(int error)
 	rs_body = generateErrorFile(error, rs_startline.reason_phrase, err_file);
 	rs_content_length = rs_body.size();
 	if (!rs_content_length)
-	{
-		setStatusCode(INTERNAL_SERVER_ERROR);
-		return -1;
-	}
-	rs_content_type = getMIMEtype("html");
+		return -setStatusCode(INTERNAL_SERVER_ERROR);
+
+	rs_headers["Content-type"] = "text/html";
 	return 0;
 }
 
-/* If no problems were detected in the parsing, matches the method and redirects to the correspondent method function. *NOTE: METHOD FUNCTIONS (in case of success) FILL THE NECESSARY RESPONSE VARIABLES (RS_VARIABLE), EXCEPT FOR RS_DATE, WHICH IS GENERATED AT THE TIME OF INSERTION*
+void	HTTPmessage::setAllowHeader()
+{
+	std::stringstream	header;
+	for (size_t i = 0; i < allowedMethods.size(); i++)
+	{
+		header << allowedMethods[i];
+		if (i != allowedMethods.size() - 1)
+			header << ", ";
+		else
+			header << "\r\n";
+	}
+
+	rs_headers["Allow"] = header.str();
+}
+
+/* If no problems were detected in the parsing, matches the method and redirects to the correspondent method function. *NOTE: METHOD FUNCTIONS (in case of success) FILL THE NECESSARY RESPONSE VARIABLES, EXCEPT FOR Date, WHICH IS GENERATED AT THE TIME OF INSERTION*
 If method function returns -1, error is set and the error generating function is called */
 int	HTTPmessage::generateResponse()
 {
@@ -142,12 +154,13 @@ int	HTTPmessage::generateResponse()
 				error = rs_startline.status_code;
 			break;
 		default:
+			setAllowHeader();
 			break;
 		}
 	}
 	if (error && generateErrorResponse(error) < 0)
 		return -1;
-	rs_date = getDate();
+	rs_headers["Date"] = getDate();
 	setResponse();
 	return 0;
 }
@@ -185,26 +198,12 @@ void	HTTPmessage::setResponse()
 
 	responseStream << rs_startline.version << " " << rs_startline.status_code << " " << rs_startline.reason_phrase << "\r\n";
 
-	responseStream << "Date: " << rs_date << "\r\n";
-	if (rs_startline.status_code == 201 || (rs_startline.status_code / 100) == 3)
-		responseStream << "Location: " << rs_location << "\r\n";
+	for (stringmap::iterator it = rs_headers.begin(); it != rs_headers.end(); it++)
+		responseStream << it->first << ": " << it->second << "\r\n";
+
 	if (!rs_body.empty())
-	{
-		responseStream << "Content-Type: " << rs_content_type << "\r\n";
 		responseStream << "Content-Length: " << rs_content_length << "\r\n";
-	}
-	if (rs_startline.status_code == 405)
-	{
-		responseStream << "Allow: ";
-		for (size_t i = 0; i < allowedMethods.size(); i++)
-		{
-			responseStream << allowedMethods[i];
-			if (i != allowedMethods.size() - 1)
-				responseStream << ", ";
-			else
-				responseStream << "\r\n";
-		}
-	}
+
 	responseStream << "\r\n";
 
 	rs_header = responseStream.str();

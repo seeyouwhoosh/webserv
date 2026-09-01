@@ -77,6 +77,6 @@ public:
 
 int			listen_socket(struct addrinfo *addr, int listen_num);
 int			error_msg(int err_code, const char *func, const char *msg);
-bool		is_empty(std::fstream &file);
+bool		file_is_empty(std::fstream &file);
 std::string	getDate();
 

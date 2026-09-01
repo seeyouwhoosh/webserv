@@ -5,7 +5,7 @@
 - [x] Crear funciones para generar fechas
 - [x] cambiar `std::vector<t_client>` por `std::map<int, t_client>` porque lo que está dando problemas al parecer es la liberación de eso o algo así
 - [x] Gestionar la respuesta para enviarlo non blocking (enviar primero el header y luego el cuerpo a cachos)
-- [ ] Implementar el autoindex
+- [x] Implementar el autoindex
 - [ ] Método GET
 - [ ] Método DELETE
 - [ ] Método POST

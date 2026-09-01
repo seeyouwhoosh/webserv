@@ -85,6 +85,7 @@ void	init_responses()
 {
 	responses[OK]						= "OK";
 	responses[CREATED]					= "Created";
+	responses[MOVED_PERMANENTLY]		= "Moved Permanently";
 	responses[BAD_REQUEST]				= "Bad Request";
 	responses[FORBIDDEN]				= "Forbidden";
 	responses[NOT_FOUND]				= "Not Found";
@@ -132,7 +133,7 @@ void	HTTPmessage::fillCGIenv()
 	cgi_env.push_back("QUERY_STRING=" + rq_startline.query);
 
 	cgi_env.push_back("CONTENT_LENGTH=" + rq_content_length);
-	cgi_env.push_back("CONTENT_TYPE=" + rq_content_type);
+	cgi_env.push_back("CONTENT_TYPE=" + rq_headers["Content-Type"]);
 	cgi_env.push_back("PATH_INFO=");
 	cgi_env.push_back("PATH_TRANSLATED=");
 
@@ -150,10 +151,7 @@ bool	HTTPmessage::isComplete() const
 {
 	size_t total_expected = rs_header.length() + rs_body.length();
 
-	if (!rs_body.empty())
-		total_expected += 2;
-
-	return totalSent >= total_expected;
+	return totalSent == total_expected;
 }
 
 void	HTTPmessage::clear()

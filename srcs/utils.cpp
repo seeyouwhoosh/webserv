@@ -51,7 +51,7 @@ int	hexToAscii(std::string s)
 	return result;
 }
 
-bool is_empty(std::fstream &file)
+bool file_is_empty(std::fstream &file)
 {
 	return file.peek() == std::fstream::traits_type::eof();
 }

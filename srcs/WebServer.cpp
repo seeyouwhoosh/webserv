@@ -284,7 +284,7 @@ int	WebServer::handle_client_data(int client)
 
 	/* ************************** ERASE ************************** */
 	clientBuffer.rq_startline.method = "GET";
-	clientBuffer.rq_startline.path = "/";
+	clientBuffer.rq_startline.path = "/test/";
 	clientBuffer.rq_startline.version = "HTTP/1.1";
 	clientBuffer.setStatusCode(OK);
 	/* ************************** ERASE *************************** */
