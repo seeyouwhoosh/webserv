@@ -1,4 +1,3 @@
-#include <cctype>
 #include <fstream>
 
 #include "HTTPmessage.hpp"
@@ -209,5 +208,4 @@ void	HTTPmessage::setResponse()
 	responseStream << "\r\n";
 
 	rs_header = responseStream.str();
-	totalSent = 0;
 }

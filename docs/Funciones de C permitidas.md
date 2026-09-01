@@ -363,7 +363,6 @@ Abre o crea un archivo.
 int close(int fd);
 ```
 
-
 Cierra un descriptor.
 
 ```c

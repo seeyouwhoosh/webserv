@@ -1,20 +1,19 @@
 #pragma once
-#include <netdb.h>
-#include <sys/epoll.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include <netdb.h> /* getaddrinfo, freeaddrinfo */
+#include <sys/epoll.h> /* epoll_create, epoll_ctl, epoll_wait */
+#include <arpa/inet.h> /* htons, ntohs */
+#include <fcntl.h> /* fcntl */
 
 #include <cstring>
 #include <cerrno>
 #include <ctime>
 
-#include <vector>
+#include <string>
 #include <sstream>
 #include <iostream>
-#include <string>
+#include <vector>
+#include <map>
 #include <algorithm>
-#include <sstream>
 
 #include "Config.hpp"
 #include "HTTPmessage.hpp"
@@ -32,6 +31,7 @@ typedef	struct t_client
 }	t_client;
 
 class HTTPmessage;
+class Parser;
 
 class WebServer
 {
@@ -49,7 +49,8 @@ public:
 	int							epoll_instance;
 	std::vector<int>			listeners;
 	std::map<int, t_client>		clients;
-	std::map<int, HTTPmessage>	clientBuffers;
+	std::map<int, HTTPmessage>	clientRequests;
+	std::map<int, Parser>		clientParsers;
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
 

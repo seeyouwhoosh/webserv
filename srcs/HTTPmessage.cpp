@@ -5,6 +5,7 @@
 HTTPmessage::HTTPmessage()
 {
 	rs_startline.version = "HTTP/1.1";
+	totalSent = 0;
 	serverconf = NULL;
 }
 
@@ -27,6 +28,7 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 		return *this;
 	rs_startline.version = other.rs_startline.version;
 	serverconf = other.serverconf;
+	totalSent = 0;
 	return *this;
 }
 

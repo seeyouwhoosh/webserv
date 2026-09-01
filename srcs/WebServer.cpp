@@ -135,39 +135,6 @@ int	WebServer::prepare_listeners()
 	return 0;
 }
 
-int	WebServer::epoll_start_instance()
-{
-	if ((epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
-	{
-		free_all();
-		return error_msg(errno, "epoll_create", NULL);
-	}
-	
-	std::cout << "\033[1m[webserv]\33[0m Epoll instance created succesfully" << "\n";
-
-	if (epoll_add_listens() < 0)
-		return -1;
-
-	std::cout << "\033[1m[webserv]\33[0m Epoll added listeners to watch. Total connections: " << num_connections << "\n";
-	return 0;
-}
-
-int	WebServer::epoll_add_listens()
-{
-	for (size_t i = 0; i < servers.size() ; i++)
-	{
-		for (size_t j = 0; j < servers[i].listens.size(); j++)
-		{
-			if (epoll_add_fd(servers[i].listens[j].sockfd) < 0)
-			{
-				free_all();
-				return -1;
-			}
-		}
-	}
-	return 0;
-}
-
 /* If it's an existing fd (listener), returns true, else returns false */
 bool	WebServer::is_listener(int fd)
 {
@@ -177,49 +144,6 @@ bool	WebServer::is_listener(int fd)
 			return true;
 	}
 	return false;
-}
-
-int	WebServer::epoll_add_fd(int fd)
-{
-	struct epoll_event	event;
-
-	event.events = EPOLLIN;
-	event.data.fd = fd;
-	if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, fd, &event) < 0)
-		return error_msg(errno, "epoll_ctl", NULL);
-	num_connections++;
-	return 0;
-}
-
-int	WebServer::epoll_del_fd(int fd)
-{
-	if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, fd, NULL) < 0)
-		return error_msg(errno, "epoll_ctl", NULL);
-	return 0;
-}
-
-int	WebServer::epoll_addflag_fd(int fd, int flag)
-{
-	struct epoll_event	event;
-	event.data.fd = fd;
-	event.events = EPOLLIN | flag;
-
-	if (epoll_ctl(epoll_instance, EPOLL_CTL_MOD, fd, &event) < 0)
-		return error_msg(errno, "epoll_ctl", NULL);
-	return 0;
-}
-
-int	WebServer::epoll_delflag_fd(int fd, int flag)
-{
-	struct epoll_event event;
-
-	event.data.fd = fd;
-	event.events = EPOLLIN & ~flag;
-
-	if (epoll_ctl(epoll_instance, EPOLL_CTL_MOD, fd, &event) < 0)
-		return error_msg(errno, "epoll_ctl", NULL);
-		
-	return 0;
 }
 
 void	WebServer::create_new_client(int clientsock, int listener)
@@ -239,8 +163,10 @@ void	WebServer::create_new_client(int clientsock, int listener)
 			if (listener == servers[i].listens[j].sockfd)
 			{
 				HTTPmessage client_message(&servers[i]);
+				Parser		client_parser;
 				client_message.setServerPort(servers[i].listens[j].port);
-				this->clientBuffers[clientsock] = client_message;
+				this->clientRequests[clientsock] = client_message;
+				this->clientParsers[clientsock] = client_parser;
 				clients[clientsock] = new_client;
 				return;
 			}
@@ -323,11 +249,18 @@ int	WebServer::keep_alive_client(int fd)
 	return 0;
 }
 
+int	update_client(t_client client)
+{
+	client.last_activity = std::time(NULL);
+	client.n_requests++;
+	return 0;
+}
+
 // HANDLE CLIENT REQUESTS
 
 int	WebServer::handle_client_data(int client)
 {
-	HTTPmessage			&clientBuffer = clientBuffers[client];
+	HTTPmessage			&clientBuffer = clientRequests[client];
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
 
@@ -336,10 +269,10 @@ int	WebServer::handle_client_data(int client)
 	{
 		buff[read_size] = '\0';
 		
-/* 		Parser	parser;
+	/* 	Parser	&clientParser = clientParsers[clients];
 		int		parse_status;
 
-		if ((parse_status = parser.parseRequest(clientBuffer)) == PARSE_ERROR)
+		if ((parse_status = clientParser.parseRequest(clientBuffer)) == PARSE_ERROR)
 			clientBuffer.setStatusCode(BAD_REQUEST);
 		else if (parse_status == PARSE_INCOMPLETE)
 			return 0;
@@ -348,12 +281,10 @@ int	WebServer::handle_client_data(int client)
 			clientBuffer.generateResponse();
 			clientBuffer.sendResponse(client);
 		} */
-		
-
 
 	/* ************************** ERASE ************************** */
 	clientBuffer.rq_startline.method = "GET";
-	clientBuffer.rq_startline.path = "/picture.jpeg";
+	clientBuffer.rq_startline.path = "/";
 	clientBuffer.rq_startline.version = "HTTP/1.1";
 	clientBuffer.setStatusCode(OK);
 	/* ************************** ERASE *************************** */
@@ -373,7 +304,8 @@ int	WebServer::handle_client_data(int client)
 	{
 		std::cout << "Client closed connection\n";
 
-		clientBuffers.erase(client);
+		clientRequests.erase(client);
+		clientParsers.erase(client);
 		clients.erase(client);
 		if (close_connection(client) < 0)
 			return -1;
@@ -402,7 +334,7 @@ int	WebServer::process_connections(int num_events)
 		}
 		if (epoll_events[i].events & EPOLLOUT)
 		{
-			HTTPmessage &clientBuffer = clientBuffers[fd];
+			HTTPmessage &clientBuffer = clientRequests[fd];
 			int	sent_size = clientBuffer.sendResponse(fd);
 
 			if (sent_size < 0)

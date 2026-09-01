@@ -45,41 +45,83 @@ int	get_location(std::vector<LocationConfig> &locations, std::string file)
 		return location_pos;
 }
 
-int	HTTPmessage::createAutoindex(std::string dir)
+int	HTTPmessage::createAutoindex(std::string dir_path)
 {
-	(void)dir;
-	return setStatusCode(NOT_IMPLEMENTED);
-	/*
+	std::stringstream page;
 	DIR *dir = opendir(dir_path.c_str());
-    if (!dir)
-        return "";
+	if (!dir)
+	{
+		if (errno == EACCES)
+			return FORBIDDEN;
+		if (errno == ENOENT)
+			return NOT_FOUND;
+		return INTERNAL_SERVER_ERROR;
+	}
 
-    std::ostringstream html;
-    html << "<!DOCTYPE html><html><head><title>Index of " << uri_path << "</title></head><body>"
-         << "<h1>Index of " << uri_path << "</h1><hr><pre>";
 
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL)
-    {
-        std::string name = entry->d_name;
-        
-        // Opcional: ignorar "." pero dejar ".." para poder subir de directorio
-        if (name == ".")
-            continue;
+	page << "<!DOCTYPE html>\n<html>\n\t<head>\n";
 
-        // Si es un directorio, le añadimos '/' al final para que el navegador sepa que es una carpeta
-        if (entry->d_type == DT_DIR)
-            name += "/";
+	page << "\t\t<title>Index of " << rq_startline.path << "</title>\n";
 
-        // Formamos la etiqueta <a> con la ruta relativa o absoluta adecuada
-        html << "<a href=\"" << name << "\">" << name << "</a>\n";
-    }
+	page << "\t\t<style>\n\t\t\ttable {\n\t\t\t\twidth: 65%;\n\t\t\t\tborder-collapse: collapse;\n\tth}\n\t\t\tth, td {\n\t\ttext-align: left;\n\t\tfont-family: \"Courier New\", Courier, monospace;\n\tth}\n\t\t</style>\n\t<head>\n\t<body>\n";
 
-    closedir(dir);
+	page << "\t\t<h1>Index of " << rq_startline.path << "</h1><hr><pre>";
 
-    html << "</pre><hr></body></html>";
-    return html.str();
-	*/
+	page << "\t<table>\n\t\t<thead>\n\t<tr id=\"theader\">\n\t\t\t\t<th>Name</th>\n\t\t\t\t<th>Last modified</th>\n\t\t\t\t<th>Size</th>\n\t\t\t</tr>\n\t\t</thead>\n\t\t<tbody id=\"tbody\">\n";
+
+	struct dirent	*entry;
+	struct stat		st;
+	char			buffer[20];
+
+	if (!dir_path.empty() && dir_path[dir_path.length() - 1] != '/')
+		dir_path += "/";
+	while ((entry = readdir(dir)) != NULL)
+	{
+		bool		write_size = true;
+		std::string	name = entry->d_name;
+		
+		if (name == ".")
+		continue;
+
+		if (name == "..")
+		{
+			page << "\t\t\t<tr>\n\t\t\t\t<td><a href=\"" << name << "\"> Parent directory</a></td>\n\t\t\t\t<td></td>\n\t\t\t\t<td></td>\n\t\t\t</tr>\n";
+			continue;
+		}
+	
+		std::string	full_name = dir_path + name;
+
+		std::cout << full_name << "\n";
+
+		if (stat(full_name.c_str(), &st) < 0)
+			continue;
+		if (entry->d_type == DT_DIR)
+		{
+			name += "/";
+			write_size = false;
+		}
+
+		std::strftime(buffer, sizeof(buffer),"%Y-%m-%d %H:%M", std::localtime(&st.st_mtim.tv_sec));
+		std::string	last_modified = std::string(buffer);
+
+		page << "\t\t\t<tr>\n\t\t\t\t<td><a href=\"" << name << "\">" << name << "</a></td>\n";
+		page << "\t\t\t\t<td>" << last_modified << "</td>\n";
+		page << "\t\t\t\t<td>";
+		if (write_size)
+			page << st.st_size;
+		else 
+			page << "-";
+		page << "</td>\n\t\t\t</tr>\n";
+	}
+
+	closedir(dir);
+
+	page << "\t\t</tbody>\n\t</table>\n</body>\n</html>";
+
+	rs_body = page.str();
+	rs_content_length = rs_body.length();
+	rs_content_type = getMIMEtype("html");
+	return OK;
 }
 
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */

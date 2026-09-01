@@ -1,9 +1,8 @@
 #pragma once
 
-#include <netdb.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
+#include <unistd.h> /* open, close, read, write, access, execve, fork, pipe, dup2, chdir, opendir */
+#include <dirent.h> /* readdir, closedir */
+#include <sys/stat.h> /* stat */
 
 #include <cstdio>
 
