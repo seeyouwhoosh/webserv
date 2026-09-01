@@ -45,9 +45,9 @@ int	get_location(std::vector<LocationConfig> &locations, std::string file)
 		return location_pos;
 }
 
-int	HTTPmessage::createAutoindex(std::string dir_path)
+int HTTPmessage::createAutoindex(std::string dir_path)
 {
-	std::stringstream page;
+	std::stringstream	page;
 	DIR *dir = opendir(dir_path.c_str());
 	if (!dir)
 	{
@@ -58,65 +58,80 @@ int	HTTPmessage::createAutoindex(std::string dir_path)
 		return INTERNAL_SERVER_ERROR;
 	}
 
+	if (!dir_path.empty() && dir_path[dir_path.length() - 1] != '/')
+		dir_path += "/";
 
-	page << "<!DOCTYPE html>\n<html>\n\t<head>\n";
-
-	page << "\t\t<title>Index of " << rq_startline.path << "</title>\n";
-
-	page << "\t\t<style>\n\t\t\ttable {\n\t\t\t\twidth: 65%;\n\t\t\t\tborder-collapse: collapse;\n\tth}\n\t\t\tth, td {\n\t\ttext-align: left;\n\t\tfont-family: \"Courier New\", Courier, monospace;\n\tth}\n\t\t</style>\n\t<head>\n\t<body>\n";
-
-	page << "\t\t<h1>Index of " << rq_startline.path << "</h1><hr><pre>";
-
-	page << "\t<table>\n\t\t<thead>\n\t<tr id=\"theader\">\n\t\t\t\t<th>Name</th>\n\t\t\t\t<th>Last modified</th>\n\t\t\t\t<th>Size</th>\n\t\t\t</tr>\n\t\t</thead>\n\t\t<tbody id=\"tbody\">\n";
+	page << "<!DOCTYPE html><html><head><title>Index of " << rq_startline.path << "</title>"
+			<< "<style>"
+			<< "table { width: 65%; border-collapse: collapse; }"
+			<< "th, td { text-align: left; font-family: \"Courier New\", Courier, monospace; padding: 4px 8px; }"
+			<< "</style></head><body>"
+			<< "<h1>Index of " << rq_startline.path << "</h1><hr>"
+			<< "<table><thead><tr id=\"theader\"><th>Name</th><th>Last modified</th><th>Size</th></tr></thead>"
+			<< "<tbody id=\"tbody\">";
 
 	struct dirent	*entry;
 	struct stat		st;
-	char			buffer[20];
+	char buffer[64];
 
-	if (!dir_path.empty() && dir_path[dir_path.length() - 1] != '/')
-		dir_path += "/";
 	while ((entry = readdir(dir)) != NULL)
 	{
-		bool		write_size = true;
-		std::string	name = entry->d_name;
-		
+		std::string name = entry->d_name;
+
 		if (name == ".")
-		continue;
+			continue;
 
 		if (name == "..")
 		{
-			page << "\t\t\t<tr>\n\t\t\t\t<td><a href=\"" << name << "\"> Parent directory</a></td>\n\t\t\t\t<td></td>\n\t\t\t\t<td></td>\n\t\t\t</tr>\n";
+			if (rq_startline.path == "/")
+				continue;
+
+			std::string parent_path = rq_startline.path;
+			if (parent_path.length() > 1 && parent_path[parent_path.length() - 1] == '/')
+				parent_path.erase(parent_path.length() - 1);
+
+			size_t last_slash = parent_path.find_last_of('/');
+			if (last_slash != std::string::npos)
+				parent_path = parent_path.substr(0, last_slash + 1);
+			else
+				parent_path = "/";
+
+			page << "<tr><td><a href=\"" << parent_path << "\">Parent directory/</a></td>"
+					<< "<td>-</td><td>-</td></tr>";
 			continue;
 		}
-	
-		std::string	full_name = dir_path + name;
 
-		std::cout << full_name << "\n";
+		std::string full_path = dir_path + name;
 
-		if (stat(full_name.c_str(), &st) < 0)
+		if (stat(full_path.c_str(), &st) < 0)
 			continue;
-		if (entry->d_type == DT_DIR)
-		{
+
+		bool is_dir = S_ISDIR(st.st_mode);
+		if (is_dir)
 			name += "/";
-			write_size = false;
-		}
 
-		std::strftime(buffer, sizeof(buffer),"%Y-%m-%d %H:%M", std::localtime(&st.st_mtim.tv_sec));
-		std::string	last_modified = std::string(buffer);
+		time_t mod_time = st.st_mtime;
+		struct tm *timeinfo = std::localtime(&mod_time);
+		if (timeinfo)
+			std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", timeinfo);
+		else
+			buffer[0] = '\0';
 
-		page << "\t\t\t<tr>\n\t\t\t\t<td><a href=\"" << name << "\">" << name << "</a></td>\n";
-		page << "\t\t\t\t<td>" << last_modified << "</td>\n";
-		page << "\t\t\t\t<td>";
-		if (write_size)
-			page << st.st_size;
-		else 
+		page << "<tr><td><a href=\"" << name << "\">" << name << "</a></td>"
+				<< "<td>" << buffer << "</td>"
+				<< "<td>";
+
+		if (is_dir)
 			page << "-";
-		page << "</td>\n\t\t\t</tr>\n";
+		else
+			page << st.st_size;
+
+		page << "</td></tr>";
 	}
 
 	closedir(dir);
 
-	page << "\t\t</tbody>\n\t</table>\n</body>\n</html>";
+	page << "</tbody></table></body></html>";
 
 	rs_body = page.str();
 	rs_content_length = rs_body.length();
@@ -191,6 +206,7 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 		if (!fs.is_open())
 			return INTERNAL_SERVER_ERROR;
 		rs_content_length = st.st_size;
+		return OK;
 	}
 	else if ((st.st_mode & S_IFMT) == S_IFDIR)
 	{
@@ -262,28 +278,27 @@ int	HTTPmessage::httpGET() //implementar cgi
 	LocationConfig	*locationconf = getPathLocation(full_path);
 	std::fstream	fs;
 
-
+	int status;
 	if (!locationconf)
-	{
-		if ((rs_startline.status_code = openFile(full_path, fs, *serverconf)) != OK)
-			return -setStatusCode(rs_startline.status_code);
-	}
+		status = openFile(full_path, fs, *serverconf);
 	else
-	{
-		if ((rs_startline.status_code = openFile(full_path, fs, *locationconf)) != OK)
-			return -setStatusCode(rs_startline.status_code);
-	}
+		status = openFile(full_path, fs, *locationconf);
 
-	rs_body.resize(rs_content_length);
-	fs.read(&rs_body[0], rs_content_length);
-	if (fs.fail())
+	if (status != OK)
+		return -setStatusCode(status);
+
+	if (fs.is_open())
 	{
-		rs_body.clear();
-		setStatusCode(INTERNAL_SERVER_ERROR);
-		return -1;
+		rs_body.resize(rs_content_length);
+		fs.read(&rs_body[0], rs_content_length);
+		if (fs.fail())
+		{
+			rs_body.clear();
+			return -setStatusCode(INTERNAL_SERVER_ERROR);
+		}
+		rs_content_type = getMIMEtype(getFileExtension(full_path));
 	}
 	setStatusCode(OK);
-	rs_content_type = getMIMEtype(getFileExtension(full_path));
 	return 0;
 }
 
@@ -293,11 +308,8 @@ int	HTTPmessage::httpPOST() // implementar cgi
 	bool			create = false;
 
 	if (rq_body.size() != rq_content_length)
-	{
-		setStatusCode(BAD_REQUEST);
-		return -1;
-	}
-	
+		return -setStatusCode(BAD_REQUEST);
+
 	struct stat	st;
 
 	getPathLocation(full_path);
@@ -308,17 +320,13 @@ int	HTTPmessage::httpPOST() // implementar cgi
 
 	fs.open(full_path.c_str(), std::ios::out | std::ios::binary);
 	if (!fs.is_open())
-	{
-		setStatusCode(FORBIDDEN);
-		return -1;
-	}
+		return -setStatusCode(FORBIDDEN);
 	fs.write(rs_body.c_str(), rq_content_length);
 
 	if (fs.fail())
 	{
 		fs.close();
-		setStatusCode(INTERNAL_SERVER_ERROR);
-		return -1;
+		return -setStatusCode(INTERNAL_SERVER_ERROR);
 	}
 	fs.close();
 
@@ -326,7 +334,6 @@ int	HTTPmessage::httpPOST() // implementar cgi
 		setStatusCode(CREATED);
 	else
 		setStatusCode(OK);
-
 	return 0;
 }
 
@@ -337,21 +344,13 @@ int	HTTPmessage::httpDELETE()
 
 	struct stat	st;
 	if (stat(full_path.c_str(), &st) < 0)
-	{
-		setStatusCode(NOT_FOUND);
-		return -1;
-	}
+		return -setStatusCode(NOT_FOUND);
+
 	if ((st.st_mode & S_IFMT) == S_IFDIR)
-	{
-		setStatusCode(NOT_IMPLEMENTED);
-		return -1;
-	}
+		return -setStatusCode(NOT_IMPLEMENTED);
 
 	if (access(full_path.c_str(), F_OK | R_OK |X_OK) < 0 || std::remove(full_path.c_str()) != 0)
-	{
-		setStatusCode(FORBIDDEN);
-		return -1;
-	}
+		return -setStatusCode(FORBIDDEN);
 
 	return 0;
 }
