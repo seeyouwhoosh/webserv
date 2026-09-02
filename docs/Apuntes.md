@@ -6,11 +6,11 @@
 - [x] cambiar `std::vector<t_client>` por `std::map<int, t_client>` porque lo que está dando problemas al parecer es la liberación de eso o algo así
 - [x] Gestionar la respuesta para enviarlo non blocking (enviar primero el header y luego el cuerpo a cachos)
 - [x] Implementar el autoindex
+- [ ] Gestionar la petición del cliente del close connection y keep-alive
+- [ ] Implementar CGI
 - [ ] Método GET
 - [ ] Método DELETE
 - [ ] Método POST
-- [ ] Gestionar la petición del cliente del close connection y keep-alive
-- [ ] Implementar CGI
 
 ## Estructura del archivo de configuración
 *Ejemplo:*
