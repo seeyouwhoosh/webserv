@@ -15,7 +15,7 @@ static void	refactorFile(std::string &path, std::string &file)
 }
 
 /* Returns location index if it exist, it not, returns -1 */
-int	getLocation(std::vector<LocationConfig> &locations, std::string file)
+int	getLocationIndex(std::vector<LocationConfig> &locations, std::string path)
 {
 	size_t		max_len = 0;
 	size_t		location_pos = -1;
@@ -24,7 +24,7 @@ int	getLocation(std::vector<LocationConfig> &locations, std::string file)
 	{
 		size_t	len = locations[i].name.length();
 		
-		if (!file.find(locations[i].name))
+		if (!path.find(locations[i].name))
 		{
 			if (len > max_len)
 			{
@@ -243,35 +243,59 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 	return NOT_FOUND;
 }
 
-/* Constructs the full path of file or directory into string file and returns the current location */
-LocationConfig	*HTTPmessage::getPathLocation(std::string &file)
+/*
+/scripts/app.php/usuarios/123
+
+
+*/
+/* Cleans the given raw_path from request and returns a string without queries and path_info */
+std::string	HTTPmessage::parsePath()
 {
-	if (serverconf == NULL)
-	{
-		setStatusCode(INTERNAL_SERVER_ERROR);
-		return NULL;
-	}
-	size_t query_pos = file.find('?');
+	std::string	file = rq_startline.raw_path;
+	size_t		query_pos = file.find('?');
+	size_t		app_pos = file.find('.');
 
 	if (query_pos != std::string::npos)
 	{
 		rq_startline.query = file.substr(query_pos + 1);
 		file = file.substr(0, query_pos);
 	}
-	rq_startline.path = file;
+	if (app_pos != std::string::npos)
+	{
+		size_t		app_end = file.find('/', app_pos);
+		std::string	app_ext = (app_end == std::string::npos) ? file.substr(app_pos + 1) : file.substr(app_pos, app_end - app_pos - 1);
+		if (!matchCGI(app_ext).empty())
+		{
+			rq_startline.path_info = file.substr(app_end);
+			file = file.substr(0, app_end);
+		}
+	}
+	rq_startline.file = file;
+	return file;
+}
 
-	int	location_pos = getLocation(serverconf->locations, file);
+/* Constructs the full path of file or directory into string file and returns the current location */
+LocationConfig	*HTTPmessage::getFullPath(std::string &full_path)
+{
+	if (serverconf == NULL)
+	{
+		setStatusCode(INTERNAL_SERVER_ERROR);
+		return NULL;
+	}
+	full_path = parsePath();
+
+	int	location_pos = getLocationIndex(serverconf->locations, full_path);
 
 	if (location_pos < 0)
 	{
 		std::string root = serverconf->root;
-		refactorFile(root, file);
+		refactorFile(root, full_path);
 		return NULL;
 	}
 
 	LocationConfig	&locationconf = serverconf->locations[location_pos];
 	std::string root = locationconf.root.empty() ? serverconf->root : locationconf.root;
-	refactorFile(root, file);
+	refactorFile(root, full_path);
 
 	return &locationconf;
 }
@@ -279,11 +303,11 @@ LocationConfig	*HTTPmessage::getPathLocation(std::string &file)
 /* When the GET path is like "/thing" meaning to grab a file but it's actually a directory*/
 int	HTTPmessage::manageActuallyDir()
 {
-	if (rq_startline.path.empty() || rq_startline.path[rq_startline.path.length() - 1] == '/')
+	if (full_path.empty() || full_path[full_path.length() - 1] == '/')
 		return 0;
 	setStatusCode(MOVED_PERMANENTLY);
 
-	std::string redirect_url = rq_startline.path + "/";
+	std::string redirect_url = full_path + "/";
 	
 	if (!rq_startline.query.empty())
 		redirect_url += "?" + rq_startline.query;

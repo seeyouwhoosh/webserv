@@ -3,15 +3,16 @@
 /* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
 int	HTTPmessage::httpGET() //implementar cgi
 {
-	full_path = rq_startline.path;
-	LocationConfig	*locationconf = getPathLocation(full_path);
+	full_path = rq_startline.raw_path;
+	struct stat		st;
+	LocationConfig	*locationconf = getFullPath(full_path);
+
+	if (stat(full_path.c_str(), &st) == 0 && (st.st_mode & S_IFMT) == S_IFDIR && manageActuallyDir())
+	return 0;
+	
+	int				status;
 	std::fstream	fs;
 
-	struct stat st;
-	if (stat(full_path.c_str(), &st) == 0 && (st.st_mode & S_IFMT) == S_IFDIR && manageActuallyDir())
-		return 0;
-	
-	int status;
 	if (!locationconf)
 		status = openFile(full_path, fs, *serverconf);
 	else
@@ -45,7 +46,7 @@ int	HTTPmessage::httpPOST() // implementar cgi
 
 	struct stat	st;
 
-	getPathLocation(full_path);
+	getFullPath(full_path);
 	if (stat(full_path.c_str(), &st) < 0)
 		create = true;
 
@@ -73,7 +74,7 @@ int	HTTPmessage::httpPOST() // implementar cgi
 int	HTTPmessage::httpDELETE()
 {
 	full_path = rq_startline.path;
-	getPathLocation(full_path);
+	getFullPath(full_path);
 
 	struct stat	st;
 	if (stat(full_path.c_str(), &st) < 0)

@@ -11,7 +11,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 {
 	std::string	error_str = toString(error);
 	std::string					err_file = error_str + ".html";
-	int							pos = (serverconf) ? getLocation(serverconf->locations, rq_startline.path) : -1;
+	int							pos = (serverconf) ? getLocationIndex(serverconf->locations, rq_startline.path) : -1;
 	
 	std::string	file;
 	if (pos >= 0 && pos < static_cast<int>(serverconf->locations.size()))

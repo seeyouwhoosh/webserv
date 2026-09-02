@@ -44,7 +44,9 @@ enum	RequestMethod
 typedef	struct t_rq_startline
 {
 	std::string	method;
-	std::string	path;
+	std::string	raw_path;
+	std::string	file;
+	std::string	path_info;
 	std::string	query;
 	std::string	version;
 }	t_rq_startline;
@@ -80,31 +82,34 @@ private:
 	size_t			rs_content_length;
 	stringmap		rs_headers;
 
-	/* Helper functions */
-	int				matchMethod(std::string &method);
-	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
-	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
-	void			setResponse();
-	void			setAllowHeader();
-	int				getLocation(std::vector<LocationConfig> &locations, std::string file);
-
-	LocationConfig	*getPathLocation(std::string &file);
-	int				generateErrorResponse(int error);
-	int				openErrorFile(int error, std::fstream &fs);
-	
-	void			autoindexParentPath(std::stringstream &page);
-	void			autoindexAddElement(std::stringstream &page, std::string dir_path, std::string name);
-	void			autoindexHtmlHead(std::stringstream &page, std::string virtual_path);
-	int				createAutoindex(std::string dir);
-	
-	void			fillCGIenv();
-
-	int				manageActuallyDir();
-
 	/* HTTP methods */
 	int				httpGET();
 	int				httpPOST();
 	int				httpDELETE();
+
+	/* Autoindex */
+	void			autoindexParentPath(std::stringstream &page);
+	void			autoindexAddElement(std::stringstream &page, std::string dir_path, std::string name);
+	void			autoindexHtmlHead(std::stringstream &page, std::string virtual_path);
+	int				createAutoindex(std::string dir);
+
+	/* CGI */
+	std::string		matchCGI(std::string extension);
+	void			fillCGIenv();
+
+	/* File management */
+	std::string		parsePath();
+	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
+	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
+	LocationConfig	*getFullPath(std::string &file);
+	int				openErrorFile(int error, std::fstream &fs);
+	int				generateErrorResponse(int error);
+	int				manageActuallyDir();
+
+	/* Other */
+	int				matchMethod(std::string &method);
+	void			setResponse();
+	void			setAllowHeader();
 
 public:
 	/* Orthodox Canonical Form */
@@ -155,4 +160,4 @@ std::string	getFileExtension(std::string file);
 
 std::string	getMIMEtype(std::string ext);
 
-int			getLocation(std::vector<LocationConfig> &locations, std::string file);
+int			getLocationIndex(std::vector<LocationConfig> &locations, std::string path);

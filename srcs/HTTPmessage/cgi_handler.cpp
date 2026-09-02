@@ -23,6 +23,17 @@ void	HTTPmessage::fillCGIenv()
 	cgi_env.push_back("REMOTE_IDENT=");
 	cgi_env.push_back("REMOTE_USER=");
 
-	cgi_env.push_back("SCRIPT_NAME=" + rq_startline.path);
+	cgi_env.push_back("SCRIPT_NAME=" + rq_startline.file);
 	cgi_env.push_back(NULL);
 }
+
+std::string	HTTPmessage::matchCGI(std::string extension)
+{
+	cgi_handler_type::iterator	it = serverconf->cgi_handlers.find(extension);
+
+	if (it == serverconf->cgi_handlers.end())
+		return "";
+	
+	return it->second;
+}
+
