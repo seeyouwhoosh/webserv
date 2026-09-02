@@ -9,9 +9,8 @@ If everything fails, uses the default given by the webserver.
 If error_file does not exist in any case or it fails somehow, returns -1 */
 int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 {
-	std::stringstream			error_str;
-	error_str << error;
-	std::string					err_file = error_str.str() + ".html";
+	std::string	error_str = toString(error);
+	std::string					err_file = error_str + ".html";
 	int							pos = (serverconf) ? getLocation(serverconf->locations, rq_startline.path) : -1;
 	
 	std::string	file;
@@ -29,7 +28,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 			file = serverconf->root + "/" + it->second;
 	}
 	if (file.empty())
-		file = std::string(ERRPAGE_DIR) + "/" + error_str.str() + ".html";
+		file = std::string(ERRPAGE_DIR) + "/" + error_str + ".html";
 
 	struct stat	st;
 	if (stat(file.c_str(), &st) < 0)
@@ -55,8 +54,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 /* Creates an error file into the default error pages directory established in the header */
 static std::string	generateErrorFile(int error, std::string phrase, std::fstream &fs)
 {
-	std::stringstream	error_str;
-	error_str << error;
+	std::string	error_str = toString(error);
 	std::string			file;
 
 	file = std::string(ERRPAGE_DIR) + "/" + error_str.str() + ".html";
@@ -64,11 +62,11 @@ static std::string	generateErrorFile(int error, std::string phrase, std::fstream
 	if (!fs.is_open() || fs.fail())
 		return "";
 
-	std::ostringstream	content;
+	std::stringstream	content;
 	content << "<!DOCTYPE html>\n<html>\n  <head>\n\t<title>";
-	content << error_str.str() << " " << phrase;
+	content << error_str << " " << phrase;
 	content << "\n</title>\n  </head>\n  <body>\n\t<h1>";
-	content << error_str.str() << " " << phrase; 
+	content << error_str << " " << phrase; 
 	content << "</h1>\n  </body>\n</html>";
 	std::string body = content.str();
 

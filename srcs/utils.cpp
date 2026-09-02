@@ -53,7 +53,7 @@ int	hexToAscii(std::string s)
 
 bool file_is_empty(std::fstream &file)
 {
-	return file.peek() == std::fstream::traits_type::eof();
+	return file.peek() == std::ios::traits_type::eof();
 }
 
 std::string	getDate()

@@ -105,3 +105,33 @@ std::string	HTTPmessage::getServerPort() const
 {
 	return server_port;
 }
+
+/* Match method given in parameters. If non matches, returns -1, else returns method enum */
+int	HTTPmessage::matchMethod(std::string &method)
+{
+	int	e_methods[] = {
+		GET,
+		POST,
+		DELETE,
+		BAD_METHOD,
+	};
+
+	for (size_t i = 0; i < allowedMethods.size(); i++)
+	{
+		if (method == allowedMethods[i])
+			return e_methods[i];
+	}
+	return BAD_METHOD;
+}
+
+bool	HTTPmessage::isComplete() const
+{
+	size_t total_expected = rs_header.length() + rs_body.length();
+
+	return totalSent == total_expected;
+}
+
+void	HTTPmessage::clear()
+{
+	;
+}

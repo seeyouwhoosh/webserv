@@ -38,14 +38,17 @@ class WebServer
 private:
 	
 public:
+	/* Orthodox Canonical Form */
 	WebServer();
 	WebServer(const WebServer &other);
 	WebServer &operator=(const WebServer &other);
 	~WebServer();
 
+	/* Configuration classes */
 	GlobalConfig				global;
 	std::vector<ServerConfig>	servers;
 
+	/* Connection variables */
 	int							epoll_instance;
 	std::vector<int>			listeners;
 	std::map<int, t_client>		clients;
@@ -54,17 +57,21 @@ public:
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
 
+	/* Sockets and clients handlers */
 	int			prepare_listeners();
-	int			process_connections(int num_events);
-	bool		is_listener(int fd);
 	int			handle_new_connection(int listener);
+	bool		is_listener(int fd);
+	int			process_connections(int num_events);
+
 	void		create_new_client(int clientsock, int listener);
 	int			keep_alive_client(int fd);
 	int			handle_client_data(int client);
-	void		free_all();
-	void		free_all_addrinfos();
 	int			close_connection(int fd);
 
+	void		free_all();
+	void		free_all_addrinfos();
+
+	/* Epoll handlers */
 	int			epoll_start_instance();
 	int			epoll_add_fd(int fd);
 	int			epoll_del_fd(int fd);
@@ -72,11 +79,25 @@ public:
 	int			epoll_delflag_fd(int fd, int flag);
 	int			epoll_add_listens();
 	
+	/* Getters and setters*/
 	std::string	getPort(int listener);
 };
 
+/* Miscelaneous helper functions */
+
+template <typename T>
+std::string toString(const T val)
+{
+	std::stringstream stream;
+	stream << val;
+	return stream.str();
+}
+
 int			listen_socket(struct addrinfo *addr, int listen_num);
+
 int			error_msg(int err_code, const char *func, const char *msg);
+
 bool		file_is_empty(std::fstream &file);
+
 std::string	getDate();
 

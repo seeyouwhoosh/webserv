@@ -76,8 +76,8 @@ private:
 	/* Response variables */
 	t_rs_startline	rs_startline;
 	std::string		rs_header;
-	std::string		rs_body;			/* Used if it's a GET request or error response */
-	size_t			rs_content_length;	/* Only used if there is a body */
+	std::string		rs_body;
+	size_t			rs_content_length;
 	stringmap		rs_headers;
 
 	/* Helper functions */
@@ -99,7 +99,7 @@ private:
 	
 	void			fillCGIenv();
 
-	int			manageActuallyDir();
+	int				manageActuallyDir();
 
 	/* HTTP methods */
 	int				httpGET();

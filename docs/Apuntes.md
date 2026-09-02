@@ -344,7 +344,7 @@ When another computer receives the packet, the hardware strips the Ethernet head
     </form>
 ```
 
-### Forma implícita de recoger el input
+### Forma implícita de recoger el input (HTML)
 ```html
 <label>
   I like peas.
@@ -357,3 +357,11 @@ Dentro del form vemos `action` y `method`, que básicamente, cuando se termina d
 ```
 /some/url/submit_page?name=Bob&email=bob%40bob.com
 ```
+
+## CGI
+
+**He empezado por rellenar las variables del cgi, algunas notorias son:**
+Ejemplo: `https://ejemplo.com/scripts/app.php/usuarios/123`
+* SCRIPT_NAME: `/scripts/app.php`
+* PATH_INFO: `/usuarios/123`
+* PATH_TRANSLATED: `/var/www/html/usuarios/123`

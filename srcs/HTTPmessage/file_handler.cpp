@@ -15,7 +15,7 @@ static void	refactorFile(std::string &path, std::string &file)
 }
 
 /* Returns location index if it exist, it not, returns -1 */
-int	HTTPmessage::getLocation(std::vector<LocationConfig> &locations, std::string file)
+int	getLocation(std::vector<LocationConfig> &locations, std::string file)
 {
 	size_t		max_len = 0;
 	size_t		location_pos = -1;
@@ -295,39 +295,4 @@ int	HTTPmessage::manageActuallyDir()
 	rs_headers["Content-Type"] = "text/html";
 
 	return 1;
-}
-
-/* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
-int	HTTPmessage::httpGET() //implementar cgi
-{
-	full_path = rq_startline.path;
-	LocationConfig	*locationconf = getPathLocation(full_path);
-	std::fstream	fs;
-
-	struct stat st;
-	if (stat(full_path.c_str(), &st) == 0 && (st.st_mode & S_IFMT) == S_IFDIR && manageActuallyDir())
-		return 0;
-	
-	int status;
-	if (!locationconf)
-		status = openFile(full_path, fs, *serverconf);
-	else
-		status = openFile(full_path, fs, *locationconf);
-
-	if (status != OK)
-		return -setStatusCode(status);
-
-	if (fs.is_open())
-	{
-		rs_body.resize(rs_content_length);
-		fs.read(&rs_body[0], rs_content_length);
-		if (fs.fail())
-		{
-			rs_body.clear();
-			return -setStatusCode(INTERNAL_SERVER_ERROR);
-		}
-		rs_headers["Content-Type"] = getMIMEtype(getFileExtension(full_path));
-	}
-	setStatusCode(OK);
-	return 0;
 }
