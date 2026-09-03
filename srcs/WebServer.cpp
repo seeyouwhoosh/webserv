@@ -146,7 +146,7 @@ bool	WebServer::is_listener(int fd)
 	return false;
 }
 
-void	WebServer::create_new_client(int clientsock, int listener)
+void	WebServer::create_new_client(int clientsock, int listener, struct sockaddr *clientaddr)
 {
 	t_client	new_client = {
 		.fd = clientsock,
@@ -164,7 +164,9 @@ void	WebServer::create_new_client(int clientsock, int listener)
 			{
 				HTTPmessage client_message(&servers[i]);
 				Parser		client_parser;
+				
 				client_message.setServerPort(servers[i].listens[j].port);
+				client_message.setClientAddress(inet_ntop(clientaddr->ss_family, clientaddr));
 				this->clientRequests[clientsock] = client_message;
 				this->clientParsers[clientsock] = client_parser;
 				clients[clientsock] = new_client;
@@ -229,7 +231,7 @@ int	WebServer::handle_new_connection(int listener)
 		return -1;
 	}
 
-	create_new_client(clientsock, listener);
+	create_new_client(clientsock, listener, clientaddr);
 
 	return 0;
 }

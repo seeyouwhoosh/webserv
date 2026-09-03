@@ -243,11 +243,6 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 	return NOT_FOUND;
 }
 
-/*
-/scripts/app.php/usuarios/123
-
-
-*/
 /* Cleans the given raw_path from request and returns a string without queries and path_info */
 std::string	HTTPmessage::parsePath()
 {
@@ -266,9 +261,12 @@ std::string	HTTPmessage::parsePath()
 		std::string	app_ext = (app_end == std::string::npos) ? file.substr(app_pos + 1) : file.substr(app_pos, app_end - app_pos - 1);
 		if (!matchCGI(app_ext).empty())
 		{
+			rq_startline.iscgi = true;
 			rq_startline.path_info = file.substr(app_end);
 			file = file.substr(0, app_end);
 		}
+		else
+			rq_startline.iscgi = false;
 	}
 	rq_startline.file = file;
 	return file;

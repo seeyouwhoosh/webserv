@@ -106,6 +106,18 @@ std::string	HTTPmessage::getServerPort() const
 	return server_port;
 }
 
+/* Set client address */
+void	HTTPmessage::setClientAddress(std::string client_address)
+{
+	client_addr = client_address;
+}
+
+/* Get client address */
+std::string	HTTPmessage::getClientAddress() const
+{
+	return client_addr;
+}
+
 /* Match method given in parameters. If non matches, returns -1, else returns method enum */
 int	HTTPmessage::matchMethod(std::string &method)
 {

@@ -49,6 +49,7 @@ typedef	struct t_rq_startline
 	std::string	path_info;
 	std::string	query;
 	std::string	version;
+	bool		iscgi;
 }	t_rq_startline;
 
 typedef	struct t_rs_startline
@@ -70,10 +71,12 @@ class HTTPmessage
 private:	
 	/* General variables */
 	ServerConfig				*serverconf;
-	std::vector<std::string>	cgi_env;
 	std::string					full_path;
-	std::string					server_port;
 	size_t						totalSent;
+	
+	std::vector<std::string>	cgi_env;
+	std::string					server_port;
+	std::string					client_addr;
 	
 	/* Response variables */
 	t_rs_startline	rs_startline;
@@ -130,14 +133,19 @@ public:
 	int					getStatusCode() const;
 	const stringmap&	getHeaders() const;
 	const std::string&	getBody() const;
-	ServerConfig		*getServerConf() const;
 	void				setVersion(const std::string& method);
 	int					setStatusCode(const int code);
 	void				setHeader(const std::string& name, const std::string& value);
 	void				setBody(const std::string& body);
 	void				setServerConf(ServerConfig& serverconf);
+	ServerConfig		*getServerConf() const;
 	void				setServerPort(std::string serverPort);
 	std::string			getServerPort() const;
+	void				setClientAddress(std::string client_address);
+	std::string			getClientAddress() const;
+{
+	return client_addr;
+}
 
 	/* Main user functions */
 	int					generateResponse();

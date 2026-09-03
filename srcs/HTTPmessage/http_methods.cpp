@@ -8,15 +8,20 @@ int	HTTPmessage::httpGET() //implementar cgi
 	LocationConfig	*locationconf = getFullPath(full_path);
 
 	if (stat(full_path.c_str(), &st) == 0 && (st.st_mode & S_IFMT) == S_IFDIR && manageActuallyDir())
-	return 0;
+		return 0;
 	
 	int				status;
 	std::fstream	fs;
 
-	if (!locationconf)
-		status = openFile(full_path, fs, *serverconf);
+	if (rq_startline.iscgi)
+		handle_cgi();
 	else
-		status = openFile(full_path, fs, *locationconf);
+	{
+		if (!locationconf)
+			status = openFile(full_path, fs, *serverconf);
+		else
+			status = openFile(full_path, fs, *locationconf);
+	}
 
 	if (status != OK)
 		return -setStatusCode(status);

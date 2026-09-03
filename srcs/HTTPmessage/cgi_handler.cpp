@@ -14,16 +14,25 @@ void	HTTPmessage::fillCGIenv()
 
 	cgi_env.push_back("CONTENT_LENGTH=" + rq_content_length);
 	cgi_env.push_back("CONTENT_TYPE=" + rq_headers["Content-Type"]);
-	cgi_env.push_back("PATH_INFO=");
-	cgi_env.push_back("PATH_TRANSLATED=");
+	cgi_env.push_back("PATH_INFO=" + rq_startline.path_info);
+	cgi_env.push_back("PATH_TRANSLATED=" + servercong->root + rq_startline.path_info);
 
 	cgi_env.push_back("AUTH_TYPE=");
-	cgi_env.push_back("REMOTE_ADDR=");
-	cgi_env.push_back("REMOTE_HOST=");
+	cgi_env.push_back("REMOTE_ADDR=" + client_addr);
+	cgi_env.push_back("REMOTE_HOST=" + client_addr);
 	cgi_env.push_back("REMOTE_IDENT=");
 	cgi_env.push_back("REMOTE_USER=");
 
 	cgi_env.push_back("SCRIPT_NAME=" + rq_startline.file);
+
+	for (stringmap::iterator it = rq_headers.begin(); it != rq_headers.end(); it++)
+	{
+		std::string	var = it->first;
+		std::transform(var.begin(), var.end(), var.begin(), std::toupper);
+		std::replace(var.begin(), var.end(), '-', '_');
+		cgi_env.push_back("HTTP_" + var + "=" + it->second)
+	}
+	
 	cgi_env.push_back(NULL);
 }
 
@@ -37,3 +46,8 @@ std::string	HTTPmessage::matchCGI(std::string extension)
 	return it->second;
 }
 
+void	handle_cgi()
+{
+	/* Mirar que el archivo está bien, existe y es ejecutable, si no, poner el código de error */
+	/* Contruir el pipe, fork y el env para ejecutarlo y redirigirlo a algún archivo o algo así*/
+}

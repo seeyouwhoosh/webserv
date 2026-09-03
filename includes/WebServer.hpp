@@ -101,3 +101,4 @@ bool		file_is_empty(std::fstream &file);
 
 std::string	getDate();
 
+std::string	inet_ntop(int af, const void *src);

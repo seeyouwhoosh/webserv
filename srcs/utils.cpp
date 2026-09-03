@@ -74,7 +74,7 @@ std::string	getDate()
 	return std::string(buffer);
 }
 
-/* static int	valid_ip(int af, const char *src)
+static int	valid_ip(int af, const char *src)
 {
 	size_t	char_count = 0;
 
@@ -108,7 +108,7 @@ std::string	getDate()
 		return 0;
 }
 
-std::string	parseIPv6(const char *src)
+static std::string	parseIPv6(const char *src)
 {
 	std::string	ip(src);
 	size_t		pos = ip.find("::");
@@ -125,56 +125,20 @@ std::string	parseIPv6(const char *src)
 	return ip;
 }
 
-//convert IPv4 and IPv6 addresses from text to binary form
-int inet_pton(int af, const char *src, void *dst)
-{
-	if (valid_ip(af, src))
-		return -1;
-	if (af == AF_INET)
-	{
-		int bytes[4];
-		std::stringstream ss(src);
-	
-		for (size_t i = 0; i < 4; i++)
-		{
-			if (!std::getline(ss, s, '.'))
-				return -1;
-			bytes[i] = std::stoi(s);
-			if (bytes[i] < 0 || bytes[i] > 255)
-				return 0;
-		}
-		std::memcpy(&(addr->s_addr), bytes, 4);
-		return 1;
-	}
-	else if (af == AF_INET6)
-	{
-		std::string s = parseIPv6(src);
-		std::stringstream ss(s);
-	
-		for (size_t i = 0; i < 8; i++)
-		{
-			if (!std::getline(ss, s, ':'))
-				return 0;
-			uint16_t val = static_cast<uint16_t>(std::stoul(s, nullptr, 16));
-			(static_cast<struct in6_addr*>(dst))->s6_addr[i * 2]     = static_cast<uint8_t>(val >> 8);
-			(static_cast<struct in6_addr*>(dst))->s6_addr[i * 2 + 1] = static_cast<uint8_t>(val & 0xFF);
-		}
-		return 1:
-	}
-	else
-		return -1;
-}
 
-// convert IPv4 and IPv6 addresses from binary to text form
-const char	*inet_ntop(int af, const void *src, char dst[size], socklen_t size)
+/* convert IPv4 and IPv6 addresses from binary to text form */
+std::string	inet_ntop(int af, const void *src)
 {
 	std::stringstream ss;
 	std::string s;
 
+	if (!srs)
+		return "";
+
 	if (af == AF_INET)
 	{
 		const struct in_addr	*addr4 = static_cast<const struct in_addr *>(src);
-		uint32_t				addr = ntohs(addr->s_addr);
+		uint32_t				addr = ntohl(addr4->s_addr);
 
 		ss << ((addr >> 24) & 255 ) << "." << ((addr >> 16) & 255 ) << "." << ((addr >> 8) & 255 ) << "." << (addr & 255 );
 	}
@@ -185,20 +149,14 @@ const char	*inet_ntop(int af, const void *src, char dst[size], socklen_t size)
 		for (size_t i = 0; i < 16; i+=2)
 		{
 			uint16_t group = (addr6->s6_addr[i] << 8) | addr6->s6_addr[i + 1];
-			if (group)
-				ss << std::hex << group;
-			if (i != 6)
+			ss << std::hex << group;
+			if (i != 14)
 				ss << ":";
 		}
-		dst = ss.str();
 	}
 	else
-		return NULL;
-
+		return "";
 	s = ss.str();
-	if (s.size() + 1 > size)
-		return NULL;
-	std::strcpy(dst, s);
-	return dst;
+
+	return s;
 }
-*/
