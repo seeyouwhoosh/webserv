@@ -8,18 +8,23 @@ int	HTTPmessage::httpGET() //implementar cgi
 	LocationConfig	*locationconf = getFullPath(full_path);
 
 	if (stat(full_path.c_str(), &st) == 0 && (st.st_mode & S_IFMT) == S_IFDIR && manageActuallyDir())
+	{
+		setStatusCode(MOVED_PERMANENTLY);
 		return 0;
-	
+	}
+
 	int				status;
 	std::fstream	fs;
 
 	if (rq_startline.iscgi)
-		handle_cgi();
+		status = handle_cgi();
 	else
 	{
+		if (!locationconf && !serverconf)
+			return -setStatusCode(INTERNAL_SERVER_ERROR);
 		if (!locationconf)
 			status = openFile(full_path, fs, *serverconf);
-		else
+		else	
 			status = openFile(full_path, fs, *locationconf);
 	}
 

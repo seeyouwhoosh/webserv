@@ -75,6 +75,7 @@ private:
 	size_t						totalSent;
 	
 	std::vector<std::string>	cgi_env;
+	std::abort					cgi_path;
 	std::string					server_port;
 	std::string					client_addr;
 	
@@ -99,6 +100,7 @@ private:
 	/* CGI */
 	std::string		matchCGI(std::string extension);
 	void			fillCGIenv();
+	int				handle_cgi();
 
 	/* File management */
 	std::string		parsePath();

@@ -46,8 +46,32 @@ std::string	HTTPmessage::matchCGI(std::string extension)
 	return it->second;
 }
 
-void	handle_cgi()
+int	HTTPmessage::handle_cgi()
 {
+	struct stat	*st;
+
+	if (stat(full_path.c_str(), st) < 0)
+		return NOT_FOUND;
+
+	if (access(full_path.c_str(), F_OK | X_OK) < 0)
+		return FORBIDDEN;
+	
+	
+
+	int		fd[2];
+	pid_t	pid;
+
+	pid = fork();
+	switch (pid)
+	{
+	case -1:
+		return INTERNAL_SERVER_ERROR;
+	case 0:
+		execve(,, cgi_env.data())
+		break;
+	default:
+		break;
+	}
 	/* Mirar que el archivo está bien, existe y es ejecutable, si no, poner el código de error */
 	/* Contruir el pipe, fork y el env para ejecutarlo y redirigirlo a algún archivo o algo así*/
 }

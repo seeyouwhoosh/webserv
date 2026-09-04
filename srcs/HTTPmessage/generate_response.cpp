@@ -115,6 +115,7 @@ int	HTTPmessage::generateErrorResponse(int error)
 void	HTTPmessage::setAllowHeader()
 {
 	std::stringstream	header;
+
 	for (size_t i = 0; i < allowedMethods.size(); i++)
 	{
 		header << allowedMethods[i];

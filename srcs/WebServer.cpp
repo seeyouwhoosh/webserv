@@ -280,6 +280,7 @@ int	WebServer::handle_client_data(int client)
 			return 0;
 		else if (parse_status == PARSE_COMPLETE)
 		{
+			clientBuffer.setStatusCode(OK);
 			clientBuffer.generateResponse();
 			clientBuffer.sendResponse(client);
 		} */

@@ -259,7 +259,7 @@ std::string	HTTPmessage::parsePath()
 	{
 		size_t		app_end = file.find('/', app_pos);
 		std::string	app_ext = (app_end == std::string::npos) ? file.substr(app_pos + 1) : file.substr(app_pos, app_end - app_pos - 1);
-		if (!matchCGI(app_ext).empty())
+		if ((cgi_path = matchCGI(app_ext)) != "")
 		{
 			rq_startline.iscgi = true;
 			rq_startline.path_info = file.substr(app_end);
@@ -276,10 +276,8 @@ std::string	HTTPmessage::parsePath()
 LocationConfig	*HTTPmessage::getFullPath(std::string &full_path)
 {
 	if (serverconf == NULL)
-	{
-		setStatusCode(INTERNAL_SERVER_ERROR);
 		return NULL;
-	}
+
 	full_path = parsePath();
 
 	int	location_pos = getLocationIndex(serverconf->locations, full_path);
@@ -303,7 +301,6 @@ int	HTTPmessage::manageActuallyDir()
 {
 	if (full_path.empty() || full_path[full_path.length() - 1] == '/')
 		return 0;
-	setStatusCode(MOVED_PERMANENTLY);
 
 	std::string redirect_url = full_path + "/";
 	

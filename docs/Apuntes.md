@@ -6,8 +6,12 @@
 - [x] cambiar `std::vector<t_client>` por `std::map<int, t_client>` porque lo que está dando problemas al parecer es la liberación de eso o algo así
 - [x] Gestionar la respuesta para enviarlo non blocking (enviar primero el header y luego el cuerpo a cachos)
 - [x] Implementar el autoindex
-- [ ] Gestionar la petición del cliente del close connection y keep-alive
 - [ ] Implementar CGI
+  - [ ] Parsear el request query
+  - [ ] implementar la búsqueda de la carpeta cgi-bin y gestionar eso
+  - [ ] diferenciar entre los ejecutables y los que son ejecutables por archivos
+  - [ ] construir la lista de argumentos
+- [ ] Gestionar la petición del cliente del close connection y keep-alive
 - [ ] Método GET
 - [ ] Método DELETE
 - [ ] Método POST
