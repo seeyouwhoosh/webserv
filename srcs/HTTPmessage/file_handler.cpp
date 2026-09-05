@@ -248,25 +248,11 @@ std::string	HTTPmessage::parsePath()
 {
 	std::string	file = rq_startline.raw_path;
 	size_t		query_pos = file.find('?');
-	size_t		app_pos = file.find('.');
 
 	if (query_pos != std::string::npos)
 	{
 		rq_startline.query = file.substr(query_pos + 1);
 		file = file.substr(0, query_pos);
-	}
-	if (app_pos != std::string::npos)
-	{
-		size_t		app_end = file.find('/', app_pos);
-		std::string	app_ext = (app_end == std::string::npos) ? file.substr(app_pos + 1) : file.substr(app_pos, app_end - app_pos - 1);
-		if ((cgi_path = matchCGI(app_ext)) != "")
-		{
-			rq_startline.iscgi = true;
-			rq_startline.path_info = file.substr(app_end);
-			file = file.substr(0, app_end);
-		}
-		else
-			rq_startline.iscgi = false;
 	}
 	rq_startline.file = file;
 	return file;
@@ -286,12 +272,15 @@ LocationConfig	*HTTPmessage::getFullPath(std::string &full_path)
 	{
 		std::string root = serverconf->root;
 		refactorFile(root, full_path);
+		CGIparse(*serverconf);
+
 		return NULL;
 	}
 
 	LocationConfig	&locationconf = serverconf->locations[location_pos];
 	std::string root = locationconf.root.empty() ? serverconf->root : locationconf.root;
 	refactorFile(root, full_path);
+	CGIparse(locationconf);
 
 	return &locationconf;
 }

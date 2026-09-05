@@ -7,7 +7,6 @@
 - [x] Gestionar la respuesta para enviarlo non blocking (enviar primero el header y luego el cuerpo a cachos)
 - [x] Implementar el autoindex
 - [ ] Implementar CGI
-  - [ ] Parsear el request query
   - [ ] implementar la búsqueda de la carpeta cgi-bin y gestionar eso
   - [ ] diferenciar entre los ejecutables y los que son ejecutables por archivos
   - [ ] construir la lista de argumentos
@@ -15,6 +14,7 @@
 - [ ] Método GET
 - [ ] Método DELETE
 - [ ] Método POST
+  - [ ] Parsear el request query del post
 
 ## Estructura del archivo de configuración
 *Ejemplo:*
@@ -369,3 +369,17 @@ Ejemplo: `https://ejemplo.com/scripts/app.php/usuarios/123`
 * SCRIPT_NAME: `/scripts/app.php`
 * PATH_INFO: `/usuarios/123`
 * PATH_TRANSLATED: `/var/www/html/usuarios/123`
+
+```
+[Cliente] ──► [HTTP Server]
+                   │
+                   ├── 1. Lee configuración ──► ¿La ruta activa CGI? ──► SÍ
+                   ├── 2. Lee Content-Length y recupera el 'body' del POST
+                   ├── 3. Prepara Pipe Entrada (stdin) y Pipe Salida (stdout)
+                   ├── 4. fork() ──► Process Hijo (execve del script o del intérprete)
+                   │                       │
+                   │                       ├── Recibe body vía stdin
+                   │                       └── Escribe cabeceras/salida en stdout
+                   │
+                   └── 5. Lee stdout del hijo ──► Formatea respuesta HTTP ──► [Cliente]
+```
