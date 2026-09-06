@@ -3,14 +3,17 @@
 #include <unistd.h> /* open, close, read, write, access, execve, fork, pipe, dup2, chdir, opendir */
 #include <dirent.h> /* readdir, closedir */
 #include <sys/stat.h> /* stat */
+#include <sys/wait.h> /* wait */
 
 #include <cstdio>
+#include <cctype>
 
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <map>
 #include <vector>
+#include <algorithm>
 
 #include "Config.hpp"
 #include "WebServer.hpp"
@@ -148,9 +151,6 @@ public:
 	std::string			getServerPort() const;
 	void				setClientAddress(std::string client_address);
 	std::string			getClientAddress() const;
-{
-	return client_addr;
-}
 
 	/* Main user functions */
 	int					generateResponse();

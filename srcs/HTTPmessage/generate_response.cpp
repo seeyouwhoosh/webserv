@@ -11,7 +11,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 {
 	std::string	error_str = toString(error);
 	std::string					err_file = error_str + ".html";
-	int							pos = (serverconf) ? getLocationIndex(serverconf->locations, rq_startline.path) : -1;
+	int							pos = (serverconf) ? getLocationIndex(serverconf->locations, rq_startline.raw_path) : -1;
 	
 	std::string	file;
 	if (pos >= 0 && pos < static_cast<int>(serverconf->locations.size()))
@@ -57,7 +57,7 @@ static std::string	generateErrorFile(int error, std::string phrase, std::fstream
 	std::string	error_str = toString(error);
 	std::string			file;
 
-	file = std::string(ERRPAGE_DIR) + "/" + error_str.str() + ".html";
+	file = std::string(ERRPAGE_DIR) + "/" + error_str + ".html";
 	fs.open(file.c_str(), std::fstream::out | std::fstream::in | std::fstream::trunc | std::fstream::binary);
 	if (!fs.is_open() || fs.fail())
 		return "";

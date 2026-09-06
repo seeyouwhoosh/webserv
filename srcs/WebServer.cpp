@@ -1,7 +1,5 @@
 #include "WebServer.hpp"
 
-#define BUFFER_SIZE 1024
-
 WebServer::WebServer()
 {
 	epoll_events = new struct epoll_event[MAX_CONNECTIONS];
@@ -146,7 +144,7 @@ bool	WebServer::is_listener(int fd)
 	return false;
 }
 
-void	WebServer::create_new_client(int clientsock, int listener, struct sockaddr *clientaddr)
+void	WebServer::create_new_client(int clientsock, int listener, void *clientaddr)
 {
 	t_client	new_client = {
 		.fd = clientsock,
@@ -166,7 +164,7 @@ void	WebServer::create_new_client(int clientsock, int listener, struct sockaddr 
 				Parser		client_parser;
 				
 				client_message.setServerPort(servers[i].listens[j].port);
-				client_message.setClientAddress(inet_ntop(clientaddr->ss_family, clientaddr));
+				client_message.setClientAddress(inet_ntop(static_cast<struct sockaddr *>(clientaddr)->sa_family, clientaddr));
 				this->clientRequests[clientsock] = client_message;
 				this->clientParsers[clientsock] = client_parser;
 				clients[clientsock] = new_client;
@@ -231,7 +229,7 @@ int	WebServer::handle_new_connection(int listener)
 		return -1;
 	}
 
-	create_new_client(clientsock, listener, clientaddr);
+	create_new_client(clientsock, listener, &clientaddr);
 
 	return 0;
 }
@@ -259,6 +257,7 @@ int	update_client(t_client client)
 }
 
 // HANDLE CLIENT REQUESTS
+extern std::string	arv;
 
 int	WebServer::handle_client_data(int client)
 {
@@ -287,9 +286,10 @@ int	WebServer::handle_client_data(int client)
 
 	/* ************************** ERASE ************************** */
 	clientBuffer.rq_startline.method = "GET";
-	clientBuffer.rq_startline.path = "/test/";
+	clientBuffer.rq_startline.raw_path = arv;
 	clientBuffer.rq_startline.version = "HTTP/1.1";
 	clientBuffer.setStatusCode(OK);
+	std::cout << "file: " << arv << std::endl;
 	/* ************************** ERASE *************************** */
 
 		if (clientBuffer.generateResponse() < 0)

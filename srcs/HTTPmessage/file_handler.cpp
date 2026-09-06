@@ -6,7 +6,7 @@ static void	refactorFile(std::string &path, std::string &file)
 	if (path.empty())
 		return;
 	if (file[0] == '/')
-		file.erase(0,0);
+		file.erase(0,1);
 
 	if (path[path.size() - 1] == '/')
 		file = path + file;
@@ -42,10 +42,10 @@ int	getLocationIndex(std::vector<LocationConfig> &locations, std::string path)
 
 void	HTTPmessage::autoindexParentPath(std::stringstream &page)
 {
-	if (rq_startline.path == "/")
+	if (rq_startline.raw_path == "/")
 		return;
 
-	std::string parent_path = rq_startline.path;
+	std::string parent_path = rq_startline.raw_path;
 	if (parent_path.length() > 1 && parent_path[parent_path.length() - 1] == '/')
 		parent_path.erase(parent_path.length() - 1);
 
@@ -118,7 +118,7 @@ int HTTPmessage::createAutoindex(std::string dir_path)
 	if (!dir_path.empty() && dir_path[dir_path.length() - 1] != '/')
 		dir_path += "/";
 
-	autoindexHtmlHead(page, rq_startline.path);
+	autoindexHtmlHead(page, rq_startline.raw_path);
 
 	struct dirent	*entry;
 	while ((entry = readdir(dir)) != NULL)
@@ -280,6 +280,8 @@ LocationConfig	*HTTPmessage::getFullPath(std::string &full_path)
 	LocationConfig	&locationconf = serverconf->locations[location_pos];
 	std::string root = locationconf.root.empty() ? serverconf->root : locationconf.root;
 	refactorFile(root, full_path);
+
+	std::cout << full_path << std::endl;
 	CGIparse(locationconf);
 
 	return &locationconf;

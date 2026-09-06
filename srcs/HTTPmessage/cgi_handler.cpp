@@ -1,5 +1,11 @@
 #include "HTTPmessage.hpp"
 
+void	toupperString(std::string &s)
+{
+	for (size_t i = 0; i < s.length(); i++)
+		s[i] = std::toupper(s[i]);
+}
+
 void	HTTPmessage::fillCGIenv()
 {
 	/* ALL REQUESTS */
@@ -15,7 +21,7 @@ void	HTTPmessage::fillCGIenv()
 	cgi_env.push_back("CONTENT_LENGTH=" + rq_content_length);
 	cgi_env.push_back("CONTENT_TYPE=" + rq_headers["Content-Type"]);
 	cgi_env.push_back("PATH_INFO=" + rq_startline.path_info);
-	cgi_env.push_back("PATH_TRANSLATED=" + servercong->root + rq_startline.path_info);
+	cgi_env.push_back("PATH_TRANSLATED=" + serverconf->root + rq_startline.path_info);
 
 	cgi_env.push_back("AUTH_TYPE=");
 	cgi_env.push_back("REMOTE_ADDR=" + client_addr);
@@ -28,9 +34,9 @@ void	HTTPmessage::fillCGIenv()
 	for (stringmap::iterator it = rq_headers.begin(); it != rq_headers.end(); it++)
 	{
 		std::string	var = it->first;
-		std::transform(var.begin(), var.end(), var.begin(), std::toupper);
+		toupperString(var);
 		std::replace(var.begin(), var.end(), '-', '_');
-		cgi_env.push_back("HTTP_" + var + "=" + it->second)
+		cgi_env.push_back("HTTP_" + var + "=" + it->second);
 	}
 	
 	cgi_env.push_back(NULL);
@@ -83,17 +89,18 @@ void	HTTPmessage::CGIparse(ServerConfig &serverconf)
 				struct stat st;
 				if (stat(current_path.c_str(), &st) == 0)
 				{
-					if ((st.st_mode & S_IFMT)== S_ISREG)
+					if ((st.st_mode & S_IFMT)== S_IFREG)
 					{
 						rq_startline.iscgi = true;
 						full_path = current_path;
 						found = true;
 					}
-					else if ((st.st_mode & S_IFMT)== S_ISDIR)
+					else if ((st.st_mode & S_IFMT)== S_IFDIR)
 						current_path += "/";
 				}
 				else
-					break; 
+					break;
+			}
 		}
 	}
 	else if (app_pos != std::string::npos)
@@ -102,7 +109,7 @@ void	HTTPmessage::CGIparse(ServerConfig &serverconf)
 		std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos + 1) : full_path.substr(app_pos + 1, app_end - app_pos - 1);
 
 		stat(full_path.c_str(), &st);
-		if (((index_st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, serverconf)) != "")
+		if (((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, serverconf)) != "")
 		{
 			rq_startline.iscgi = true;
 			rq_startline.path_info = full_path.substr(app_end);
@@ -140,17 +147,18 @@ void	HTTPmessage::CGIparse(LocationConfig &locationconf)
 				struct stat st;
 				if (stat(current_path.c_str(), &st) == 0)
 				{
-					if ((st.st_mode & S_IFMT)== S_ISREG)
+					if ((st.st_mode & S_IFMT)== S_IFREG)
 					{
 						rq_startline.iscgi = true;
 						full_path = current_path;
 						found = true;
 					}
-					else if ((st.st_mode & S_IFMT)== S_ISDIR)
+					else if ((st.st_mode & S_IFMT)== S_IFDIR)
 						current_path += "/";
 				}
 				else
-					break; 
+					break;
+			}
 		}
 	}
 	else if (app_pos != std::string::npos)
@@ -159,7 +167,7 @@ void	HTTPmessage::CGIparse(LocationConfig &locationconf)
 		std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos + 1) : full_path.substr(app_pos + 1, app_end - app_pos - 1);
 
 		stat(full_path.c_str(), &st);
-		if (((index_st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, locationconf)) != "")
+		if (((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, locationconf)) != "")
 		{
 			rq_startline.iscgi = true;
 			rq_startline.path_info = full_path.substr(app_end);
@@ -183,10 +191,13 @@ int	HTTPmessage::handle_cgi()
 	int pipe_in[2];
 	int pipe_out[2];
 	pid_t	pid;
+	std::vector<char *> argv;
+	std::vector<char *> envp;
 
 	if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
 		return INTERNAL_SERVER_ERROR;
 	pid = fork();
+
 	switch (pid)
 	{
 	case -1:
@@ -199,25 +210,28 @@ int	HTTPmessage::handle_cgi()
 		close(pipe_in[0]); close(pipe_in[1]);
 		close(pipe_out[0]); close(pipe_out[1]);
 
-		std::vector<char *> argv;
-
-		if (!cgi_path.empty()) 
+		if (!cgi_path.empty())
 		{
-			argv.push_back(interpreter.c_str());
-			argv.push_back(full_path.c_str());
-		} 
+			argv.push_back(const_cast<char *>(cgi_path.c_str()));
+			argv.push_back(const_cast<char *>(full_path.c_str()));
+		}
 		else 
-			argv.push_back(const_cast<char*>(full_path.c_str()));
+			argv.push_back(const_cast<char *>(full_path.c_str()));
 		argv.push_back(NULL);
 
-		execve(argv[0], argv.data(), cgi_env.data());
+		for (size_t i = 0; i < cgi_env.size(); ++i) {
+			envp.push_back(const_cast<char*>(cgi_env[i].c_str()));
+		}
+		envp.push_back(NULL);
+	
+		execve(argv[0], argv.data(), envp.data());
 		exit(1);
 	default:
 		close(pipe_in[0]);
 		close(pipe_out[1]);
 
 		if (!rq_body.empty())
-			write(pipe_in[1], body.c_str(), body.size());
+			write(pipe_in[1], rq_body.c_str(), rq_body.size());
 		close(pipe_in[1]);
 
 		char buffer[BUFFER_SIZE];
@@ -233,7 +247,7 @@ int	HTTPmessage::handle_cgi()
 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 			return INTERNAL_SERVER_ERROR;
 
-		this->response_body = cgi_output; 
+		this->rs_body = cgi_output; 
 
 		return OK;
 	}

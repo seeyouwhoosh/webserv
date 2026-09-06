@@ -48,7 +48,7 @@ int	HTTPmessage::httpGET() //implementar cgi
 
 int	HTTPmessage::httpPOST() // implementar cgi
 {
-	full_path = rq_startline.path;
+	full_path = rq_startline.raw_path;
 	bool			create = false;
 
 	if (rq_body.size() != rq_content_length)
@@ -83,7 +83,7 @@ int	HTTPmessage::httpPOST() // implementar cgi
 
 int	HTTPmessage::httpDELETE()
 {
-	full_path = rq_startline.path;
+	full_path = rq_startline.raw_path;
 	getFullPath(full_path);
 
 	struct stat	st;

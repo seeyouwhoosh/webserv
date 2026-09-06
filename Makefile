@@ -21,7 +21,7 @@ INCLUDES	= -I$(INCLUDE_DIR)
 # Sources
 SRC_DIR		= srcs
 SOURCES		= main.cpp \
-				HTTPmessage.cpp HTTPmessage/http_methods.cpp HTTPmessage/utils.cpp HTTPmessage/file_handler.cpp HTTPmessage/generate_response.cpp HTTPmessage/file_handler.cpp HTTPmessage/cgi_handler.cpp \
+				HTTPmessage/HTTPmessage.cpp HTTPmessage/http_methods.cpp HTTPmessage/utils.cpp HTTPmessage/generate_response.cpp HTTPmessage/file_handler.cpp HTTPmessage/cgi_handler.cpp \
 				WebServer.cpp WebServer_epoll.cpp \
 				utils.cpp Config.cpp Parser.cpp 
 
@@ -48,7 +48,7 @@ $(NAME): $(OBJECTS)
 	@echo "$(BBLUE)$(NAME)$(NC): $(GREEN)$(NAME)$(NC) created"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(OBJ_DIR) $(OBJ_DIR)/HTTPmessage
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ 
 
 # Bonus program

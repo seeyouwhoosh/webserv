@@ -48,7 +48,7 @@ bool Parser::parseRequestLine(const std::string& line, HTTPmessage& request)
 		return false;
 
 	request.rq_startline.method = method;
-	request.rq_startline.path = path;
+	request.rq_startline.raw_path = path;
 	request.rq_startline.version = version;
 
 	return true;

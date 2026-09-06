@@ -21,6 +21,10 @@
 
 #define MAX_CONNECTIONS	512
 
+#ifndef BUFFER_SIZE
+# define BUFFER_SIZE 1024
+#endif
+
 typedef	struct t_client
 {
 	int			fd;
@@ -63,7 +67,7 @@ public:
 	bool		is_listener(int fd);
 	int			process_connections(int num_events);
 
-	void		create_new_client(int clientsock, int listener);
+	void		create_new_client(int clientsock, int listener, void *clientaddr);
 	int			keep_alive_client(int fd);
 	int			handle_client_data(int client);
 	int			close_connection(int fd);

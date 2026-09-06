@@ -74,65 +74,13 @@ std::string	getDate()
 	return std::string(buffer);
 }
 
-static int	valid_ip(int af, const char *src)
-{
-	size_t	char_count = 0;
-
-	if (af == AF_INET)
-	{
-		for (size_t i = 0; src[i] != '\0'; i++)
-		{
-			if (!std::isdigit(src[i] - '0') && src[i] != '.')
-				return 0;
-			if (src[i] == '.')
-				char_count++;
-		}
-		if (char_count != 4)
-			return 0;
-		return 1;
-	}
-	else if (af == AF_INET6)
-	{
-		for (size_t i = 0; src[i] != '\0'; i++)
-		{
-			if (!std::isxdigit(src[i] - '0') && src[i] != ':')
-				return 0;
-			if (src[i] == ':')
-				char_count++;
-		}
-		if (char_count != 6)
-			return 0;
-		return 1;
-	}
-	else
-		return 0;
-}
-
-static std::string	parseIPv6(const char *src)
-{
-	std::string	ip(src);
-	size_t		pos = ip.find("::");
-
-	if (pos != std::string::npos)
-	{
-		int dotdot = std::count(ip.begin(), ip.end(), ':');
-		int to_add = 8 - (dotdot - 1);
-		std::string blank = ":";
-		for (int i = 0; i < to_add; ++i)
-			blank += "0:";	
-		ip.replace(pos, 2, blank);
-	}
-	return ip;
-}
-
-
 /* convert IPv4 and IPv6 addresses from binary to text form */
 std::string	inet_ntop(int af, const void *src)
 {
 	std::stringstream ss;
 	std::string s;
 
-	if (!srs)
+	if (!src)
 		return "";
 
 	if (af == AF_INET)
