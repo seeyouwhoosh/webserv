@@ -10,11 +10,16 @@
   - [x] implementar la búsqueda de la carpeta cgi-bin y gestionar eso
   - [x] diferenciar entre los ejecutables y los que son ejecutables por archivos
   - [x] construir la lista de argumentos
+- [ ] Parsear el output del cgi
+- [ ] Testear el CGI
 - [ ] Gestionar la petición del cliente del close connection y keep-alive
-- [ ] Método GET
-- [ ] Método DELETE
+- [x] Método GET
+- [ ] testear el método DELETE
 - [ ] Método POST
-  - [ ] Parsear el request query del post
+  - [ ] Si hay cgi, el marrón se lo come el cgi
+  - [ ] Subida de Archivos: Si va dirigido a una ruta donde upload_enable es on, leer el cuerpo de la petición y guardarlo en el directorio especificado en upload_store
+  - [ ] Si el tipo es multipart, hay que parsearlo
+  - [ ] application/x-www-form-urlencoded se ignora si no hay cgi
 
 ## Estructura del archivo de configuración
 *Ejemplo:*

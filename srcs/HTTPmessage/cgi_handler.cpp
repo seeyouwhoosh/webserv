@@ -178,6 +178,11 @@ void	HTTPmessage::CGIparse(LocationConfig &locationconf)
 	}
 }
 
+void	HTTPmessage::parseCGIoutput(std::string &cgi_output)
+{
+	;
+}
+
 int	HTTPmessage::handle_cgi()
 {
 	struct stat	st;
@@ -194,8 +199,32 @@ int	HTTPmessage::handle_cgi()
 	std::vector<char *> argv;
 	std::vector<char *> envp;
 
-	if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
+	if (pipe(pipe_out) < 0)
 		return INTERNAL_SERVER_ERROR;
+
+	if (fcntl(pipe_out[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(pipe_out[1], F_SETFL, O_NONBLOCK) < 0)
+	{
+		close(pipe_out[0]);
+		close(pipe_out[1]);
+		return INTERNAL_SERVER_ERROR;
+	}
+
+	if (pipe(pipe_in) < 0)
+	{
+		close(pipe_out[0]);
+		close(pipe_out[1]);
+		return INTERNAL_SERVER_ERROR;
+	}
+
+	if (fcntl(pipe_in[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(pipe_in[1], F_SETFL, O_NONBLOCK) < 0)
+	{
+		close(pipe_out[0]);
+		close(pipe_out[1]);
+		close(pipe_in[0]);
+		close(pipe_in[1]);
+		return INTERNAL_SERVER_ERROR;
+	}
+
 	pid = fork();
 
 	switch (pid)
@@ -209,6 +238,8 @@ int	HTTPmessage::handle_cgi()
 		dup2(pipe_out[1], STDOUT_FILENO);
 		close(pipe_in[0]); close(pipe_in[1]);
 		close(pipe_out[0]); close(pipe_out[1]);
+
+		chdir(full_path.substr(0, full_path.find_last_of('/')).c_str());
 
 		if (!cgi_path.empty())
 		{
@@ -247,10 +278,9 @@ int	HTTPmessage::handle_cgi()
 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 			return INTERNAL_SERVER_ERROR;
 
+		parseCGIoutput(cgi_output);
 		this->rs_body = cgi_output; 
 
 		return OK;
 	}
-	/* Mirar que el archivo está bien, existe y es ejecutable, si no, poner el código de error */
-	/* Contruir el pipe, fork y el env para ejecutarlo y redirigirlo a algún archivo o algo así*/
 }

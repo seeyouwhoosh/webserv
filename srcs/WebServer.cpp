@@ -30,8 +30,7 @@ void	WebServer::free_all()
 				freeaddrinfo(servers[i].listens[j].serversock_info);
 				servers[i].listens[j].serversock_info = NULL;
 			}
-			if (fcntl(servers[i].listens[j].sockfd, F_GETFD) > -1)
-				close(servers[i].listens[j].sockfd);
+			close(servers[i].listens[j].sockfd);
 		}
 	}
 	if (epoll_events)

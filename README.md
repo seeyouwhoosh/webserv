@@ -1,6 +1,9 @@
 # webserv
 
 ## Resources
+### Configuration file
+* https://www.getpagespeed.com/check-nginx-config
+
 ### General
 * https://www.alimnaqvi.com/blog/webserv
 * https://nginx101.com/
