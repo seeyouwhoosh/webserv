@@ -183,26 +183,23 @@ int	HTTPmessage::handle_cgi()
 	int pipe_in[2];
 	int pipe_out[2];
 	pid_t	pid;
+
 	if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
 		return INTERNAL_SERVER_ERROR;
 	pid = fork();
 	switch (pid)
 	{
 	case -1:
-		close(pipe_in[0]);
-		close(pipe_in[1]);
-		close(pipe_out[0]);
-		close(pipe_out[1]);
+		close(pipe_in[0]); close(pipe_in[1]);
+		close(pipe_out[0]); close(pipe_out[1]);
 		return INTERNAL_SERVER_ERROR;
 	case 0:
 		dup2(pipe_in[0], STDIN_FILENO);
 		dup2(pipe_out[1], STDOUT_FILENO);
-		close(pipe_in[0]);
-		close(pipe_in[1]);
-		close(pipe_out[0]);
-		close(pipe_out[1]);
+		close(pipe_in[0]); close(pipe_in[1]);
+		close(pipe_out[0]); close(pipe_out[1]);
 
-		std::vector<char*> argv;
+		std::vector<char *> argv;
 
 		if (!cgi_path.empty()) 
 		{
@@ -219,11 +216,11 @@ int	HTTPmessage::handle_cgi()
 		close(pipe_in[0]);
 		close(pipe_out[1]);
 
-		if (!body.empty())
+		if (!rq_body.empty())
 			write(pipe_in[1], body.c_str(), body.size());
 		close(pipe_in[1]);
 
-		char buffer[1024];
+		char buffer[BUFFER_SIZE];
 		ssize_t bytes_read;
 		std::string cgi_output;
 
@@ -233,9 +230,8 @@ int	HTTPmessage::handle_cgi()
 		int status;
 		waitpid(pid, &status, 0);
 
-		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 			return INTERNAL_SERVER_ERROR;
-		}
 
 		this->response_body = cgi_output; 
 
