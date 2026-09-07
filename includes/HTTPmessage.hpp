@@ -106,7 +106,8 @@ private:
 	std::string		matchCGI(std::string extension, LocationConfig &locationconf);
 	std::string		matchCGI(std::string extension, ServerConfig &serverconf);
 	void			fillCGIenv();
-	int				handle_cgi();
+	int				handleCGI();
+	void			parseCGIoutput(std::string &cgi_output);
 
 	/* File management */
 	std::string		parsePath();

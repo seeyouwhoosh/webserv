@@ -17,7 +17,7 @@ int	HTTPmessage::httpGET() //implementar cgi
 	std::fstream	fs;
 
 	if (rq_startline.iscgi)
-		status = handle_cgi();
+		status = handleCGI();
 	else
 	{
 		if (!locationconf && !serverconf)

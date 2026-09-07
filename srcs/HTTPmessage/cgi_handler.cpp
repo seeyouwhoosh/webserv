@@ -180,10 +180,42 @@ void	HTTPmessage::CGIparse(LocationConfig &locationconf)
 
 void	HTTPmessage::parseCGIoutput(std::string &cgi_output)
 {
-	;
+	std::stringstream	ss(cgi_output);
+	std::string			word;
+
+	if (cgi_output.find("\r\n\r\n") == cgi_output.npos)
+		return;
+
+	while (ss >> word)
+	{
+		size_t		header_delim;
+		size_t		body_delim;
+		std::string	header;
+		std::string	header_body;
+		bool		end = false;
+
+		if (word.find("\r\n\r\n") != word.npos)
+			end = true;
+
+		if ((header_delim = word.find(':')) != word.npos)
+		{
+			if (!header_delim)
+				return;
+			header = word.erase(header_delim, 1);
+		}
+		else if (!header.empty() && (body_delim = word.find("\r\n") != word.npos))
+		{
+			header_body += word.erase(header_delim);
+			rs_headers[header] = header_body;
+		}
+		else
+			header_body += word;
+		if (end == true)
+			return;
+	}
 }
 
-int	HTTPmessage::handle_cgi()
+int	HTTPmessage::handleCGI()
 {
 	struct stat	st;
 
