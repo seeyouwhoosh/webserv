@@ -1,11 +1,5 @@
 #include "HTTPmessage.hpp"
 
-void	toupperString(std::string &s)
-{
-	for (size_t i = 0; i < s.length(); i++)
-		s[i] = std::toupper(s[i]);
-}
-
 void	HTTPmessage::fillCGIenv()
 {
 	/* ALL REQUESTS */
@@ -236,45 +230,20 @@ int	HTTPmessage::handleCGI()
 	std::vector<char *> argv;
 	std::vector<char *> envp;
 
-	if (pipe(pipe_out) < 0)
+	if (pipePipes(pipe_in, pipe_out) < 0)
 		return INTERNAL_SERVER_ERROR;
-
-	if (fcntl(pipe_out[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(pipe_out[1], F_SETFL, O_NONBLOCK) < 0)
-	{
-		close(pipe_out[0]);
-		close(pipe_out[1]);
-		return INTERNAL_SERVER_ERROR;
-	}
-
-	if (pipe(pipe_in) < 0)
-	{
-		close(pipe_out[0]);
-		close(pipe_out[1]);
-		return INTERNAL_SERVER_ERROR;
-	}
-
-	if (fcntl(pipe_in[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(pipe_in[1], F_SETFL, O_NONBLOCK) < 0)
-	{
-		close(pipe_out[0]);
-		close(pipe_out[1]);
-		close(pipe_in[0]);
-		close(pipe_in[1]);
-		return INTERNAL_SERVER_ERROR;
-	}
 
 	pid = fork();
 
 	switch (pid)
 	{
 	case -1:
-		close(pipe_in[0]); close(pipe_in[1]);
-		close(pipe_out[0]); close(pipe_out[1]);
+		closePipes(pipe_in, pipe_out);
 		return INTERNAL_SERVER_ERROR;
 	case 0:
 		dup2(pipe_in[0], STDIN_FILENO);
 		dup2(pipe_out[1], STDOUT_FILENO);
-		close(pipe_in[0]); close(pipe_in[1]);
-		close(pipe_out[0]); close(pipe_out[1]);
+		closePipes(pipe_in, pipe_out);
 
 		chdir(full_path.substr(0, full_path.find_last_of('/')).c_str());
 

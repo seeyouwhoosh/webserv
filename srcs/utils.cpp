@@ -108,3 +108,47 @@ std::string	inet_ntop(int af, const void *src)
 
 	return s;
 }
+
+void	toupperString(std::string &s)
+{
+	for (size_t i = 0; i < s.length(); i++)
+		s[i] = std::toupper(s[i]);
+}
+
+int	pipeNonBlockingPipes(int pipe_in[2], int pipe_out[2])
+{
+	if (pipe(pipe_out) < 0)
+		return -1;
+
+	if (fcntl(pipe_out[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(pipe_out[1], F_SETFL, O_NONBLOCK) < 0)
+	{
+		close(pipe_out[0]);
+		close(pipe_out[1]);
+		return -1;
+	}
+
+	if (pipe(pipe_in) < 0)
+	{
+		close(pipe_out[0]);
+		close(pipe_out[1]);
+		return -1;
+	}
+
+	if (fcntl(pipe_in[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(pipe_in[1], F_SETFL, O_NONBLOCK) < 0)
+	{
+		close(pipe_out[0]);
+		close(pipe_out[1]);
+		close(pipe_in[0]);
+		close(pipe_in[1]);
+		return -1;
+	}
+	return 0
+}
+
+void	closePipes(int pipe_in[2], int pipe_out[2])
+{
+	close(pipe_in[0]);
+	close(pipe_in[1]);
+	close(pipe_out[0]);
+	close(pipe_out[1]);
+}

@@ -175,3 +175,5 @@ std::string	getFileExtension(std::string file);
 std::string	getMIMEtype(std::string ext);
 
 int			getLocationIndex(std::vector<LocationConfig> &locations, std::string path);
+
+void		toupperString(std::string &s);
