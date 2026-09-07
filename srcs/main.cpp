@@ -56,18 +56,20 @@ int	main(int ac, char **av)
 	ServerConfig server;
 	LocationConfig	location;
 	location.name = "/";
-	location.root = "/home/xwu/sgoinfre/webserv/test";
+	location.root = "/workspaces/webserv/test";
 	location.indexes.push_back("index.html");
 	location.autoindex = AUTOINDEX_ON;
 	location.error_pages[NOT_FOUND] = "404.html";
+	location.cgi_handlers["cgi"] = "/usr/bin/perl";
 	
 	server.autoindex = AUTOINDEX_OFF;
-	server.root = "/home/xwu/sgoinfre/webserv/test";
+	server.root = "/workspaces/webserv/test";
 	server.server_name = "prueba.com";
 	server.indexes.push_back("picture.jpeg");
 	server.locations.push_back(location);
 	server.listens.push_back(listen);
 	webserv.servers.push_back(server);
+	server.cgi_handlers[".cgi"] = "/usr/bin/perl";
 
 	arv = av[1];
 

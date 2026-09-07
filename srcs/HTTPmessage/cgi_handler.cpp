@@ -167,11 +167,16 @@ void	HTTPmessage::CGIparse(LocationConfig &locationconf)
 		std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos + 1) : full_path.substr(app_pos + 1, app_end - app_pos - 1);
 
 		stat(full_path.c_str(), &st);
-		if (((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, locationconf)) != "")
+		if ((((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, locationconf)) != "") || app_ext == "cgi")
 		{
 			rq_startline.iscgi = true;
-			rq_startline.path_info = full_path.substr(app_end);
-			full_path = full_path.substr(0, app_end);
+			if (app_end != std::string::npos)
+			{
+				rq_startline.path_info = full_path.substr(0, app_end);
+				full_path = full_path.substr(app_end);
+			}
+			else
+				rq_startline.path_info = full_path;
 		}
 		else
 			rq_startline.iscgi = false;
@@ -180,40 +185,38 @@ void	HTTPmessage::CGIparse(LocationConfig &locationconf)
 
 void	HTTPmessage::parseCGIoutput(std::string &cgi_output)
 {
-	std::stringstream	ss(cgi_output);
-	std::string			word;
-	size_t				end_of_header;
-
-	if ((end_of_header = cgi_output.find("\r\n\r\n")) == cgi_output.npos)
+	size_t				end_of_header = cgi_output.find("\r\n\r\n");
+	if (end_of_header == cgi_output.npos)
 		return;
 
-	cgi_output.erase(0, end_of_header + 2);
-	while (ss >> word)
+	std::string			header_part = cgi_output.substr(0, end_of_header + 4);
+	cgi_output.erase(0, end_of_header + 4);
+
+	std::stringstream	ss(header_part);
+	std::string			line;
+
+	while (std::getline(ss, line))
 	{
-		size_t		header_delim;
-		size_t		body_delim;
-		std::string	header;
-		std::string	header_body;
-		bool		end = false;
+		if (!line.empty() && line[line.length() - 1] == '\r')
+			line.erase(line.length() - 1, 1);
 
-		if (word.find("\r\n\r\n") != word.npos)
-			end = true;
+		if (line.empty())
+			continue;
 
-		if ((header_delim = word.find(':')) != word.npos)
-		{
-			if (!header_delim)
-				return;
-			header = word.erase(header_delim, 1);
-		}
-		else if (!header.empty() && (body_delim = word.find("\r\n") != word.npos))
-		{
-			header_body += word.erase(header_delim);
-			rs_headers[header] = header_body;
-		}
+		size_t colon_pos = line.find(':');
+		if (colon_pos == std::string::npos)
+			continue;
+
+		std::string key = line.substr(0, colon_pos);
+		std::string value = line.substr(colon_pos + 1);
+
+		size_t first_non_space = value.find_first_not_of(" \t");
+		if (first_non_space != std::string::npos)
+			value = value.substr(first_non_space);
 		else
-			header_body += word;
-		if (end == true)
-			return;
+			value.clear();
+
+		rs_headers[key] = value;
 	}
 }
 
@@ -284,12 +287,11 @@ int	HTTPmessage::handleCGI()
 			argv.push_back(const_cast<char *>(full_path.c_str()));
 		argv.push_back(NULL);
 
-		for (size_t i = 0; i < cgi_env.size(); ++i) {
+		for (size_t i = 0; i < cgi_env.size(); ++i)
 			envp.push_back(const_cast<char*>(cgi_env[i].c_str()));
-		}
 		envp.push_back(NULL);
 	
-		execve(argv[0], argv.data(), envp.data());
+		execve(cgi_path.c_str(), argv.data(), envp.data());
 		exit(1);
 	default:
 		close(pipe_in[0]);

@@ -134,7 +134,7 @@ int	HTTPmessage::generateResponse()
 {
 	int	error = 0;
 
-	if (rs_startline.status_code != BAD_REQUEST)
+	if (rs_startline.status_code == OK)
 	{
 		std::string	m = rq_startline.method;
 		int	e_method = matchMethod(m);
@@ -157,6 +157,8 @@ int	HTTPmessage::generateResponse()
 			break;
 		}
 	}
+	else
+		error = rs_startline.status_code;
 	if (error && generateErrorResponse(error) < 0)
 		return -1;
 	rs_headers["Date"] = getDate();
