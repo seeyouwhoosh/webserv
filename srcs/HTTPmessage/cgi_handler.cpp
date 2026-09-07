@@ -182,10 +182,12 @@ void	HTTPmessage::parseCGIoutput(std::string &cgi_output)
 {
 	std::stringstream	ss(cgi_output);
 	std::string			word;
+	size_t				end_of_header;
 
-	if (cgi_output.find("\r\n\r\n") == cgi_output.npos)
+	if ((end_of_header = cgi_output.find("\r\n\r\n")) == cgi_output.npos)
 		return;
 
+	cgi_output.erase(0, end_of_header + 2);
 	while (ss >> word)
 	{
 		size_t		header_delim;

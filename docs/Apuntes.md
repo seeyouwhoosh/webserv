@@ -10,7 +10,7 @@
   - [x] implementar la búsqueda de la carpeta cgi-bin y gestionar eso
   - [x] diferenciar entre los ejecutables y los que son ejecutables por archivos
   - [x] construir la lista de argumentos
-- [ ] Parsear el output del cgi
+- [x] Parsear el output del cgi
 - [ ] Testear el CGI
 - [ ] Gestionar la petición del cliente del close connection y keep-alive
 - [x] Método GET
