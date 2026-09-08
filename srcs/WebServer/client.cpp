@@ -128,7 +128,7 @@ int	WebServer::handle_client_data(int client)
 		} */
 
 	/* ************************** ERASE ************************** */
-	clientBuffer.rq_startline.method = "GET";
+	clientBuffer.rq_startline.method = "DELETE";
 	clientBuffer.rq_startline.raw_path = arv;
 	clientBuffer.rq_startline.version = "HTTP/1.1";
 	clientBuffer.setStatusCode(OK);

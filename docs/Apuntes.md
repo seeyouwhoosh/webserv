@@ -15,7 +15,7 @@
 - [x] Testear el CGI
 - [ ] Gestionar la petición del cliente del close connection y keep-alive
 - [x] Método GET
-- [ ] testear el método DELETE
+- [x] testear el método DELETE
 - [ ] Método POST
   - [ ] Si hay cgi, el marrón se lo come el cgi
   - [ ] Subida de Archivos: Si va dirigido a una ruta donde upload_enable es on, leer el cuerpo de la petición y guardarlo en el directorio especificado en upload_store

@@ -94,5 +94,6 @@ int	HTTPmessage::httpDELETE()
 	if (access(full_path.c_str(), F_OK | R_OK |X_OK) < 0 || std::remove(full_path.c_str()) != 0)
 		return -setStatusCode(FORBIDDEN);
 
+	setStatusCode(NO_CONTENT);
 	return 0;
 }

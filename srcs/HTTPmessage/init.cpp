@@ -75,6 +75,7 @@ void	init_responses()
 {
 	responses[OK]						= "OK";
 	responses[CREATED]					= "Created";
+	responses[NO_CONTENT]				= "No Content";
 	responses[MOVED_PERMANENTLY]		= "Moved Permanently";
 	responses[BAD_REQUEST]				= "Bad Request";
 	responses[FORBIDDEN]				= "Forbidden";
