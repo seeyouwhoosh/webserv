@@ -102,9 +102,9 @@ private:
 
 	/* CGI */
 	void			CGIparse(ServerConfig &serverconf, LocationConfig *locationconf);
-	void			CGIparse(LocationConfig &locationconf);
 	std::string		matchCGI(std::string extension, ServerConfig &serverconf, LocationConfig *locationconf);
 	void			fillCGIenv();
+	void			fillArgvEnvp(std::vector<char *> &argv, std::vector<char *> &envp);
 	int				handleCGI();
 	void			parseCGIoutput(std::string &cgi_output);
 
@@ -169,10 +169,10 @@ void		init_allowedMethods();
 
 /* Miscelaneous helper functions */
 
-std::string	getFileExtension(std::string file);
-
 std::string	getMIMEtype(std::string ext);
 
 int			getLocationIndex(std::vector<LocationConfig> &locations, std::string path);
 
-void		toupperString(std::string &s);
+int			pipePipes(int pipe_in[2], int pipe_out[2]);
+
+void		closePipes(int pipe_in[2], int pipe_out[2]);

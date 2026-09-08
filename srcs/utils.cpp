@@ -29,6 +29,30 @@ std::string	getFileExtension(std::string file)
 	return file.substr(dot + 1);
 }
 
+bool file_is_empty(std::fstream &file)
+{
+	return file.peek() == std::ios::traits_type::eof();
+}
+
+int	checkFileStatus(int flags, std::string &file)
+{
+	struct stat	st;
+
+	if (stat(file.c_str(), &st) < 0)
+		return NOT_FOUND;
+
+	if (access(file.c_str(), flags) < 0)
+		return FORBIDDEN;
+
+	return OK;
+}
+
+void	toupperString(std::string &s)
+{
+	for (size_t i = 0; i < s.length(); i++)
+		s[i] = std::toupper(s[i]);
+}
+
 int	hexToAscii(std::string s)
 {
 	int result = 0;
@@ -49,11 +73,6 @@ int	hexToAscii(std::string s)
 		base *= 16;
 	}
 	return result;
-}
-
-bool file_is_empty(std::fstream &file)
-{
-	return file.peek() == std::ios::traits_type::eof();
 }
 
 std::string	getDate()
@@ -107,33 +126,4 @@ std::string	inet_ntop(int af, const void *src)
 	s = ss.str();
 
 	return s;
-}
-
-void	toupperString(std::string &s)
-{
-	for (size_t i = 0; i < s.length(); i++)
-		s[i] = std::toupper(s[i]);
-}
-
-int	pipePipes(int pipe_in[2], int pipe_out[2])
-{
-	if (pipe(pipe_out) < 0)
-		return -1;
-
-	if (pipe(pipe_in) < 0)
-	{
-		close(pipe_out[0]);
-		close(pipe_out[1]);
-		return -1;
-	}
-
-	return 0;
-}
-
-void	closePipes(int pipe_in[2], int pipe_out[2])
-{
-	close(pipe_in[0]);
-	close(pipe_in[1]);
-	close(pipe_out[0]);
-	close(pipe_out[1]);
 }

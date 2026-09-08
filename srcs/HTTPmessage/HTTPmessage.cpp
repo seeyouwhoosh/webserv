@@ -4,15 +4,53 @@
 
 HTTPmessage::HTTPmessage()
 {
-	rs_startline.version = "HTTP/1.1";
-	totalSent = 0;
 	serverconf = NULL;
+	server_port = "";
+	client_addr = "";
+	rs_startline.version = "HTTP/1.1";
+
+	rs_startline.reason_phrase = "";
+	rs_startline.status_code = 0;
+	full_path = "";
+	totalSent = 0;
+	rs_header = "";
+	rs_body = "";
+	rs_content_length = 0;
+
+	rq_startline.file = "";
+	rq_startline.iscgi = false;
+	rq_startline.method = "";
+	rq_startline.path_info = "";
+	rq_startline.query = "";
+	rq_startline.raw_path = "";
+	rq_startline.version = "";
+	rq_body = "";
+	rq_content_length = 0;
 }
 
 HTTPmessage::HTTPmessage(ServerConfig *server)
 {
 	rs_startline.version = "HTTP/1.1";
 	serverconf = server;
+	server_port = "";
+	client_addr = "";
+
+	rs_startline.reason_phrase = "";
+	rs_startline.status_code = 0;
+	full_path = "";
+	totalSent = 0;
+	rs_header = "";
+	rs_body = "";
+	rs_content_length = 0;
+
+	rq_startline.file = "";
+	rq_startline.iscgi = false;
+	rq_startline.method = "";
+	rq_startline.path_info = "";
+	rq_startline.query = "";
+	rq_startline.raw_path = "";
+	rq_body = "";
+	rq_content_length = 0;
 }
 
 HTTPmessage::~HTTPmessage() {}
@@ -29,6 +67,25 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 	rs_startline.version = other.rs_startline.version;
 	serverconf = other.serverconf;
 	totalSent = 0;
+	server_port = other.server_port;
+	client_addr = other.client_addr;
+
+	rs_startline.reason_phrase = other.rs_startline.reason_phrase;
+	rs_startline.status_code = other.rs_startline.status_code;
+	full_path = other.full_path;
+	totalSent = other.totalSent;
+	rs_header = other.rs_header;
+	rs_body = other.rs_body;
+	rs_content_length = other.rs_content_length;
+
+	rq_startline.file = other.rq_startline.file;
+	rq_startline.iscgi = other.rq_startline.iscgi;
+	rq_startline.method = other.rq_startline.method;
+	rq_startline.path_info = other.rq_startline.path_info;
+	rq_startline.query = other.rq_startline.query;
+	rq_startline.raw_path = other.rq_startline.raw_path;
+	rq_body = other.rq_body;
+	rq_content_length = other.rq_content_length;
 	return *this;
 }
 
@@ -145,5 +202,21 @@ bool	HTTPmessage::isComplete() const
 
 void	HTTPmessage::clear()
 {
-	;
+	rs_startline.reason_phrase.clear();
+	rs_startline.status_code = 0;
+	full_path.clear();
+	totalSent = 0;
+	rs_header.clear();
+	rs_body.clear();
+	rs_content_length = 0;
+
+	rq_startline.file.clear();
+	rq_startline.iscgi = false;
+	rq_startline.method.clear();
+	rq_startline.path_info.clear();
+	rq_startline.query.clear();
+	rq_startline.raw_path.clear();
+	rq_startline.version.clear();
+	rq_body.clear();
+	rq_content_length = 0;
 }

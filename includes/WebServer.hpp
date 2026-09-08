@@ -97,16 +97,27 @@ std::string toString(const T val)
 	return stream.str();
 }
 
-int			listen_socket(struct addrinfo *addr, int listen_num);
-
+/* Helper functions */
 int			error_msg(int err_code, const char *func, const char *msg);
 
-bool		file_is_empty(std::fstream &file);
+int			listen_socket(struct addrinfo *addr, int listen_num);
 
-std::string	getDate();
+int			update_client(t_client &client);
 
 std::string	inet_ntop(int af, const void *src);
 
-int			pipePipes(int pipe_in[2], int pipe_out[2]);
+/* File management */
 
-void		closePipes(int pipe_in[2], int pipe_out[2]);
+std::string	getFileExtension(std::string file);
+
+bool		file_is_empty(std::fstream &file);
+
+int			checkFileStatus(int flags, std::string &file);
+
+/* Conversion utils */
+
+void		toupperString(std::string &s);
+
+int			hexToAscii(std::string s);
+
+std::string	getDate();

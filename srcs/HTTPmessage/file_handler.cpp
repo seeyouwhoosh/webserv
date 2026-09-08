@@ -14,32 +14,6 @@ static void	refactorFile(std::string &path, std::string &file)
 		file = path + "/" + file;
 }
 
-/* Returns location index if it exist, it not, returns -1 */
-int	getLocationIndex(std::vector<LocationConfig> &locations, std::string path)
-{
-	size_t		max_len = 0;
-	size_t		location_pos = -1;
-
-	for (size_t i = 0; i < locations.size(); i++)
-	{
-		size_t	len = locations[i].name.length();
-		
-		if (!path.find(locations[i].name))
-		{
-			if (len > max_len)
-			{
-				location_pos = i;
-				max_len = len;
-			}
-		}
-	}
-
-	if (!max_len)
-		return -1;
-	else
-		return location_pos;
-}
-
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
 int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf)
 {
