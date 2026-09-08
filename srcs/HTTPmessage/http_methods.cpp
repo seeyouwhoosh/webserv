@@ -54,10 +54,8 @@ int	HTTPmessage::httpPOST() // implementar cgi
 	if (rq_body.size() != rq_content_length)
 		return -setStatusCode(BAD_REQUEST);
 
-	struct stat	st;
-
 	getFullPath(full_path);
-	if (stat(full_path.c_str(), &st) < 0)
+	if (checkFileStatus(F_OK, full_path) < 0)
 		create = true;
 
 	std::fstream	fs;

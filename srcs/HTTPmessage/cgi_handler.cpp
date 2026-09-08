@@ -53,7 +53,6 @@ void	HTTPmessage::CGIparse(ServerConfig &serverconf, LocationConfig *locationcon
 {
 	size_t		app_pos = full_path.find('.');
 	size_t		cgibin_pos = full_path.find("/cgi-bin/");
-	struct stat	st;
 
 	if (cgibin_pos != std::string::npos)
 	{
@@ -73,7 +72,7 @@ void	HTTPmessage::CGIparse(ServerConfig &serverconf, LocationConfig *locationcon
 			{
 				current_path += segment;
 
-				struct stat st;
+				struct stat	st;
 				if (stat(current_path.c_str(), &st) == 0)
 				{
 					if ((st.st_mode & S_IFMT)== S_IFREG)
@@ -95,6 +94,7 @@ void	HTTPmessage::CGIparse(ServerConfig &serverconf, LocationConfig *locationcon
 		size_t		app_end = full_path.find('/', app_pos);
 		std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos + 1) : full_path.substr(app_pos + 1, app_end - app_pos - 1);
 
+		struct stat	st;
 		stat(full_path.c_str(), &st);
 		if ((((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, serverconf, locationconf)) != "") || app_ext == "cgi")
 		{
@@ -164,6 +164,15 @@ void	HTTPmessage::fillArgvEnvp(std::vector<char *> &argv, std::vector<char *> &e
 	envp.push_back(NULL);
 }
 
+static void	dumpOutput(int pipe, std::string &cgi_output)
+{
+	char		buffer[BUFFER_SIZE];
+	ssize_t		bytes_read;
+
+	while ((bytes_read = read(pipe, buffer, sizeof(buffer))) > 0)
+		cgi_output.append(buffer, bytes_read);
+}
+
 int	HTTPmessage::handleCGI()
 {
 	int		pipe_in[2];
@@ -181,8 +190,10 @@ int	HTTPmessage::handleCGI()
 	switch (pid)
 	{
 	case -1:
+	{
 		closePipes(pipe_in, pipe_out);
 		return INTERNAL_SERVER_ERROR;
+	}
 	case 0:
 	{
 		std::vector<char *> argv;
@@ -198,24 +209,20 @@ int	HTTPmessage::handleCGI()
 		execve(argv[0], argv.data(), envp.data());
 		exit(1);
 	}
-
 	default:
+	{
 		close(pipe_in[0]);
 		close(pipe_out[1]);
 
 		if (!rq_body.empty())
 			write(pipe_in[1], rq_body.c_str(), rq_body.size());
 		close(pipe_in[1]);
-
-		char		buffer[BUFFER_SIZE];
-		ssize_t		bytes_read;
+		
 		std::string	cgi_output;
-
-		while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer))) > 0)
-			cgi_output.append(buffer, bytes_read);
+		dumpOutput(pipe_out[0], cgi_output);
 		close(pipe_out[0]);
-		waitpid(pid, &status, 0);
 
+		waitpid(pid, &status, 0);
 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 			return INTERNAL_SERVER_ERROR;
 
@@ -224,5 +231,6 @@ int	HTTPmessage::handleCGI()
 		rs_content_length = cgi_output.size();
 
 		return OK;
+	}
 	}
 }
