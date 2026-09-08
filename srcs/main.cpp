@@ -60,7 +60,6 @@ int	main(int ac, char **av)
 	location.indexes.push_back("index.html");
 	location.autoindex = AUTOINDEX_ON;
 	location.error_pages[NOT_FOUND] = "404.html";
-	location.cgi_handlers["cgi"] = "/usr/bin/perl";
 	
 	server.autoindex = AUTOINDEX_OFF;
 	server.root = "/workspaces/webserv/test";
@@ -68,8 +67,8 @@ int	main(int ac, char **av)
 	server.indexes.push_back("picture.jpeg");
 	server.locations.push_back(location);
 	server.listens.push_back(listen);
+	server.cgi_handlers["cgi"] = "/usr/bin/perl";
 	webserv.servers.push_back(server);
-	server.cgi_handlers[".cgi"] = "/usr/bin/perl";
 
 	arv = av[1];
 

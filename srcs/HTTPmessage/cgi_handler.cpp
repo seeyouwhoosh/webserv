@@ -36,19 +36,9 @@ void	HTTPmessage::fillCGIenv()
 	cgi_env.push_back(NULL);
 }
 
-std::string	HTTPmessage::matchCGI(std::string extension, LocationConfig &locationconf)
+std::string	HTTPmessage::matchCGI(std::string extension, ServerConfig &serverconf, LocationConfig *locationconf)
 {
-	cgi_handler_type::iterator	it = locationconf.cgi_handlers.find(extension);
-
-	if (it == locationconf.cgi_handlers.end())
-		return "";
-	
-	return it->second;
-}
-
-std::string	HTTPmessage::matchCGI(std::string extension, ServerConfig &serverconf)
-{
-	cgi_handler_type::iterator	it = serverconf.cgi_handlers.find(extension);
+	cgi_handler_type::iterator	it = locationconf ? locationconf->cgi_handlers.find(extension) : serverconf.cgi_handlers.find(extension);
 
 	if (it == serverconf.cgi_handlers.end())
 		return "";
@@ -56,7 +46,7 @@ std::string	HTTPmessage::matchCGI(std::string extension, ServerConfig &servercon
 	return it->second;
 }
 
-void	HTTPmessage::CGIparse(ServerConfig &serverconf)
+void	HTTPmessage::CGIparse(ServerConfig &serverconf, LocationConfig *locationconf)
 {
 	size_t		app_pos = full_path.find('.');
 	size_t		cgibin_pos = full_path.find("/cgi-bin/");
@@ -103,65 +93,7 @@ void	HTTPmessage::CGIparse(ServerConfig &serverconf)
 		std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos + 1) : full_path.substr(app_pos + 1, app_end - app_pos - 1);
 
 		stat(full_path.c_str(), &st);
-		if (((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, serverconf)) != "")
-		{
-			rq_startline.iscgi = true;
-			rq_startline.path_info = full_path.substr(app_end);
-			full_path = full_path.substr(0, app_end);
-		}
-		else
-			rq_startline.iscgi = false;
-	}
-}
-
-void	HTTPmessage::CGIparse(LocationConfig &locationconf)
-{
-	size_t		app_pos = full_path.find('.');
-	size_t		cgibin_pos = full_path.find("/cgi-bin/");
-	struct stat	st;
-
-	if (cgibin_pos != std::string::npos)
-	{
-		std::stringstream	ss(full_path.substr(cgibin_pos + std::strlen("/cgi-bin/")));
-		std::string			segment;
-		std::string			current_path = full_path.substr(0, cgibin_pos + std::strlen("/cgi-bin/"));
-		bool				found = false;
-	
-		while (std::getline(ss, segment, '/'))
-		{
-			if (segment.empty())
-				break;
-
-			if (found)
-				rq_startline.path_info += "/" + segment;
-			else
-			{
-				current_path += segment;
-
-				struct stat st;
-				if (stat(current_path.c_str(), &st) == 0)
-				{
-					if ((st.st_mode & S_IFMT)== S_IFREG)
-					{
-						rq_startline.iscgi = true;
-						full_path = current_path;
-						found = true;
-					}
-					else if ((st.st_mode & S_IFMT)== S_IFDIR)
-						current_path += "/";
-				}
-				else
-					break;
-			}
-		}
-	}
-	else if (app_pos != std::string::npos)
-	{
-		size_t		app_end = full_path.find('/', app_pos);
-		std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos + 1) : full_path.substr(app_pos + 1, app_end - app_pos - 1);
-
-		stat(full_path.c_str(), &st);
-		if ((((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, locationconf)) != "") || app_ext == "cgi")
+		if ((((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, serverconf, locationconf)) != "") || app_ext == "cgi")
 		{
 			rq_startline.iscgi = true;
 			if (app_end != std::string::npos)
@@ -209,7 +141,6 @@ void	HTTPmessage::parseCGIoutput(std::string &cgi_output)
 			value = value.substr(first_non_space);
 		else
 			value.clear();
-
 		rs_headers[key] = value;
 	}
 }
@@ -241,10 +172,6 @@ int	HTTPmessage::handleCGI()
 		closePipes(pipe_in, pipe_out);
 		return INTERNAL_SERVER_ERROR;
 	case 0:
-		dup2(pipe_in[0], STDIN_FILENO);
-		dup2(pipe_out[1], STDOUT_FILENO);
-		closePipes(pipe_in, pipe_out);
-
 		chdir(full_path.substr(0, full_path.find_last_of('/')).c_str());
 
 		if (!cgi_path.empty())
@@ -260,7 +187,11 @@ int	HTTPmessage::handleCGI()
 			envp.push_back(const_cast<char*>(cgi_env[i].c_str()));
 		envp.push_back(NULL);
 	
-		execve(cgi_path.c_str(), argv.data(), envp.data());
+		dup2(pipe_in[0], STDIN_FILENO);
+		dup2(pipe_out[1], STDOUT_FILENO);
+		closePipes(pipe_in, pipe_out);
+	
+		execve(argv[0], argv.data(), envp.data());
 		exit(1);
 	default:
 		close(pipe_in[0]);
@@ -285,6 +216,7 @@ int	HTTPmessage::handleCGI()
 
 		parseCGIoutput(cgi_output);
 		this->rs_body = cgi_output; 
+		rs_content_length = cgi_output.size();
 
 		return OK;
 	}

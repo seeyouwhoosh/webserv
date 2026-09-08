@@ -115,17 +115,10 @@ void	toupperString(std::string &s)
 		s[i] = std::toupper(s[i]);
 }
 
-int	pipeNonBlockingPipes(int pipe_in[2], int pipe_out[2])
+int	pipePipes(int pipe_in[2], int pipe_out[2])
 {
 	if (pipe(pipe_out) < 0)
 		return -1;
-
-	if (fcntl(pipe_out[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(pipe_out[1], F_SETFL, O_NONBLOCK) < 0)
-	{
-		close(pipe_out[0]);
-		close(pipe_out[1]);
-		return -1;
-	}
 
 	if (pipe(pipe_in) < 0)
 	{
@@ -134,15 +127,7 @@ int	pipeNonBlockingPipes(int pipe_in[2], int pipe_out[2])
 		return -1;
 	}
 
-	if (fcntl(pipe_in[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(pipe_in[1], F_SETFL, O_NONBLOCK) < 0)
-	{
-		close(pipe_out[0]);
-		close(pipe_out[1]);
-		close(pipe_in[0]);
-		close(pipe_in[1]);
-		return -1;
-	}
-	return 0
+	return 0;
 }
 
 void	closePipes(int pipe_in[2], int pipe_out[2])

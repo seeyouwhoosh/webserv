@@ -11,6 +11,7 @@
   - [x] diferenciar entre los ejecutables y los que son ejecutables por archivos
   - [x] construir la lista de argumentos
 - [x] Parsear el output del cgi
+- [x] Parsear mejor el header del cgi
 - [ ] Testear el CGI
 - [ ] Gestionar la petición del cliente del close connection y keep-alive
 - [x] Método GET

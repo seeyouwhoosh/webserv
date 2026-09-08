@@ -101,10 +101,9 @@ private:
 	int				createAutoindex(std::string dir);
 
 	/* CGI */
-	void			CGIparse(ServerConfig &serverconf);
+	void			CGIparse(ServerConfig &serverconf, LocationConfig *locationconf);
 	void			CGIparse(LocationConfig &locationconf);
-	std::string		matchCGI(std::string extension, LocationConfig &locationconf);
-	std::string		matchCGI(std::string extension, ServerConfig &serverconf);
+	std::string		matchCGI(std::string extension, ServerConfig &serverconf, LocationConfig *locationconf);
 	void			fillCGIenv();
 	int				handleCGI();
 	void			parseCGIoutput(std::string &cgi_output);

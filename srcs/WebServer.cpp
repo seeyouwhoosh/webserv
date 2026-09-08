@@ -289,6 +289,7 @@ int	WebServer::handle_client_data(int client)
 	clientBuffer.rq_startline.version = "HTTP/1.1";
 	clientBuffer.setStatusCode(OK);
 	std::cout << "file: " << arv << std::endl;
+
 	/* ************************** ERASE *************************** */
 
 		if (clientBuffer.generateResponse() < 0)
