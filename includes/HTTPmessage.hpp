@@ -31,6 +31,7 @@ enum	StatusCodes
 	NOT_FOUND				= 404,
 	METHOD_NOT_ALLOWED		= 405,
 	UNSUPPORTED_MEDIA_TYPE	= 415,
+	UNPROCESSABLE_CONTENT	= 422,
 	INTERNAL_SERVER_ERROR	= 500,
 	NOT_IMPLEMENTED			= 501
 };
@@ -103,8 +104,8 @@ private:
 
 	/* CGI */
 	void			filefromCGIbin(size_t cgibin_pos);
-	void			indepCGIexecutable(size_t app_pos);
-	void			CGIparse(ServerConfig &serverconf, LocationConfig *locationconf);
+	void			indepCGIexecutable(size_t app_pos, LocationConfig *locationconf);
+	void			CGIparse(LocationConfig *locationconf);
 	std::string		matchCGI(std::string extension, ServerConfig &serverconf, LocationConfig *locationconf);
 	void			fillCGIenv();
 	void			fillArgvEnvp(std::vector<char *> &argv, std::vector<char *> &envp);
@@ -116,6 +117,7 @@ private:
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
 	LocationConfig	*getFullPath(std::string &file);
+	LocationConfig	*getUploadPath(std::string &full_path);
 	int				openErrorFile(int error, std::fstream &fs);
 	int				generateErrorResponse(int error);
 	int				manageActuallyDir();
@@ -179,3 +181,5 @@ int			getLocationIndex(std::vector<LocationConfig> &locations, std::string path)
 int			pipePipes(int pipe_in[2], int pipe_out[2]);
 
 void		closePipes(int pipe_in[2], int pipe_out[2]);
+
+void		refactorFile(std::string &path, std::string &file);

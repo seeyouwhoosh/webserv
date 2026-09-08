@@ -36,14 +36,14 @@ void	HTTPmessage::filefromCGIbin(size_t cgibin_pos)
 	}
 }
 
-void	HTTPmessage::indepCGIexecutable(size_t app_pos)
+void	HTTPmessage::indepCGIexecutable(size_t app_pos, LocationConfig *locationconf)
 {
 	size_t		app_end = full_path.find('/', app_pos);
 	std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos + 1) : full_path.substr(app_pos + 1, app_end - app_pos - 1);
 
 	struct stat	st;
 	stat(full_path.c_str(), &st);
-	if ((((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, serverconf, locationconf)) != "") || app_ext == "cgi")
+	if ((((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, *serverconf, locationconf)) != "") || app_ext == "cgi")
 	{
 		rq_startline.iscgi = true;
 		if (app_end != std::string::npos)
@@ -58,7 +58,7 @@ void	HTTPmessage::indepCGIexecutable(size_t app_pos)
 		rq_startline.iscgi = false;
 }
 
-void	HTTPmessage::CGIparse(ServerConfig &serverconf, LocationConfig *locationconf)
+void	HTTPmessage::CGIparse(LocationConfig *locationconf)
 {
 	size_t		app_pos = full_path.find('.');
 	size_t		cgibin_pos = full_path.find("/cgi-bin/");
@@ -66,7 +66,7 @@ void	HTTPmessage::CGIparse(ServerConfig &serverconf, LocationConfig *locationcon
 	if (cgibin_pos != std::string::npos)
 		filefromCGIbin(cgibin_pos);
 	else if (app_pos != std::string::npos)
-		indepCGIexecutable(app_pos);
+		indepCGIexecutable(app_pos, locationconf);
 }
 
 void	HTTPmessage::parseCGIoutput(std::string &cgi_output)

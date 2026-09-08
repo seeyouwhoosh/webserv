@@ -29,7 +29,7 @@ std::string	getFileExtension(std::string file)
 	return file.substr(dot + 1);
 }
 
-bool file_is_empty(std::fstream &file)
+bool isFileEmpty(std::fstream &file)
 {
 	return file.peek() == std::ios::traits_type::eof();
 }

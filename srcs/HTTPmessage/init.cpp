@@ -82,6 +82,7 @@ void	init_responses()
 	responses[NOT_FOUND]				= "Not Found";
 	responses[METHOD_NOT_ALLOWED]		= "Method Not Allowed";
 	responses[UNSUPPORTED_MEDIA_TYPE]	= "Unsupported Media Type";
+	responses[UNPROCESSABLE_CONTENT]	= "Unprocessable Content";
 	responses[INTERNAL_SERVER_ERROR]	= "Internal Server Error";
 	responses[NOT_IMPLEMENTED]			= "Not Implemented";
 }

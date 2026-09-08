@@ -41,7 +41,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 	fs.open(file.c_str(), std::ios::in | std::ios::binary);
 	if (!fs.is_open() || fs.fail())
 		return -1;
-	if (file_is_empty(fs))
+	if (isFileEmpty(fs))
 	{
 		fs.close();
 		return -1;

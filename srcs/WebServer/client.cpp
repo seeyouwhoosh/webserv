@@ -128,9 +128,11 @@ int	WebServer::handle_client_data(int client)
 		} */
 
 	/* ************************** ERASE ************************** */
-	clientBuffer.rq_startline.method = "GET";
+	clientBuffer.rq_startline.method = "POST";
 	clientBuffer.rq_startline.raw_path = arv;
 	clientBuffer.rq_startline.version = "HTTP/1.1";
+	
+	clientBuffer.rq_body = "Hello, world!\n";
 	clientBuffer.setStatusCode(OK);
 	std::cout << "file: " << arv << std::endl;
 

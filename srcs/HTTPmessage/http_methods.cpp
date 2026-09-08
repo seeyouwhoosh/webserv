@@ -1,7 +1,7 @@
 #include "HTTPmessage.hpp"
 
 /* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
-int	HTTPmessage::httpGET() //implementar cgi
+int	HTTPmessage::httpGET()
 {
 	full_path = rq_startline.raw_path;
 	struct stat		st;
@@ -46,24 +46,81 @@ int	HTTPmessage::httpGET() //implementar cgi
 	return 0;
 }
 
+/* Constructs the full path of file or directory into string file and returns the current location (upload file edition) */
+LocationConfig	*HTTPmessage::getUploadPath(std::string &full_path)
+{
+	if (serverconf == NULL)
+		return NULL;
+
+	full_path = parsePath();
+
+	int	location_pos = getLocationIndex(serverconf->locations, full_path);
+
+	if (location_pos < 0)
+	{
+		std::string upload_store = serverconf->upload_store;
+		refactorFile(upload_store, full_path);
+		CGIparse(NULL);
+		return NULL;
+	}
+
+	LocationConfig	&locationconf = serverconf->locations[location_pos];
+	std::string upload_store = locationconf.upload_store.empty() ? serverconf->upload_store : locationconf.upload_store;
+	refactorFile(upload_store, full_path);
+
+	CGIparse(&locationconf);
+
+	return &locationconf;
+}
+
+void	parseMultipart()
+{
+	;
+}
+
 int	HTTPmessage::httpPOST() // implementar cgi
 {
-	full_path = rq_startline.raw_path;
-	bool			create = false;
-
 	if (rq_body.size() != rq_content_length)
 		return -setStatusCode(BAD_REQUEST);
 
+	full_path = rq_startline.raw_path;
+
+	bool			create = false;
+	int				status;
+	struct stat		st;
+	
 	getFullPath(full_path);
-	if (checkFileStatus(F_OK, full_path) < 0)
+	if (stat(full_path.c_str(), &st) == 0)
+	{
+		if ((st.st_mode & S_IFMT) != S_IFREG || (!full_path.empty() && full_path[full_path.length() - 1] == '/'))
+			return -setStatusCode(METHOD_NOT_ALLOWED);
+	}
+
+	if (rq_startline.iscgi)
+	{
+		status = handleCGI();
+		if (status != OK)
+			return -setStatusCode(status);
+		return 0;
+	}
+
+	if (rq_headers["Content-Type"] == "application/x-www-form-urlencoded")
+		return -setStatusCode(UNPROCESSABLE_CONTENT);
+
+	if (access(full_path.c_str(), F_OK) < 0)
 		create = true;
-
+	if (access(full_path.c_str(), W_OK) < 0)
+		return -setStatusCode(FORBIDDEN);
+	
 	std::fstream	fs;
+	fs.open(full_path.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
 
-	fs.open(full_path.c_str(), std::ios::out | std::ios::binary);
 	if (!fs.is_open())
 		return -setStatusCode(FORBIDDEN);
-	fs.write(rs_body.c_str(), rq_content_length);
+
+	if (rq_headers["Content-Type"] == "multipart/form-data")
+		parseMultipart();
+	fs.write(rq_body.c_str(), rq_content_length);
 
 	if (fs.fail())
 	{

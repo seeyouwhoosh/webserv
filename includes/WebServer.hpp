@@ -110,7 +110,7 @@ std::string	inet_ntop(int af, const void *src);
 
 std::string	getFileExtension(std::string file);
 
-bool		file_is_empty(std::fstream &file);
+bool		isFileEmpty(std::fstream &file);
 
 int			checkFileStatus(int flags, std::string &file);
 

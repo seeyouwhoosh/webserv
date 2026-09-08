@@ -58,3 +58,17 @@ void	closePipes(int pipe_in[2], int pipe_out[2])
 	close(pipe_out[0]);
 	close(pipe_out[1]);
 }
+
+/* Appends path with file, manages primarily backslashes. Modifies file */
+void	refactorFile(std::string &path, std::string &file)
+{
+	if (path.empty())
+		return;
+	if (file[0] == '/')
+		file.erase(0,1);
+
+	if (path[path.size() - 1] == '/')
+		file = path + file;
+	else
+		file = path + "/" + file;
+}

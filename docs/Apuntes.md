@@ -17,9 +17,9 @@
 - [x] Método GET
 - [x] testear el método DELETE
 - [ ] Método POST
-  - [ ] Si hay cgi, el marrón se lo come el cgi
+  - [x] Si hay cgi, el marrón se lo come el cgi
   - [ ] Subida de Archivos: Si va dirigido a una ruta donde upload_enable es on, leer el cuerpo de la petición y guardarlo en el directorio especificado en upload_store
-  - [ ] Si el tipo es multipart, hay que parsearlo (y luego cgi si eso)
+  - [ ] Si el tipo es multipart, hay que parsearlo 
   - [ ] application/x-www-form-urlencoded se ignora si no hay cgi
 
 ## Estructura del archivo de configuración

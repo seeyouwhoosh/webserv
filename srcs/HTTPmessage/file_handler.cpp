@@ -1,19 +1,5 @@
 #include "HTTPmessage.hpp"
 
-/* Appends path with file, manages primarily backslashes. Modifies file */
-static void	refactorFile(std::string &path, std::string &file)
-{
-	if (path.empty())
-		return;
-	if (file[0] == '/')
-		file.erase(0,1);
-
-	if (path[path.size() - 1] == '/')
-		file = path + file;
-	else
-		file = path + "/" + file;
-}
-
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
 int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf)
 {
@@ -141,7 +127,7 @@ LocationConfig	*HTTPmessage::getFullPath(std::string &full_path)
 	{
 		std::string root = serverconf->root;
 		refactorFile(root, full_path);
-		CGIparse(*serverconf, NULL);
+		CGIparse(NULL);
 		return NULL;
 	}
 
@@ -149,7 +135,7 @@ LocationConfig	*HTTPmessage::getFullPath(std::string &full_path)
 	std::string root = locationconf.root.empty() ? serverconf->root : locationconf.root;
 	refactorFile(root, full_path);
 
-	CGIparse(*serverconf, &locationconf);
+	CGIparse(&locationconf);
 
 	return &locationconf;
 }
