@@ -102,6 +102,8 @@ private:
 	int				createAutoindex(std::string dir);
 
 	/* CGI */
+	void			filefromCGIbin(size_t cgibin_pos);
+	void			indepCGIexecutable(size_t app_pos);
 	void			CGIparse(ServerConfig &serverconf, LocationConfig *locationconf);
 	std::string		matchCGI(std::string extension, ServerConfig &serverconf, LocationConfig *locationconf);
 	void			fillCGIenv();
