@@ -47,54 +47,93 @@ int	HTTPmessage::httpGET()
 }
 
 /* Constructs the full path of file or directory into string file and returns the current location (upload file edition) */
-LocationConfig	*HTTPmessage::getUploadPath(std::string &full_path)
+int	HTTPmessage::getUploadPath(LocationConfig *locationconf)
 {
-	if (serverconf == NULL)
-		return NULL;
+	if (locationconf->upload_store.empty())
+		return NOT_FOUND;
 
-	full_path = parsePath();
+	struct stat	st;
+	std::string	upload_name;
+	bool		create = false;
 
-	int	location_pos = getLocationIndex(serverconf->locations, full_path);
-
-	if (location_pos < 0)
+	if (access(full_path.c_str(), F_OK) < 0)
+		create = true;
+	else
 	{
-		std::string upload_store = serverconf->upload_store;
-		refactorFile(upload_store, full_path);
-		CGIparse(NULL);
-		return NULL;
+		if (access(full_path.c_str(), W_OK) < 0)
+			return FORBIDDEN;
+		if (stat(full_path.c_str(), &st) == 0)
+		{
+			if ((st.st_mode & S_IFMT) != S_IFREG && (st.st_mode & S_IFMT) != S_IFDIR)
+				return METHOD_NOT_ALLOWED;
+		}
 	}
 
-	LocationConfig	&locationconf = serverconf->locations[location_pos];
-	std::string upload_store = locationconf.upload_store.empty() ? serverconf->upload_store : locationconf.upload_store;
-	refactorFile(upload_store, full_path);
+	if (create || (!full_path.empty() && full_path[full_path.length() - 1] == '/') || (!create && (st.st_mode & S_IFMT) == S_IFDIR))
+	{
+		upload_name = "upload_" + getDate();
+		std::replace(upload_name.begin(), upload_name.end(), ' ', '_');
+	}
+	else
+	{
+		size_t	last_slash = full_path.find_last_of('/');
+		if (last_slash != std::string::npos)
+			upload_name = full_path.substr(last_slash);
+		else
+			upload_name = full_path;
+	}
 
-	CGIparse(&locationconf);
+	refactorFile(locationconf->upload_store, upload_name);
 
-	return &locationconf;
+	if (create)
+		return CREATED;
+	return OK;
 }
 
-void	parseMultipart()
+void	HTTPmessage::processURLencoded()
 {
-	;
+	std::stringstream	page;
+	std::stringstream	ss;
+	ss << rq_body;
+
+	page << "<!DOCTYPE html><html><head><title>Received form answers</title>"
+		<< "<style>"
+		<< "table { width: 65%; border-collapse: collapse; }"
+		<< "th, td { text-align: left; font-family: \"Courier New\", Courier, monospace; padding: 4px 8px; }"
+		<< "</style></head><body>"
+		<< "<h1>Received form answers</h1><hr>"
+		<< "<table><thead><tr id=\"theader\"><th>Field</th><th>Value</th></tr></thead>"
+		<< "<tbody id=\"tbody\">";
+
+	std::string	pair;
+	while (std::getline(ss, pair, '&'))
+	{
+		size_t	separator = pair.find('=');
+
+		if (separator == std::string::npos)
+		{
+			page << "<tr><td>" << pair << "</td><td></td>";
+			continue;
+		}
+
+		page << "<tr><td>" << pair.substr(0, separator) << "</td>"
+			<< "<td>" << pair.substr(separator + 1) << "</td>";
+	}
+	page << "</tbody></table></body></html>";
+	rs_body = page.str();
+	rs_content_length = rs_body.length();
+	rs_headers["Content-Type"] = "text/html";
 }
 
-int	HTTPmessage::httpPOST() // implementar cgi
+int	HTTPmessage::httpPOST()
 {
 	if (rq_body.size() != rq_content_length)
 		return -setStatusCode(BAD_REQUEST);
 
 	full_path = rq_startline.raw_path;
 
-	bool			create = false;
 	int				status;
-	struct stat		st;
-	
-	getFullPath(full_path);
-	if (stat(full_path.c_str(), &st) == 0)
-	{
-		if ((st.st_mode & S_IFMT) != S_IFREG || (!full_path.empty() && full_path[full_path.length() - 1] == '/'))
-			return -setStatusCode(METHOD_NOT_ALLOWED);
-	}
+	LocationConfig	*locationconf = getFullPath(full_path);
 
 	if (rq_startline.iscgi)
 	{
@@ -104,22 +143,25 @@ int	HTTPmessage::httpPOST() // implementar cgi
 		return 0;
 	}
 
+	if (rq_headers["Content-Type"] == "multipart/form-data")
+		return -setStatusCode(NOT_IMPLEMENTED);
 	if (rq_headers["Content-Type"] == "application/x-www-form-urlencoded")
-		return -setStatusCode(UNPROCESSABLE_CONTENT);
+	{
+		processURLencoded();
+		setStatusCode(OK);
+		return 0;
+	}
 
-	if (access(full_path.c_str(), F_OK) < 0)
-		create = true;
-	if (access(full_path.c_str(), W_OK) < 0)
-		return -setStatusCode(FORBIDDEN);
-	
+	status = getUploadPath(locationconf);
+	if (status != OK || status != CREATED)
+		return -setStatusCode(status);
+
 	std::fstream	fs;
 	fs.open(full_path.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
 
 	if (!fs.is_open())
 		return -setStatusCode(FORBIDDEN);
 
-	if (rq_headers["Content-Type"] == "multipart/form-data")
-		parseMultipart();
 	fs.write(rq_body.c_str(), rq_content_length);
 
 	if (fs.fail())
@@ -129,10 +171,7 @@ int	HTTPmessage::httpPOST() // implementar cgi
 	}
 	fs.close();
 
-	if (create)
-		setStatusCode(CREATED);
-	else
-		setStatusCode(OK);
+	setStatusCode(status);
 	return 0;
 }
 

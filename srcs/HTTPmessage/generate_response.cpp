@@ -10,8 +10,8 @@ If error_file does not exist in any case or it fails somehow, returns -1 */
 int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 {
 	std::string	error_str = toString(error);
-	std::string					err_file = error_str + ".html";
-	int							pos = (serverconf) ? getLocationIndex(serverconf->locations, rq_startline.raw_path) : -1;
+	std::string	err_file = error_str + ".html";
+	int			pos = (serverconf) ? getLocationIndex(serverconf->locations, rq_startline.raw_path) : -1;
 	
 	std::string	file;
 	if (pos >= 0 && pos < static_cast<int>(serverconf->locations.size()))
