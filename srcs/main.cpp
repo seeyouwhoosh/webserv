@@ -56,13 +56,14 @@ int	main(int ac, char **av)
 	ServerConfig server;
 	LocationConfig	location;
 	location.name = "/";
-	location.root = "/mnt/d/Developer/webserv/test";
+	location.root = "/sgoinfre/students/xwu/webserv/test";
 	location.indexes.push_back("index.html");
 	location.autoindex = AUTOINDEX_ON;
 	location.error_pages[NOT_FOUND] = "404.html";
+	location.upload_store = "/sgoinfre/students/xwu/webserv/test/uploads";
 	
 	server.autoindex = AUTOINDEX_OFF;
-	server.root = "/mnt/d/Developer/webserv/test";
+	server.root = "/sgoinfre/students/xwu/webserv/test";
 	server.server_name = "prueba.com";
 	server.indexes.push_back("picture.jpeg");
 	server.locations.push_back(location);

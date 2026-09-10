@@ -52,41 +52,9 @@ int	HTTPmessage::getUploadPath(LocationConfig *locationconf)
 	if (locationconf->upload_store.empty())
 		return NOT_FOUND;
 
-	struct stat	st;
-	std::string	upload_name;
-	bool		create = false;
-
-	if (access(full_path.c_str(), F_OK) < 0)
-		create = true;
-	else
-	{
-		if (access(full_path.c_str(), W_OK) < 0)
-			return FORBIDDEN;
-		if (stat(full_path.c_str(), &st) == 0)
-		{
-			if ((st.st_mode & S_IFMT) != S_IFREG && (st.st_mode & S_IFMT) != S_IFDIR)
-				return METHOD_NOT_ALLOWED;
-		}
-	}
-
-	if (create || (!full_path.empty() && full_path[full_path.length() - 1] == '/') || (!create && (st.st_mode & S_IFMT) == S_IFDIR))
-	{
-		upload_name = "upload_" + getDate();
-		std::replace(upload_name.begin(), upload_name.end(), ' ', '_');
-	}
-	else
-	{
-		size_t	last_slash = full_path.find_last_of('/');
-		if (last_slash != std::string::npos)
-			upload_name = full_path.substr(last_slash);
-		else
-			upload_name = full_path;
-	}
-
+	std::string	upload_name = "upload_" + toString(time(NULL));
 	refactorFile(locationconf->upload_store, upload_name);
 
-	if (create)
-		return CREATED;
 	return OK;
 }
 
@@ -131,10 +99,9 @@ int	HTTPmessage::httpPOST()
 		return -setStatusCode(BAD_REQUEST);
 
 	full_path = rq_startline.raw_path;
-
-	int				status;
 	LocationConfig	*locationconf = getFullPath(full_path);
-
+	
+	int				status;
 	if (rq_startline.iscgi)
 	{
 		status = handleCGI();
@@ -152,9 +119,16 @@ int	HTTPmessage::httpPOST()
 		return 0;
 	}
 
-	status = getUploadPath(locationconf);
-	if (status != OK || status != CREATED)
-		return -setStatusCode(status);
+	if (locationconf->upload_store.empty())
+		return -setStatusCode(NOT_FOUND);
+	
+	struct stat	st;
+	if (stat(locationconf->upload_store.c_str(), &st) < 0 || access(locationconf->upload_store.c_str(), X_OK) < 0)
+		return -setStatusCode(FORBIDDEN);
+
+	std::string	upload_name = "upload_" + toString(time(NULL));
+	refactorFile(locationconf->upload_store, upload_name);
+	full_path = upload_name;
 
 	std::fstream	fs;
 	fs.open(full_path.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
@@ -171,7 +145,7 @@ int	HTTPmessage::httpPOST()
 	}
 	fs.close();
 
-	setStatusCode(status);
+	setStatusCode(CREATED);
 	return 0;
 }
 
