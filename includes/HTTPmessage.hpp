@@ -117,7 +117,6 @@ private:
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
 	LocationConfig	*getFullPath(std::string &file);
-	int				getUploadPath(LocationConfig *locationconf);
 	int				openErrorFile(int error, std::fstream &fs);
 	int				generateErrorResponse(int error);
 	int				manageActuallyDir();

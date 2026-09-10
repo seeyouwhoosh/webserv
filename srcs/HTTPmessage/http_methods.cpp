@@ -46,17 +46,6 @@ int	HTTPmessage::httpGET()
 	return 0;
 }
 
-/* Constructs the full path of file or directory into string file and returns the current location (upload file edition) */
-int	HTTPmessage::getUploadPath(LocationConfig *locationconf)
-{
-	if (locationconf->upload_store.empty())
-		return NOT_FOUND;
-
-	std::string	upload_name = "upload_" + toString(time(NULL));
-	refactorFile(locationconf->upload_store, upload_name);
-
-	return OK;
-}
 
 void	HTTPmessage::processURLencoded()
 {
