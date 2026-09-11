@@ -1,7 +1,8 @@
 #pragma once
-#include <string>
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
-#include "HTTPmessage.hpp"
+#include <string>
 
 enum ParseState
 {
@@ -10,6 +11,7 @@ enum ParseState
 	BODY,
 	CHUNK_SIZE,
 	CHUNK_DATA,
+	CHUNK_CRLF,
 	COMPLETE
 };
 
@@ -26,29 +28,38 @@ class Parser
 {
 public:
 	Parser();
-	Parser(const Parser &other);
-	Parser	&operator=(const Parser &other);
 	~Parser();
 
-	ParseResult parseRequest(HTTPmessage& request);
+	void appendData(const std::string& data); //buffer
+	void reset();
 	
-	private:
+	ParseResult parse(HTTPmessage& request);
+
+	bool parseRequestLine(const std::string& line, HTTPmessage& request);
+
+private:
 	std::string _buffer;
 	ParseState _state;
 	std::size_t _contentLength;
 	std::size_t _bodyReceived;
+	std::size_t _chunkSize;
 
 	bool isValidMethod(const std::string& method) const;
 	bool isValidVersion(const std::string& version) const;
 	bool isValidPath(const std::string& path) const;
-	void appendData(const std::string& data); //buffer
-	bool parseRequestLine(const std::string& line, HTTPmessage& request);
+
 	bool parseHeader(const std::string& line, HTTPmessage& request);
-	bool hasChunkedEncoding(const HTTPmessage& request) const;
 	bool parseContentLength(const HTTPmessage& request);
+	bool hasChunkedEncoding(const HTTPmessage& request) const;
+	bool hasContentLength(const HTTPmessage& request) const;//borrar esto si queremos que ignore el content-length y solo haga chunked
+	bool hasHost(const HTTPmessage& request) const;
 	bool getNextLine(std::string& line);
 	
-	bool parseBody(HTTPmessage& request);
+	ParseResult parseBody(HTTPmessage& request);
+
+	ParseResult parseChunkSize();//leer tamaño del chunk
+	ParseResult parseChunkData(HTTPmessage& request);
+	ParseResult parseChunkCRLF();
 };
 
-std::vector<std::pair<std::string, std::string> >	parseQuery(std::string query);
+#endif
