@@ -16,26 +16,14 @@
 #include <algorithm>
 
 #include "Config.hpp"
-#include "HTTPmessage.hpp"
-#include "Parser.hpp"
+#include "Client.hpp"
+#include "utils.hpp"
 
 #define MAX_CONNECTIONS	512
 
 #ifndef BUFFER_SIZE
 # define BUFFER_SIZE 1024
 #endif
-
-typedef	struct t_client
-{
-	int			fd;
-	time_t		last_activity;
-	int			keep_alive;
-	int			max_requests;
-	int			n_requests;
-}	t_client;
-
-class HTTPmessage;
-class Parser;
 
 class WebServer
 {
@@ -55,9 +43,7 @@ public:
 	/* Connection variables */
 	int							epoll_instance;
 	std::vector<int>			listeners;
-	std::map<int, t_client>		clients;
-	std::map<int, HTTPmessage>	clientRequests;
-	std::map<int, Parser>		clientParsers;
+	std::map<int, Client>		clients;
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
 
@@ -68,7 +54,6 @@ public:
 	int			process_connections(int num_events);
 
 	void		create_new_client(int clientsock, int listener, void *clientaddr);
-	int			keep_alive_client(int fd);
 	int			handle_client_data(int client);
 	int			close_connection(int fd);
 
@@ -86,38 +71,3 @@ public:
 	/* Getters and setters*/
 	std::string	getPort(int listener);
 };
-
-/* Miscelaneous helper functions */
-
-template <typename T>
-std::string toString(const T val)
-{
-	std::stringstream stream;
-	stream << val;
-	return stream.str();
-}
-
-/* Helper functions */
-int			error_msg(int err_code, const char *func, const char *msg);
-
-int			listen_socket(struct addrinfo *addr, int listen_num);
-
-int			update_client(t_client &client);
-
-std::string	inet_ntop(int af, const void *src);
-
-/* File management */
-
-std::string	getFileExtension(std::string file);
-
-bool		isFileEmpty(std::fstream &file);
-
-int			checkFileStatus(int flags, std::string &file);
-
-/* Conversion utils */
-
-void		toupperString(std::string &s);
-
-int			hexToAscii(std::string s);
-
-std::string	getDate();

@@ -1,82 +1,123 @@
 #include "Client.hpp"
 
-Client()
+Client::Client()
 {
-    ;
+	last_activity = std::time(NULL);
+	keep_alive = -1;
+	max_requests = -1;
+	n_requests = 0;
 }
 
-Client(Client &other)
+Client::Client(const Client &other)
 {
-    ;
+	*this = other;
 }
 
-Client	&operator=(Client &other)
+Client::Client(int fd): fd(fd)
 {
-    ;
+	last_activity = std::time(NULL);
+	keep_alive = -1;
+	max_requests = -1;
+	n_requests = 0;
 }
 
-~Client()
+Client	&Client::operator=(const Client &other)
 {
-    ;
+	fd = other.fd;
+	last_activity = other.last_activity;
+	keep_alive = other.keep_alive;
+	max_requests = other.max_requests;
+	n_requests = other.n_requests;
+
+	message = other.message;
+	parser = other.parser;
+	return *this;
 }
 
+Client::~Client() {}
 
-time_t		getLastActivity()
+bool	Client::askkeepAlive()
 {
-    ;
+	if (keep_alive < 0)
+		return 1;
+	if (!keep_alive)
+		return 0;
+
+	time_t		now = time(NULL);
+	if ((now - last_activity > keep_alive) || (max_requests > 0 && n_requests <= max_requests))
+		return 1;
+	return 0;
 }
 
-int			getKeepAlive()
+void	Client::updateActivity()
 {
-    ;
+	stringmap::iterator conn_it = message.rq_headers.find("Connection");
+	if (conn_it != message.rq_headers.end() && conn_it->second == "close")
+		keep_alive = 0;
+	else
+		keep_alive = -1;
+
+	stringmap::iterator	it = message.rq_headers.find("Keep-Alive");
+	if ((keep_alive < 0) && (it != message.rq_headers.end()))
+	{
+		std::stringstream	ss(it->second.c_str());
+		std::string			s;
+
+		while (std::getline(ss, s, ','))
+		{
+			if (s.empty())
+				continue;
+
+			size_t eq_pos = s.find('=');
+			if (eq_pos != std::string::npos)
+			{
+				std::string key = s.substr(0, eq_pos);
+				std::string val = s.substr(eq_pos + 1);
+
+			if (s.find("timeout") != s.npos)
+				keep_alive = strtoInt(s.substr(s.find("=") + 1));
+			if (s.find("max") != s.npos)
+				max_requests = strtoInt(s.substr(s.find("=") + 1));
+			}
+		}
+	}
+
+	last_activity = std::time(NULL);
+	n_requests++;
 }
 
-int			getMaxRequest()
+void	Client::initHTTPmessage(std::string &port, std::string address)
 {
-    ;
+	message.setServerPort(port);
+	message.setClientAddress(address);
 }
 
-int			getNumberRequests()
+int	Client::parse()
 {
-    ;
+	return parser.parse(message);
 }
 
-HTTPmessage	&getHTTPmessage()
+int	Client::setStatusCode(int code)
 {
-    ;
+	return message.setStatusCode(code);
 }
 
-Parser		&getParser()
+int	Client::generateResponse()
 {
-    ;
+	return message.generateResponse();
 }
 
-void		setLastActivity(time_t last)
+int	Client::sendResponse()
 {
-    ;
+	return message.sendResponse(fd);
 }
 
-void		setKeepAlive(int keepalive)
+int	Client::responseComplete()
 {
-    ;
+	return message.isComplete();
 }
 
-void		setMaxRequest(int max_request)
+void	Client::clear()
 {
-    ;
-}
-
-void		setNumberRequests(int n)
-{
-    ;
-}
-
-void		setHTTPmessage(HTTPmessage &message)
-{
-    ;
-}
-
-void		setParser(Parser &parser)
-{
-    ;
+	message.clear();
 }

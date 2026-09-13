@@ -4,9 +4,11 @@
 #include <dirent.h> /* readdir, closedir */
 #include <sys/stat.h> /* stat */
 #include <sys/wait.h> /* wait */
+#include <sys/socket.h>
 
 #include <cstdio>
 #include <cctype>
+#include <ctime>
 
 #include <string>
 #include <fstream>
@@ -16,9 +18,12 @@
 #include <algorithm>
 
 #include "Config.hpp"
-#include "WebServer.hpp"
+#include "utils.hpp"
 
 #define ERRPAGE_DIR	"error_pages"
+#ifndef BUFFER_SIZE
+# define BUFFER_SIZE 1024
+#endif
 
 enum	StatusCodes
 {
@@ -64,7 +69,6 @@ typedef	struct t_rs_startline
 	std::string	reason_phrase;
 }	t_rs_startline;
 
-typedef std::map<std::string, std::vector<std::string> > t_accept;
 typedef std::map<std::string, std::string> stringmap;
 
 extern stringmap					mime_types;
@@ -163,23 +167,3 @@ public:
 	int					sendResponse(int client);
 	void				clear();
 };
-
-/* INITs */
-
-void		init_responses();
-
-void		init_MIMEtypes();
-
-void		init_allowedMethods();
-
-/* Miscelaneous helper functions */
-
-std::string	getMIMEtype(std::string ext);
-
-int			getLocationIndex(std::vector<LocationConfig> &locations, std::string path);
-
-int			pipePipes(int pipe_in[2], int pipe_out[2]);
-
-void		closePipes(int pipe_in[2], int pipe_out[2]);
-
-void		refactorFile(std::string &path, std::string &file);

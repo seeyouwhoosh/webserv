@@ -1,51 +1,17 @@
 #include "WebServer.hpp"
 
-/* Return 1 if the server should keep the connection alive, 0 otherwise */
-int	WebServer::keep_alive_client(int fd)
-{
-	t_client	client = clients[fd];
-
-	if (client.keep_alive < 0)
-		return 1;
-	if (!client.keep_alive)
-		return 0;
-	time_t		now = time(NULL);
-	if ((client.keep_alive > 0 && (now - client.last_activity > client.keep_alive)) || (client.max_requests > 0 && client.n_requests <= client.max_requests))
-		return 1;
-	return 0;
-}
-
-int	update_client(t_client &client)
-{
-	client.last_activity = std::time(NULL);
-	client.n_requests++;
-	return 0;
-}
-
 void	WebServer::create_new_client(int clientsock, int listener, void *clientaddr)
 {
-	t_client	new_client = {
-		.fd = clientsock,
-		.last_activity = std::time(NULL),
-		.keep_alive = 0,
-		.max_requests = -1,
-		.n_requests = 0
-	};
-	
 	for (size_t i = 0; i < servers.size() ; i++)
 	{
 		for (size_t j = 0; j < servers[i].listens.size(); j++)
 		{
 			if (listener == servers[i].listens[j].sockfd)
 			{
-				HTTPmessage client_message(&servers[i]);
-				Parser		client_parser;
-				
-				client_message.setServerPort(servers[i].listens[j].port);
-				client_message.setClientAddress(inet_ntop(static_cast<struct sockaddr *>(clientaddr)->sa_family, clientaddr));
-				this->clientRequests[clientsock] = client_message;
-				this->clientParsers[clientsock] = client_parser;
-				clients[clientsock] = new_client;
+				Client	client(clientsock);
+
+				client.initHTTPmessage(servers[i].listens[j].port, inet_ntop(static_cast<struct sockaddr *>(clientaddr)->sa_family, clientaddr));
+				clients[clientsock] = client;
 				return;
 			}
 		}
@@ -104,7 +70,7 @@ extern std::string	arv;
 
 int	WebServer::handle_client_data(int client)
 {
-	HTTPmessage			&clientBuffer = clientRequests[client];
+	Client				&clientUnit = clients[client];
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
 
@@ -112,50 +78,34 @@ int	WebServer::handle_client_data(int client)
 	if (read_size > 0)
 	{
 		buff[read_size] = '\0';
-		
-	/* 	Parser	&clientParser = clientParsers[clients];
 		int		parse_status;
+		int		response_status;
 
-		if ((parse_status = clientParser.parseRequest(clientBuffer)) == PARSE_ERROR)
-			clientBuffer.setStatusCode(BAD_REQUEST);
+		if ((parse_status = clientUnit.parse()) == PARSE_ERROR)
+			clientUnit.setStatusCode(BAD_REQUEST);
 		else if (parse_status == PARSE_INCOMPLETE)
 			return 0;
 		else if (parse_status == PARSE_COMPLETE)
-		{
-			clientBuffer.setStatusCode(OK);
-			clientBuffer.generateResponse();
-			clientBuffer.sendResponse(client);
-		} */
+			clientUnit.setStatusCode(OK);
 
-	/* ************************** ERASE ************************** */
-	clientBuffer.rq_startline.method = "POST";
-	clientBuffer.rq_startline.raw_path = arv;
-	clientBuffer.rq_startline.version = "HTTP/1.1";
-	
-	clientBuffer.rq_body = "Hello, world!\n";
-	clientBuffer.setStatusCode(OK);
-	std::cout << "file: " << arv << std::endl;
-
-	/* ************************** ERASE *************************** */
-
-		if (clientBuffer.generateResponse() < 0)
+		response_status = clientUnit.generateResponse();
+		if (response_status < 0)
 		{
 			free_all();
 			return error_msg(1, "generateResponse", "couldn't generate response");
 		}
+	
 		if (epoll_addflag_fd(client, EPOLLOUT) < 0)
 		{
 			free_all();
 			return -1;
 		}
-		update_client(clients[client]);
+		clientUnit.updateActivity();
 	}
 	if (!read_size)
 	{
 		std::cout << "Client closed connection\n";
 
-		clientRequests.erase(client);
-		clientParsers.erase(client);
 		clients.erase(client);
 		if (close_connection(client) < 0)
 			return -1;

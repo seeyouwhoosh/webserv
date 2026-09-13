@@ -1,4 +1,33 @@
-#include "HTTPmessage.hpp"
+#include "utils.hpp"
+
+std::string	getFileExtension(std::string file)
+{
+	size_t dot = file.find_last_of('.');
+	size_t slash = file.find_last_of('/');
+
+	if (dot == std::string::npos || dot < slash + 1)
+		return "plain";
+
+	return file.substr(dot + 1);
+}
+
+bool isFileEmpty(std::fstream &file)
+{
+	return file.peek() == std::ios::traits_type::eof();
+}
+
+int	checkFileStatus(int flags, std::string &file)
+{
+	struct stat	st;
+
+	if (stat(file.c_str(), &st) < 0)
+		return NOT_FOUND;
+
+	if (access(file.c_str(), flags) < 0)
+		return FORBIDDEN;
+
+	return OK;
+}
 
 /* Returns location index if it exist, it not, returns -1 */
 int	getLocationIndex(std::vector<LocationConfig> &locations, std::string path)
@@ -34,29 +63,6 @@ std::string	getMIMEtype(std::string ext)
 		return "application/octet-stream";
 
 	return it->second;
-}
-
-int	pipePipes(int pipe_in[2], int pipe_out[2])
-{
-	if (pipe(pipe_out) < 0)
-		return -1;
-
-	if (pipe(pipe_in) < 0)
-	{
-		close(pipe_out[0]);
-		close(pipe_out[1]);
-		return -1;
-	}
-
-	return 0;
-}
-
-void	closePipes(int pipe_in[2], int pipe_out[2])
-{
-	close(pipe_in[0]);
-	close(pipe_in[1]);
-	close(pipe_out[0]);
-	close(pipe_out[1]);
 }
 
 /* Appends path with file, manages primarily backslashes. Modifies file */

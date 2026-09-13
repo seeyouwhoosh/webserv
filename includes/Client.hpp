@@ -1,5 +1,6 @@
 #pragma once
 #include <ctime>
+#include <sstream>
 
 #include "HTTPmessage.hpp"
 #include "Parser.hpp"
@@ -7,33 +8,33 @@
 class Client
 {
 private:
+	int		fd;
 	time_t	last_activity;
 	int		keep_alive;
 	int		max_requests;
 	int		n_requests;
 
-	HTTPmessage	&message;
-	Parser		&parser;
-
+	HTTPmessage	message;
+	Parser		parser;
 public:
 	Client();
-	Client(Client &other);
-	Client	&operator=(Client &other);
+	Client(const Client &other);
+	Client(int fd);
+	Client	&operator=(const Client &other);
 	~Client();
 
-	int	fd;
-	
-	/* Getters and setters */
-	time_t		getLastActivity();
-	int			getKeepAlive();
-	int			getMaxRequest();
-	int			getNumberRequests();
-	HTTPmessage	&getHTTPmessage();
-	Parser		&getParser();
-	void		setLastActivity(time_t last);
-	void		setKeepAlive(int keepalive);
-	void		setMaxRequest(int max_request);
-	void		setNumberRequests(int n);
-	void		setHTTPmessage(HTTPmessage &message);
-	void		setParser(Parser &parser);
+	/* Parser */
+	int	parse();
+
+	/* Keep Alive */
+	bool	askkeepAlive();
+	void	updateActivity();
+
+	/* HTTPmessage functions */
+	void	initHTTPmessage(std::string &port, std::string address);
+	int		setStatusCode(int code);
+	int		generateResponse();
+	int		sendResponse();
+	int		responseComplete();
+	void	clear();
 };

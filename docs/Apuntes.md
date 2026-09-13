@@ -16,11 +16,11 @@
 - [ ] Gestionar la petición del cliente del close connection y keep-alive
 - [x] Método GET
 - [x] testear el método DELETE
-- [ ] Método POST
+- [x] Método POST
   - [x] Si hay cgi, el marrón se lo come el cgi
   - [x] Subida de Archivos: Si va dirigido a una ruta donde upload_enable es on, leer el cuerpo de la petición y guardarlo en el directorio especificado en upload_store
-  - [ ] Si el tipo es multipart, hay que parsearlo 
   - [x] application/x-www-form-urlencoded se ignora si no hay cgi
+- [ ] Probar el método post
 
 ## Estructura del archivo de configuración
 *Ejemplo:*

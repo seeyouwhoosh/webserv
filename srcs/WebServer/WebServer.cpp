@@ -100,8 +100,7 @@ int	WebServer::process_connections(int num_events)
 		}
 		if (epoll_events[i].events & EPOLLOUT)
 		{
-			HTTPmessage &clientBuffer = clientRequests[fd];
-			int	sent_size = clientBuffer.sendResponse(fd);
+			int	sent_size = clients[fd].sendResponse();
 
 			if (sent_size < 0)
 			{
@@ -109,16 +108,16 @@ int	WebServer::process_connections(int num_events)
 					return -1;
 				continue;
 			}
-			if (clientBuffer.isComplete())
+			if (clients[fd].responseComplete())
 			{
 				epoll_delflag_fd(fd, EPOLLOUT);
-				if (!keep_alive_client(fd))
+				if (!clients[fd].askkeepAlive())
 				{
 					if (close_connection(fd) < 0)
 						return -1;
 				}
 				else
-					clientBuffer.clear();
+					clients[fd].clear();
 			}
 		}
 		if (epoll_events[i].events & EPOLLIN)
