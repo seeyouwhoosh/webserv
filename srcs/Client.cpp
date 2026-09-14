@@ -86,10 +86,11 @@ void	Client::updateActivity()
 	n_requests++;
 }
 
-void	Client::initHTTPmessage(std::string &port, std::string address)
+void Client::initHTTPmessage(std::string &port, std::string address, ServerConfig &server)
 {
 	message.setServerPort(port);
 	message.setClientAddress(address);
+	message.setServerConf(server);
 }
 
 int	Client::parse()

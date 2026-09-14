@@ -1,16 +1,29 @@
 #include "WebServer.hpp"
 
-void	WebServer::create_new_client(int clientsock, int listener, void *clientaddr)
+void Client::appendData(const std::string &data)
 {
-	for (size_t i = 0; i < servers.size() ; i++)
+	parser.appendData(data);
+}
+
+void WebServer::create_new_client(int clientsock, int listener, void *clientaddr)
+{
+	for (size_t i = 0; i < servers.size(); i++)
 	{
 		for (size_t j = 0; j < servers[i].listens.size(); j++)
 		{
 			if (listener == servers[i].listens[j].sockfd)
 			{
-				Client	client(clientsock);
+				Client client(clientsock);
 
-				client.initHTTPmessage(servers[i].listens[j].port, inet_ntop(static_cast<struct sockaddr *>(clientaddr)->sa_family, clientaddr));
+				client.initHTTPmessage(
+					servers[i].listens[j].port,
+					inet_ntop(
+						static_cast<struct sockaddr *>(clientaddr)->sa_family,
+						clientaddr
+					),
+					servers[i]
+				);
+
 				clients[clientsock] = client;
 				return;
 			}
@@ -81,7 +94,12 @@ int	WebServer::handle_client_data(int client)
 		int		parse_status;
 		int		response_status;
 
-		if ((parse_status = clientUnit.parse()) == PARSE_ERROR)
+		clientUnit.appendData(std::string(buff, read_size));
+
+		parse_status = clientUnit.parse();
+		std::cout << "parse result: " << parse_status << std::endl;
+
+		if (parse_status == PARSE_ERROR)
 			clientUnit.setStatusCode(BAD_REQUEST);
 		else if (parse_status == PARSE_INCOMPLETE)
 			return 0;
@@ -94,7 +112,7 @@ int	WebServer::handle_client_data(int client)
 			free_all();
 			return error_msg(1, "generateResponse", "couldn't generate response");
 		}
-	
+
 		if (epoll_addflag_fd(client, EPOLLOUT) < 0)
 		{
 			free_all();

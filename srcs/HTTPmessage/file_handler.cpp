@@ -1,4 +1,5 @@
 #include "HTTPmessage.hpp"
+#include <iostream>//borrar
 
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
 int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf)
@@ -114,14 +115,14 @@ std::string	HTTPmessage::parsePath()
 }
 
 /* Constructs the full path of file or directory into string file and returns the current location */
-LocationConfig	*HTTPmessage::getFullPath(std::string &full_path)
+LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 {
 	if (serverconf == NULL)
 		return NULL;
 
 	full_path = parsePath();
 
-	int	location_pos = getLocationIndex(serverconf->locations, full_path);
+	int location_pos = getLocationIndex(serverconf->locations, full_path);
 
 	if (location_pos < 0)
 	{
@@ -131,8 +132,10 @@ LocationConfig	*HTTPmessage::getFullPath(std::string &full_path)
 		return NULL;
 	}
 
-	LocationConfig	&locationconf = serverconf->locations[location_pos];
-	std::string root = locationconf.root.empty() ? serverconf->root : locationconf.root;
+	LocationConfig &locationconf = serverconf->locations[location_pos];
+	std::string root = locationconf.root.empty()
+		? serverconf->root
+		: locationconf.root;
 	refactorFile(root, full_path);
 
 	CGIparse(&locationconf);
