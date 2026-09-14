@@ -25,13 +25,14 @@ public:
 
 	/* Parser */
 	int	parse();
+	void appendData(const std::string &data);
 
 	/* Keep Alive */
 	bool	askkeepAlive();
 	void	updateActivity();
 
 	/* HTTPmessage functions */
-	void	initHTTPmessage(std::string &port, std::string address);
+	void	initHTTPmessage(std::string &port, std::string address, ServerConfig &server);
 	int		setStatusCode(int code);
 	int		generateResponse();
 	int		sendResponse();

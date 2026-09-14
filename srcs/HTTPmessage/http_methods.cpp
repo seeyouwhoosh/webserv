@@ -1,20 +1,22 @@
 #include "HTTPmessage.hpp"
 
 /* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
-int	HTTPmessage::httpGET()
+int HTTPmessage::httpGET()
 {
 	full_path = rq_startline.raw_path;
-	struct stat		st;
-	LocationConfig	*locationconf = getFullPath(full_path);
+	struct stat st;
+	LocationConfig *locationconf = getFullPath(full_path);
 
-	if (stat(full_path.c_str(), &st) == 0 && (st.st_mode & S_IFMT) == S_IFDIR && manageActuallyDir())
+	if (stat(full_path.c_str(), &st) == 0 &&
+		(st.st_mode & S_IFMT) == S_IFDIR &&
+		manageActuallyDir())
 	{
 		setStatusCode(MOVED_PERMANENTLY);
 		return 0;
 	}
 
-	int				status;
-	std::fstream	fs;
+	int status;
+	std::fstream fs;
 
 	if (rq_startline.iscgi)
 		status = handleCGI();
@@ -24,7 +26,7 @@ int	HTTPmessage::httpGET()
 			return -setStatusCode(INTERNAL_SERVER_ERROR);
 		if (!locationconf)
 			status = openFile(full_path, fs, *serverconf);
-		else	
+		else
 			status = openFile(full_path, fs, *locationconf);
 	}
 
@@ -90,6 +92,9 @@ int	HTTPmessage::httpPOST()
 	full_path = rq_startline.raw_path;
 	LocationConfig	*locationconf = getFullPath(full_path);
 	
+	if (!locationconf)
+		return -setStatusCode(NOT_FOUND);
+
 	int				status;
 	if (rq_startline.iscgi)
 	{
