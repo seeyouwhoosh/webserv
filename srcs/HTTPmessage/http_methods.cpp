@@ -82,6 +82,21 @@ void	HTTPmessage::processURLencoded()
 	rs_headers["Content-Type"] = "text/html";
 }
 
+int	HTTPmessage::handleSpecialType()
+{
+	stringmap::iterator it = rq_headers.find("Content-Type");
+
+	if (it != rq_headers.end() && it->second.find("multipart/form-data") != std::string::npos)
+		return -setStatusCode(NOT_IMPLEMENTED);
+	if (it != rq_headers.end() && it->second.find("application/x-www-form-urlencoded") != std::string::npos)
+	{
+		processURLencoded();
+		setStatusCode(OK);
+		return 0;
+	}
+	return 1;
+}
+
 int	HTTPmessage::httpPOST()
 {
 	if (rq_body.size() != rq_content_length)
@@ -99,24 +114,20 @@ int	HTTPmessage::httpPOST()
 		return 0;
 	}
 
-	if (rq_headers["Content-Type"] == "multipart/form-data")
-		return -setStatusCode(NOT_IMPLEMENTED);
-	if (rq_headers["Content-Type"] == "application/x-www-form-urlencoded")
-	{
-		processURLencoded();
-		setStatusCode(OK);
-		return 0;
-	}
+	if ((status = handleSpecialType()) != 1)
+		return status;
 
 	if (locationconf->upload_store.empty())
 		return -setStatusCode(NOT_FOUND);
 	
 	struct stat	st;
-	if (stat(locationconf->upload_store.c_str(), &st) < 0 || access(locationconf->upload_store.c_str(), X_OK) < 0)
+	std::string	uploat_store = locationconf ? locationconf->upload_store : serverconf->upload_store;
+
+	if (stat(uploat_store.c_str(), &st) < 0 || access(uploat_store.c_str(), X_OK | W_OK) < 0)
 		return -setStatusCode(FORBIDDEN);
 
 	std::string	upload_name = "upload_" + toString(time(NULL));
-	refactorFile(locationconf->upload_store, upload_name);
+	refactorFile(uploat_store, upload_name);
 	full_path = upload_name;
 
 	std::fstream	fs;
