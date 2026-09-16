@@ -7,19 +7,19 @@ int HTTPmessage::httpGET()
 	struct stat st;
 	LocationConfig *locationconf = getFullPath(full_path);
 
-	if (locationconf && (locationconf->return_code.first != 0 || !locationconf->return_code.second.empty()))
+	if (locationconf && (locationconf->return_status.first != 0 || !locationconf->return_status.second.empty()))
 	{
-		if (locationconf->return_code.first == 0 && !locationconf->return_code.second.empty())
+		if (locationconf->return_status.first == 0 && !locationconf->return_status.second.empty())
 		{
-			rs_headers["Location"] = locationconf->return_code.second;
+			rs_headers["Location"] = locationconf->return_status.second;
 			setStatusCode(FOUND);
 		}
-		else if (locationconf->return_code.first != 0)
+		else if (locationconf->return_status.first != 0)
 		{
-			setStatusCode(locationconf->return_code.first);
-			if (!locationconf->return_code.second.empty())
+			setStatusCode(locationconf->return_status.first);
+			if (!locationconf->return_status.second.empty())
 			{
-				std::string val = locationconf->return_code.second;
+				std::string val = locationconf->return_status.second;
 				if (val.find("http://") == 0 || val.find("https://") == 0 || val[0] == '/')
 					rs_headers["Location"] = val;
 				else 
