@@ -69,7 +69,7 @@ public:
 	cgi_handler_type			cgi_handlers;
 	int							limit_except;
 	std::string					upload_store;
-	std::pair<int,std::string>	return_code;
+	std::pair<int,std::string>	return_status;
 	std::map<int, std::string>	error_pages;
 };
 
