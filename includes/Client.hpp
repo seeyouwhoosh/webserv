@@ -24,8 +24,8 @@ public:
 	~Client();
 
 	/* Parser */
-	int	parse();
-	void appendData(const std::string &data);
+	int		parse();
+	void	appendData(const std::string &data);
 
 	/* Keep Alive */
 	bool	askkeepAlive();

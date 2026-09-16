@@ -122,3 +122,8 @@ void	Client::clear()
 {
 	message.clear();
 }
+
+void Client::appendData(const std::string &data)
+{
+	parser.appendData(data);
+}

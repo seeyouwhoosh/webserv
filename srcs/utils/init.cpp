@@ -2,7 +2,7 @@
 
 stringmap					mime_types;
 std::map<int, const char *>	responses;
-std::map<const char *, int>	requestMethods;
+std::vector<std::string>	allowedMethods;
 
 void	init_MIMEtypes()
 {
@@ -77,6 +77,7 @@ void	init_responses()
 	responses[CREATED]					= "Created";
 	responses[NO_CONTENT]				= "No Content";
 	responses[MOVED_PERMANENTLY]		= "Moved Permanently";
+	responses[Found]					= "Found";
 	responses[BAD_REQUEST]				= "Bad Request";
 	responses[FORBIDDEN]				= "Forbidden";
 	responses[NOT_FOUND]				= "Not Found";
@@ -89,9 +90,7 @@ void	init_responses()
 
 void	init_allowedMethods()
 {
-	requestMethods["GET"] = GET;
-	requestMethods["POST"] = POST;
-	requestMethods["DELETE"] = DELETE;
-	requestMethods["HEAD"] = HEAD;
-	requestMethods["TRACE"] = TRACE;
+	allowedMethods.push_back("GET");
+	allowedMethods.push_back("POST");
+	allowedMethods.push_back("DELETE");
 }

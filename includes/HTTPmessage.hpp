@@ -31,6 +31,7 @@ enum	StatusCodes
 	CREATED					= 201,
 	NO_CONTENT				= 204,
 	MOVED_PERMANENTLY		= 301,
+	FOUND					= 302,
 	BAD_REQUEST				= 400,
 	FORBIDDEN				= 403,
 	NOT_FOUND				= 404,
@@ -80,7 +81,6 @@ class HTTPmessage
 private:	
 	/* General variables */
 	ServerConfig				*serverconf;
-	LocationConfig				*locationconf;
 	std::string					full_path;
 	size_t						totalSent;
 	
@@ -127,6 +127,7 @@ private:
 	int				manageActuallyDir();
 
 	/* Other */
+	int				handleSpecialType();
 	void			processURLencoded();
 	int				matchMethod(std::string &method);
 	void			setResponse();

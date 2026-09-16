@@ -1,10 +1,5 @@
 #include "WebServer.hpp"
 
-void Client::appendData(const std::string &data)
-{
-	parser.appendData(data);
-}
-
 void WebServer::create_new_client(int clientsock, int listener, void *clientaddr)
 {
 	for (size_t i = 0; i < servers.size(); i++)
@@ -17,10 +12,7 @@ void WebServer::create_new_client(int clientsock, int listener, void *clientaddr
 
 				client.initHTTPmessage(
 					servers[i].listens[j].port,
-					inet_ntop(
-						static_cast<struct sockaddr *>(clientaddr)->sa_family,
-						clientaddr
-					),
+					inet_ntop(static_cast<struct sockaddr *>(clientaddr)->sa_family, clientaddr),
 					servers[i]
 				);
 
@@ -77,9 +69,6 @@ int	WebServer::handle_new_connection(int listener)
 
 	return 0;
 }
-//
-extern std::string	arv;
-//
 
 int	WebServer::handle_client_data(int client)
 {
@@ -97,7 +86,6 @@ int	WebServer::handle_client_data(int client)
 		clientUnit.appendData(std::string(buff, read_size));
 
 		parse_status = clientUnit.parse();
-		std::cout << "parse result: " << parse_status << std::endl;
 
 		if (parse_status == PARSE_ERROR)
 			clientUnit.setStatusCode(BAD_REQUEST);

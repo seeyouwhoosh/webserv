@@ -3,7 +3,35 @@
 /* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
 int HTTPmessage::httpGET()
 {
+	full_path = rq_startline.raw_path;
 	struct stat st;
+	LocationConfig *locationconf = getFullPath(full_path);
+
+	if (locationconf && (locationconf->return_code.first != 0 || !locationconf->return_code.second.empty()))
+	{
+		if (locationconf->return_code.first == 0 && !locationconf->return_code.second.empty())
+		{
+			rs_headers["Location"] = locationconf->return_code.second;
+			setStatusCode(FOUND);
+		}
+		else if (locationconf->return_code.first != 0)
+		{
+			setStatusCode(locationconf->return_code.first);
+			if (!locationconf->return_code.second.empty())
+			{
+				std::string val = locationconf->return_code.second;
+				if (val.find("http://") == 0 || val.find("https://") == 0 || val[0] == '/')
+					rs_headers["Location"] = val;
+				else 
+				{
+					rs_headers["Content-Type"] = mime_types["plain"];
+					rs_body = val;
+					rs_content_length = val.size();
+				}
+			}
+		}
+		return 0;
+	}
 
 	if (stat(full_path.c_str(), &st) == 0 &&
 		(st.st_mode & S_IFMT) == S_IFDIR &&
@@ -101,6 +129,9 @@ int	HTTPmessage::httpPOST()
 {
 	if (rq_body.size() != rq_content_length)
 		return -setStatusCode(BAD_REQUEST);
+
+	full_path = rq_startline.raw_path;
+	LocationConfig	*locationconf = getFullPath(full_path);
 	
 	if (!locationconf)
 		return -setStatusCode(NOT_FOUND);
@@ -117,13 +148,13 @@ int	HTTPmessage::httpPOST()
 	if ((status = handleSpecialType()) != 1)
 		return status;
 
-	if (locationconf && locationconf->upload_store.empty() || serverconf->upload_store.empty())
+	if ((locationconf && locationconf->upload_store.empty()) || serverconf->upload_store.empty())
 		return -setStatusCode(NOT_FOUND);
 	
 	struct stat	st;
 	std::string	upload_store = locationconf ? locationconf->upload_store : serverconf->upload_store;
 
-	if (stat(uploat_store.c_str(), &st) < 0 || access(upload_store.c_str(), X_OK | W_OK) < 0)
+	if (stat(upload_store.c_str(), &st) < 0 || access(upload_store.c_str(), X_OK | W_OK) < 0)
 		return -setStatusCode(FORBIDDEN);
 
 	std::string	upload_name = "upload_" + toString(time(NULL));
@@ -151,8 +182,10 @@ int	HTTPmessage::httpPOST()
 
 int	HTTPmessage::httpDELETE()
 {
-	struct stat	st;
+	full_path = rq_startline.raw_path;
+	getFullPath(full_path);
 
+	struct stat	st;
 	if (stat(full_path.c_str(), &st) < 0)
 		return -setStatusCode(NOT_FOUND);
 

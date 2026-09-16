@@ -88,14 +88,14 @@ int	WebServer::process_connections(int num_events)
 		{
 			if (close_connection(fd) < 0)
 				return -1;
-			std::cout << "Client error\n";
+			std::cout << "Client" << fd << "error\n";
 			continue;
 		}
 		if (epoll_events[i].events & EPOLLHUP)
 		{
 			if (close_connection(fd) < 0)
 				return -1;
-			std::cout << "Client closed connection\n";
+			std::cout << "Client" << fd << "closed connection\n";
 			continue;
 		}
 		if (epoll_events[i].events & EPOLLOUT)

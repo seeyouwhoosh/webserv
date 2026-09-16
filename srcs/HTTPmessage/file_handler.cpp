@@ -121,7 +121,6 @@ LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 		return NULL;
 
 	full_path = parsePath();
-
 	int location_pos = getLocationIndex(serverconf->locations, full_path);
 
 	if (location_pos < 0)
@@ -140,6 +139,7 @@ LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 
 	CGIparse(&locationconf);
 
+	std::cout << "checkpoint: " << full_path << std::endl;
 	return &locationconf;
 }
 

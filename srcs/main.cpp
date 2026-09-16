@@ -17,10 +17,6 @@
 
 int	g_signal = 1;
 
-//
-std::string	arv;
-//
-
 void	sigint_handler(int sig)
 {
 	(void)sig;
@@ -55,23 +51,22 @@ int	main(int ac, char **av)
 
 	ServerConfig server;
 	LocationConfig	location;
-	location.name = "/";
-	location.root = "/home/uelizegi/42cursus/circulo6/Webserv/webserv/test/tests";
+	location.name = "/linuxleo";
+	location.root = "var/www/html";
 	location.indexes.push_back("index.html");
 	location.autoindex = AUTOINDEX_ON;
-	location.error_pages[NOT_FOUND] = "404.html";
-	location.upload_store = "/home/uelizegi/42cursus/circulo6/Webserv/webserv/test/uploads";
 	
 	server.autoindex = AUTOINDEX_OFF;
-	server.root = "/home/uelizegi/42cursus/circulo6/Webserv/webserv/test";
+	server.root = "var/www/html";
 	server.server_name = "prueba.com";
-	server.indexes.push_back("picture.jpeg");
+	server.upload_store = "var/www/uploads";
+	server.cgi_handlers["py"] = "/usr/bin/python3";
+	server.cgi_handlers["php"] = "/usr/bin/php-cgi";
+	server.cgi_handlers["sh"] = "/bin/bash";
+	server.indexes.push_back("index.html");
 	server.locations.push_back(location);
 	server.listens.push_back(listen);
-	server.cgi_handlers["cgi"] = "/usr/bin/perl";
 	webserv.servers.push_back(server);
-
-	arv = av[1];
 
 	/* ************************** ERASE *************************** */
 

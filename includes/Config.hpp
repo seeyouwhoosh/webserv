@@ -64,11 +64,12 @@ public:
 	std::string					root;
 	std::vector<std::string>	indexes;
 	bool						autoindex;
+	std::vector<std::string>	allowed_methods;
 	size_t						client_max_body_size;
 	cgi_handler_type			cgi_handlers;
 	int							limit_except;
 	std::string					upload_store;
-	int							return_status;
+	std::pair<int,std::string>	return_code;
 	std::map<int, std::string>	error_pages;
 };
 
@@ -88,6 +89,7 @@ public:
 	std::string					root;
 	std::vector<std::string>	indexes;
 	bool						autoindex;
+	std::vector<std::string>	allowed_methods;
 	size_t						client_max_body_size;
 	std::string					upload_store;
 	cgi_handler_type			cgi_handlers;

@@ -178,17 +178,19 @@ std::string	HTTPmessage::getClientAddress() const
 /* Match method given in parameters. If non matches, returns -1, else returns method enum */
 int	HTTPmessage::matchMethod(std::string &method)
 {
-	if (location)
+	int	e_methods[] = {
+		GET,
+		POST,
+		DELETE,
+		BAD_METHOD,
+	};
+
+	for (size_t i = 0; i < allowedMethods.size(); i++)
 	{
-		std::vector<std::string>::iterator	it = allowed_methods.find(method);
-		if (it == allowed_methods.end())
-			return BAD_METHOD;
+		if (method == allowedMethods[i])
+			return e_methods[i];
 	}
-	else
-	{
-		if 
-	}
-	return requestMethods[method];
+	return BAD_METHOD;
 }
 
 bool	HTTPmessage::isComplete() const

@@ -37,9 +37,10 @@ int	getLocationIndex(std::vector<LocationConfig> &locations, std::string path)
 
 	for (size_t i = 0; i < locations.size(); i++)
 	{
-		size_t	len = locations[i].name.length();
-		
-		if (!path.find(locations[i].name))
+		std::string	location_name = locations[i].name[0] == '/' ? locations[i].name : "/" + locations[i].name;
+		size_t	len = location_name.length();
+	
+		if (!path.find(location_name))
 		{
 			if (len > max_len)
 			{

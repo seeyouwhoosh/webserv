@@ -65,9 +65,9 @@ static std::string	generateErrorFile(int error, std::string phrase, std::fstream
 	std::stringstream	content;
 	content << "<!DOCTYPE html>\n<html>\n  <head>\n\t<title>";
 	content << error_str << " " << phrase;
-	content << "\n</title>\n  </head>\n  <body>\n\t<h1>";
+	content << "</title>\n  </head>\n  <body>\n\t<h1>";
 	content << error_str << " " << phrase; 
-	content << "</h1>\n  </body>\n</html>";
+	content << "</h1>\n  </body>\n</html>\n";
 	std::string body = content.str();
 
 	fs << body;
@@ -134,20 +134,8 @@ int	HTTPmessage::generateResponse()
 {
 	int	error = 0;
 
-	if (rs_startline.status_code != OK)
-		error = rs_startline.status_code;
-	else
+	if (rs_startline.status_code == OK)
 	{
-		if (!serverconf)
-		{
-			error = setStatusCode(INTERNAL_SERVER_ERROR);
-			if (error && generateErrorResponse(error) < 0)
-				return -1;
-				rs_headers["Date"] = getDate();
-				setResponse();
-		}
-		full_path = rq_startline.raw_path;
-		LocationConfig	*locationconf = getFullPath(full_path);
 		std::string	m = rq_startline.method;
 		int	e_method = matchMethod(m);
 		switch (e_method)
@@ -166,11 +154,16 @@ int	HTTPmessage::generateResponse()
 			break;
 		default:
 			setAllowHeader();
+			error = setStatusCode(METHOD_NOT_ALLOWED);
 			break;
 		}
 	}
+	else
+		error = rs_startline.status_code;
 	if (error && generateErrorResponse(error) < 0)
 		return -1;
+
+	std::cout << rq_startline.raw_path << " " << full_path << std::endl;
 	rs_headers["Date"] = getDate();
 	setResponse();
 	return 0;
