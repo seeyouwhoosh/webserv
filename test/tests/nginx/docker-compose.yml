@@ -1,9 +1,0 @@
-services:
-  nginx:
-    image: nginx
-    build:
-      context: .
-    container_name: nginx
-    ports:
-      - "8080:80"
-    restart: on-failure
