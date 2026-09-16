@@ -3,9 +3,7 @@
 /* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
 int HTTPmessage::httpGET()
 {
-	full_path = rq_startline.raw_path;
 	struct stat st;
-	LocationConfig *locationconf = getFullPath(full_path);
 
 	if (stat(full_path.c_str(), &st) == 0 &&
 		(st.st_mode & S_IFMT) == S_IFDIR &&
@@ -103,9 +101,6 @@ int	HTTPmessage::httpPOST()
 {
 	if (rq_body.size() != rq_content_length)
 		return -setStatusCode(BAD_REQUEST);
-
-	full_path = rq_startline.raw_path;
-	LocationConfig	*locationconf = getFullPath(full_path);
 	
 	if (!locationconf)
 		return -setStatusCode(NOT_FOUND);
@@ -156,10 +151,8 @@ int	HTTPmessage::httpPOST()
 
 int	HTTPmessage::httpDELETE()
 {
-	full_path = rq_startline.raw_path;
-	getFullPath(full_path);
-
 	struct stat	st;
+
 	if (stat(full_path.c_str(), &st) < 0)
 		return -setStatusCode(NOT_FOUND);
 

@@ -2,7 +2,7 @@
 
 stringmap					mime_types;
 std::map<int, const char *>	responses;
-std::vector<std::string>	allowedMethods;
+std::map<const char *, int>	requestMethods;
 
 void	init_MIMEtypes()
 {
@@ -89,7 +89,9 @@ void	init_responses()
 
 void	init_allowedMethods()
 {
-	allowedMethods.push_back("GET");
-	allowedMethods.push_back("POST");
-	allowedMethods.push_back("DELETE");
+	requestMethods["GET"] = GET;
+	requestMethods["POST"] = POST;
+	requestMethods["DELETE"] = DELETE;
+	requestMethods["HEAD"] = HEAD;
+	requestMethods["TRACE"] = TRACE;
 }
