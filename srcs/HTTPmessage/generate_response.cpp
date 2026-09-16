@@ -134,8 +134,20 @@ int	HTTPmessage::generateResponse()
 {
 	int	error = 0;
 
-	if (rs_startline.status_code == OK)
+	if (rs_startline.status_code != OK)
+		error = rs_startline.status_code;
+	else
 	{
+		if (!serverconf)
+		{
+			error = setStatusCode(INTERNAL_SERVER_ERROR);
+			if (error && generateErrorResponse(error) < 0)
+				return -1;
+				rs_headers["Date"] = getDate();
+				setResponse();
+		}
+		full_path = rq_startline.raw_path;
+		LocationConfig	*locationconf = getFullPath(full_path);
 		std::string	m = rq_startline.method;
 		int	e_method = matchMethod(m);
 		switch (e_method)
@@ -157,8 +169,6 @@ int	HTTPmessage::generateResponse()
 			break;
 		}
 	}
-	else
-		error = rs_startline.status_code;
 	if (error && generateErrorResponse(error) < 0)
 		return -1;
 	rs_headers["Date"] = getDate();

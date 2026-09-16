@@ -80,6 +80,7 @@ class HTTPmessage
 private:	
 	/* General variables */
 	ServerConfig				*serverconf;
+	LocationConfig				*locationconf;
 	std::string					full_path;
 	size_t						totalSent;
 	
