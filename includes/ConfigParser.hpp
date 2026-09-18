@@ -32,15 +32,15 @@ typedef	struct s_listen
 	int						sockfd;
 }							t_listen;
 
-class GlobalConfig
+class ConfigParser
 {
 private:
 
 public:
-	GlobalConfig();
-	~GlobalConfig();
-	GlobalConfig(const GlobalConfig &other);
-	GlobalConfig	&operator=(const GlobalConfig &other);
+	ConfigParser();
+	~ConfigParser();
+	ConfigParser(const ConfigParser &other);
+	ConfigParser	&operator=(const ConfigParser &other);
 
 	std::string					root;
 	std::vector<std::string>	indexes;

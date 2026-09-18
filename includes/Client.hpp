@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include "HTTPmessage.hpp"
-#include "Parser.hpp"
+#include "RequestParser.hpp"
 
 class Client
 {
@@ -14,8 +14,8 @@ private:
 	int		max_requests;
 	int		n_requests;
 
-	HTTPmessage	message;
-	Parser		parser;
+	HTTPmessage		message;
+	RequestParser	parser;
 public:
 	Client();
 	Client(const Client &other);

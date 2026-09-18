@@ -1,17 +1,17 @@
-#include "Parser.hpp"
+#include "RequestParser.hpp"
 #include "HTTPmessage.hpp"
 #include <sstream>
 #include <map>
 #include <algorithm>
 #include <cctype>
 
-Parser::Parser()
+RequestParser::RequestParser()
 	: _state(REQUEST_LINE), _contentLength(0),
 	  _bodyReceived(0), _chunkSize(0)
 {
 }
 
-void Parser::reset()
+void RequestParser::reset()
 {
 	_state = REQUEST_LINE;
 	_contentLength = 0;
@@ -19,13 +19,13 @@ void Parser::reset()
 	_chunkSize = 0;
 }
 
-Parser::~Parser()
+RequestParser::~RequestParser()
 {
 }
 
 //1.Request Line
 
-bool Parser::parseRequestLine(const std::string& line, HTTPmessage& request)
+bool RequestParser::parseRequestLine(const std::string& line, HTTPmessage& request)
 {
 	std::istringstream stream(line); //return the string so it can be read with >>
 
@@ -52,24 +52,21 @@ bool Parser::parseRequestLine(const std::string& line, HTTPmessage& request)
 	return true;
 }
 
-bool Parser::isValidMethod(const std::string& method) const
+bool RequestParser::isValidMethod(const std::string& method) const
 {
-	if (method == "GET")
+	std::map<char *, int>::iterator	it = allowedMethods.find(method);
+
+	if (it != allowedMethods.end())
 		return true;
-	if (method == "POST")
-		return true;
-	if (method == "DELETE")
-		return true;
-	
 	return false;
 }
 
-bool Parser::isValidVersion(const std::string& version) const
+bool RequestParser::isValidVersion(const std::string& version) const
 {
 	return version == "HTTP/1.1";
 }
 
-bool Parser::isValidPath(const std::string& path) const
+bool RequestParser::isValidPath(const std::string& path) const
 {
 	if (path.empty())
 		return false;
@@ -81,7 +78,7 @@ bool Parser::isValidPath(const std::string& path) const
 
 //2.Headers
 
-bool Parser::parseHeader(const std::string& line, HTTPmessage& request)
+bool RequestParser::parseHeader(const std::string& line, HTTPmessage& request)
 {
 	std::string::size_type separator = line.find(':');
 
@@ -111,12 +108,12 @@ bool Parser::parseHeader(const std::string& line, HTTPmessage& request)
 	return true;
 }
 
-void Parser::appendData(const std::string& data)
+void RequestParser::appendData(const std::string& data)
 {
 	_buffer += data;
 }
 
-bool Parser::parseContentLength(const HTTPmessage& request)
+bool RequestParser::parseContentLength(const HTTPmessage& request)
 {
 	std::map<std::string, std::string>::const_iterator it;
 
@@ -151,7 +148,7 @@ bool Parser::parseContentLength(const HTTPmessage& request)
 }
 
 //to get next line
-bool Parser::getNextLine(std::string& line)
+bool RequestParser::getNextLine(std::string& line)
 {
 	std::string::size_type end = _buffer.find("\r\n");
 
@@ -165,7 +162,7 @@ bool Parser::getNextLine(std::string& line)
 	return true;
 }
 
-ParseResult Parser::parseBody(HTTPmessage& request)
+ParseResult RequestParser::parseBody(HTTPmessage& request)
 {
 	std::size_t remaining = _contentLength - _bodyReceived;
 	std::size_t toRead = std::min(remaining, _buffer.size());
@@ -185,7 +182,7 @@ ParseResult Parser::parseBody(HTTPmessage& request)
 	return PARSE_INCOMPLETE;
 }
 
-bool Parser::hasChunkedEncoding(const HTTPmessage& request) const
+bool RequestParser::hasChunkedEncoding(const HTTPmessage& request) const
 {
 	std::map<std::string, std::string>::const_iterator it;
 	std::string value;
@@ -210,13 +207,13 @@ bool Parser::hasChunkedEncoding(const HTTPmessage& request) const
 	return false;
 }
 
-bool Parser::hasContentLength(const HTTPmessage& request) const
+bool RequestParser::hasContentLength(const HTTPmessage& request) const
 {
 	return request.rq_headers.find("content-length")
 		!= request.rq_headers.end();
 }
 
-bool Parser::hasHost(const HTTPmessage& request) const
+bool RequestParser::hasHost(const HTTPmessage& request) const
 {
 	std::map<std::string, std::string>::const_iterator it;
 
@@ -230,7 +227,7 @@ bool Parser::hasHost(const HTTPmessage& request) const
 	return true;
 }
 
-ParseResult Parser::parse(HTTPmessage& request)
+ParseResult RequestParser::parse(HTTPmessage& request)
 {
 	while (_state != COMPLETE)
 	{
@@ -325,7 +322,7 @@ ParseResult Parser::parse(HTTPmessage& request)
 }
 
 //Chunked
-ParseResult Parser::parseChunkSize()
+ParseResult RequestParser::parseChunkSize()
 {
 	std::string line;
 	std::string sizeText;
@@ -372,7 +369,7 @@ ParseResult Parser::parseChunkSize()
 	return PARSE_INCOMPLETE;
 }
 
-ParseResult Parser::parseChunkData(HTTPmessage& request)
+ParseResult RequestParser::parseChunkData(HTTPmessage& request)
 {
 	if (_buffer.size() < _chunkSize)
 		return PARSE_INCOMPLETE;
@@ -384,7 +381,7 @@ ParseResult Parser::parseChunkData(HTTPmessage& request)
 	return PARSE_INCOMPLETE;
 }
 
-ParseResult Parser::parseChunkCRLF()
+ParseResult RequestParser::parseChunkCRLF()
 {
 	if (_buffer.size() < 2)
 		return PARSE_INCOMPLETE;

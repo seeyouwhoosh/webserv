@@ -14,16 +14,16 @@
 
 /* ORTHODOX CANONICAL FORM */
 
-GlobalConfig::GlobalConfig() {}
+ConfigParser::ConfigParser() {}
 
-GlobalConfig::~GlobalConfig() {}
+ConfigParser::~ConfigParser() {}
 
-GlobalConfig::GlobalConfig(const GlobalConfig &other)
+ConfigParser::ConfigParser(const ConfigParser &other)
 {
 	*this = other;
 }
 
-GlobalConfig	&GlobalConfig::operator=(const GlobalConfig &other)
+ConfigParser	&ConfigParser::operator=(const ConfigParser &other)
 {
 	root = other.root;
 	indexes = other.indexes;

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef PARSER_HPP
-#define PARSER_HPP
 
 #include <string>
 
@@ -24,11 +22,11 @@ enum ParseResult
 
 class HTTPmessage;
 
-class Parser
+class RequestParser
 {
 public:
-	Parser();
-	~Parser();
+	RequestParser();
+	~RequestParser();
 
 	void appendData(const std::string& data); //buffer
 	void reset();
@@ -61,5 +59,3 @@ private:
 	ParseResult parseChunkData(HTTPmessage& request);
 	ParseResult parseChunkCRLF();
 };
-
-#endif
