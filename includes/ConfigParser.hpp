@@ -14,6 +14,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <fstream>
+#include "utils.hpp"
 
 typedef std::map<std::string, std::string> cgi_handler_type;
 
@@ -47,6 +49,8 @@ public:
 	bool						autoindex;
 	size_t						client_max_body_size;
 	std::map<int, std::string>	error_pages;
+
+	int	parse_config(char *file, std::vector<ServerConfig> *servers);
 };
 
 

@@ -24,12 +24,6 @@ void	sigint_handler(int sig)
 	g_signal = 0;
 }
 
-int	parse_file(char *file)
-{
-	(void)file;
-	return 0;
-}
-
 int	main(int ac, char **av)
 {
 	(void)av;

@@ -15,7 +15,7 @@
 #include <map>
 #include <algorithm>
 
-#include "Config.hpp"
+#include "ConfigParser.hpp"
 #include "Client.hpp"
 #include "utils.hpp"
 
@@ -37,7 +37,7 @@ public:
 	~WebServer();
 
 	/* Configuration classes */
-	GlobalConfig				global;
+	ConfigParser				globalconf;
 	std::vector<ServerConfig>	servers;
 
 	/* Connection variables */
@@ -46,6 +46,9 @@ public:
 	std::map<int, Client>		clients;
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
+
+	/* Parser */
+	int			parse_config(char *file);
 
 	/* Sockets and clients handlers */
 	int			prepare_listeners();

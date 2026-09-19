@@ -133,3 +133,8 @@ int	WebServer::process_connections(int num_events)
 	}
 	return 0;
 }
+
+int	WebServer::parse_config(char *file)
+{
+	globalconf.parse_config(file, &servers)
+}

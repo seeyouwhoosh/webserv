@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Config.hpp"
+#include "ConfigParser.hpp"
 
 /* ORTHODOX CANONICAL FORM */
 
@@ -81,4 +81,33 @@ LocationConfig	&LocationConfig::operator=(const LocationConfig &other)
 	upload_store = other.upload_store;
 	return_status = other.return_status;
 	return *this;
+}
+
+/*
+- [ ] Gestionar comillas (Quote opened but never closed)
+- [ ] Expansión de comodín
+- [ ] Integrar comentarios
+- [ ] Comprobar que el punto y coma está allí
+- [ ] Comprobar que la directiva no está sola solo nombre (Block or simple directive with no name)
+
+
+
+*/
+
+int	ConfigParser::parse_config(char *file, std::vector<ServerConfig> *servers);
+
+{
+	std::fstream	f(file, std::ios::in);
+
+	if (!f.is_open())
+		return error_msg(1, "open", "can't open the file");
+
+	// dumpear todo en un string o así
+
+	// Mirar que los brackets están emparejados
+	if (unmatchedBrackets())
+		return error_msg(1, "parse", "unmatched brackets");
+	// ir dumpeando linea a linea el string y parsear
+	f.close();
+	return 0;
 }
