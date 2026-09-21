@@ -6,13 +6,28 @@
 #include <string>
 #include <fstream>
 
-typedef std::map<std::string, std::string> cgi_handler_type;
+typedef	std::map<std::string, std::string>	cgi_handler_type;
+typedef	std::pair<int, std::string &>		tuple;
 
 enum e_autoindex
 {
 	AUTOINDEX_UNSET = -1,
 	AUTOINDEX_OFF,
 	AUTOINDEX_ON
+};
+
+enum ParseError
+{
+	GENERIC_ERROR = 1,
+	UNCLOSED_QUOTE,
+	UNMATCHED_BRACKET,
+	MISSING_SEMICOLON,
+	NOT_IMPLEMENTED,
+	EMPTY_DIRECTIVE,
+	INVALID_DIRECTIVE,
+	MISSING_DIRECTIVE,
+	INVALID_VALUE,
+	EMPTY_VALUE
 };
 
 typedef struct s_listen
@@ -67,6 +82,15 @@ public:
 
 class ConfigParser
 {
+private:
+	std::vector<std::string>	tokens;
+	std::string					raw;
+
+	int		getTokens();
+	int		handleQuote(std::stringstream &ss, std::string starter, char quote_char);
+	int		sendParseError(int error, const std::string &par);
+	tuple	fillDirectives();
+
 public:
 	ConfigParser();
 	~ConfigParser();

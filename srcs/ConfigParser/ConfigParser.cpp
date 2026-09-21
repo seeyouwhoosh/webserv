@@ -85,51 +85,88 @@ LocationConfig	&LocationConfig::operator=(const LocationConfig &other)
 }
 
 /*
-- [ ] Gestionar comillas (Quote opened but never closed)
+- [x] Gestionar comillas (Quote opened but never closed)
 - [ ] Expansión de comodín
-- [ ] Integrar comentarios
-- [ ] Comprobar que el punto y coma está allí
+- [x] Integrar comentarios
+- [x] Comprobar que el punto y coma está allí
 - [ ] Comprobar que la directiva no está sola solo nombre (Block or simple directive with no name)
 */
 
-/* Imaginemos que el string grande está en config parser y se llama strbuff */
-void	ConfigParser::handleDoubleQuote(std::vector<std::string> &v, std::stringstream &ss, std::string starter)
+int	ConfigParser::sendParseError(int error, const std::string &par)
 {
-	size_t	remainder_index = starter.find('\"');
-	std::string	remainder = starter.substr(0, remainder_index);
+	std::string	msg;
 
-	size_t	end_quote = starter.find('\"')
-	std::string	quote = starter.substr(remainder_index + 1, );
-
-	std::string	str;
-	while (ss >> str)
+	switch (error)
 	{
-		if ()
+	case GENERIC_ERROR:
+		msg = "an error has ocurred while parsing the config file";
+		break;
+	case UNCLOSED_QUOTE:
+		msg = "quote opened but never closed";
+		break;
+	case UNMATCHED_BRACKET:
+		msg = "bracket unmatched";
+		break;
+	case MISSING_SEMICOLON:
+		msg = "missing semicolon";
+		break;
+	case EMPTY_DIRECTIVE:
+		msg = "empty directive";
+		break;
+	case INVALID_DIRECTIVE:
+		msg = "invalid directive";
+		break;
+	case NOT_IMPLEMENTED:
+		msg = "directive not implemented";
+		break;
+	case MISSING_DIRECTIVE:
+		msg = "missing directive";
+		break;
+	case INVALID_VALUE:
+		msg = "invalid value in directive \"" + par + "\"";
+		break;
+	case EMPTY_VALUE:
+		msg = "empty value in directive \"" + par + "\"";
+		break;
+	default:
+		break;
 	}
-	
+	return error_msg(1, "parse", msg.c_str());
 }
 
-void	ConfigParser::handleSingleQuote(std::vector<std::string> &v, std::stringstream &ss, std::string starter)
+int ConfigParser::handleQuote(std::stringstream &ss, std::string starter, char quote_char)
 {
-	size_t	remainder_index = starter.find('\'');
+	size_t		remainder_index = starter.find(quote_char);
 	std::string	remainder = starter.substr(0, remainder_index);
 	v.push_back(remainder);
 
-	size_t		end_quote = starter.find('\'');
-	std::string	quote;
+	size_t		end_quote = starter.find(quote_char, remainder_index + 1);
+	std::string quote;
+
 	if (end_quote != std::string::npos)
 	{
-		quote = starter.substr(remainder_index + 1, end_quote);
-		v.push_back(quote);
+		quote = starter.substr(remainder_index + 1, end_quote - remainder_index - 1);
+		tokens.push_back(quote);
+		
 		remainder = starter.substr(end_quote + 1);
-		v.push_back(remainder);
-		return;
+		tokens.push_back(remainder);
+		return 0;
 	}
 
+	quote = starter.substr(remainder_index + 1);
 	std::string	str;
-	while (ss >> str)
-	std::getline(ss, str, '\'');
-	
+	if (std::getline(ss, str, quote_char))
+	{
+		quote += str;
+		tokens.push_back(quote);
+		return 0;
+	}
+	else
+	{
+		if (ss.eof())
+			return UNCLOSED_QUOTE;
+		return GENERIC_ERROR;
+	}
 }
 
 std::string	&dumptoString(std::fstream f)
@@ -177,11 +214,12 @@ bool	unmatchedBracket(std::string s)
 	return true;
 }
 
-std::vector<std::string>	&getTokens(std::string s)
+int	ConfigParser::getTokens()
 {
-	std::vector<std::string>	&tokens;
-	std::stringstream	ss(s);
-	std::string			temp;
+	std::stringstream			ss(raw);
+	std::string					temp;
+	char						c;
+	int							status;
 
 	while (ss >> temp)
 	{
@@ -189,52 +227,84 @@ std::vector<std::string>	&getTokens(std::string s)
 			;
 		if (temp.find('}'))
 			;
-		if (temp.find('*'))
-			;
-		if (temp.find('\"'))
-			;
+		size_t	quote_pos = temp.find('\'') == std::string::npos ? temp.find('\'') : temp.find('\"');
+		if (quote_pos != std::string::npos && (status = handleQuote(ss, temp, temp[quote_pos])))
+			return status;
 	}
-
-
+	return 0;
 }
 
-void eraseComments(std::string &s)
+void	eraseComments(std::string &s)
 {
 	size_t pos = s.find('#');
-	
+
 	while (pos != std::string::npos)
 	{
 		size_t end_pos = s.find('\n', pos);
-		
+
 		if (end_pos != std::string::npos)
 			s.erase(pos, end_pos - pos);
 		else
 		{
-			s.erase(pos); 
+			s.erase(pos);
 			break;
 		}
-		
+
 		pos = s.find('#', pos);
 	}
 }
 
-int	ConfigParser::parse_config(char *file, std::vector<ServerConfig> *servers)
+bool	incompleteSemicolons(std::string &s)
+{
+	std::stringstream	ss(s);
+	std::string			buff;
 
+	while (std::getline(ss, buff))
+	{
+		if (buff.find_first_not_of(" \t\r\n") == std::string::npos)
+			continue;
+
+		if (buff.find('{') != std::string::npos || buff.find('}') != std::string::npos)
+			continue;
+
+		size_t last_char = buff.find_last_not_of(" \t\r\n");
+		if (last_char == std::string::npos || buff[last_char] != ';')
+			return true;
+	}
+	return false;
+}
+
+tuple	ConfigParser::fillDirectives()
+{
+	tuple	p(0, "");
+
+	return p;
+}
+
+int	ConfigParser::parse_config(char *file, std::vector<ServerConfig> *servers)
 {
 	std::fstream	f(file, std::ios::in | std::ios::binary);
+	int				status;
 
 	if (!f.is_open())
 		return error_msg(1, "open", "can't open the file");
 
-	std::string	s = dumptoString(f);
-
-	if (unmatchedBracket(s))
-		return error_msg(1, "parse", "unmatched bracket ");
-
-	eraseComments(s);
-
-	std::vector<std::string>	tokens = getTokens(s);
-	// ir dumpeando linea a linea el string y parsear
+	raw = dumptoString(f);
 	f.close();
+
+	eraseComments(raw);
+
+	if (unmatchedBracket(raw))
+		return sendParseError(UNMATCHED_BRACKET, "");
+
+	if (incompleteSemicolons(raw))
+		return sendParseError(MISSING_SEMICOLON, "");
+
+	if ((status = getTokens(s)))
+		return sendParseError(status, "");
+
+	tuple	p;
+	if ((p = fillDirectives()))
+		return sendParseError(p.first, p.second);
 	return 0;
 }
