@@ -89,10 +89,48 @@ LocationConfig	&LocationConfig::operator=(const LocationConfig &other)
 - [ ] Integrar comentarios
 - [ ] Comprobar que el punto y coma está allí
 - [ ] Comprobar que la directiva no está sola solo nombre (Block or simple directive with no name)
-
-
-
 */
+
+
+/* Imaginemos que el string grande está en config parser y se llama strbuff */
+void	ConfigParser::handleDoubleQuote(std::vector<std::string> &v, std::stringstream &ss, std::string starter)
+{
+	size_t	remainder_index = starter.find('\"');
+	std::string	remainder = starter.substr(0, remainder_index);
+
+	size_t	end_quote = starter.find('\"')
+	std::string	quote = starter.substr(remainder_index + 1, );
+
+	std::string	str;
+	while (ss >> str)
+	{
+		if ()
+	}
+	
+}
+
+void	ConfigParser::handleSingleQuote(std::vector<std::string> &v, std::stringstream &ss, std::string starter)
+{
+	size_t	remainder_index = starter.find('\'');
+	std::string	remainder = starter.substr(0, remainder_index);
+	v.push_back(remainder);
+
+	size_t		end_quote = starter.find('\'');
+	std::string	quote;
+	if (end_quote != std::string::npos)
+	{
+		quote = starter.substr(remainder_index + 1, end_quote);
+		v.push_back(quote);
+		remainder = starter.substr(end_quote + 1);
+		v.push_back(remainder);
+		return;
+	}
+
+	std::string	str;
+	while (ss >> str)
+	std::getline(ss, str, '\'');
+	
+}
 
 int	ConfigParser::parse_config(char *file, std::vector<ServerConfig> *servers);
 
