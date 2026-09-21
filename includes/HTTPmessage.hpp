@@ -17,8 +17,8 @@
 #include <vector>
 #include <algorithm>
 
-#include "Config.hpp"
-#include "utils.hpp"
+class ServerConfig;
+class LocationConfig;
 
 #define ERRPAGE_DIR	"error_pages"
 #ifndef BUFFER_SIZE

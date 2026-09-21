@@ -1,6 +1,9 @@
 #include <fstream>
 
 #include "HTTPmessage.hpp"
+#include "ConfigParser.hpp"
+#include "utils.hpp"
+#include <iostream>
 
 /* Searches for error.html in the location corresponding to the current path.
 If location exists, and error_file is set, attempts to open file.

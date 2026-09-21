@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "utils.hpp"
 
 Client::Client()
 {

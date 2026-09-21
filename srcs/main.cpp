@@ -39,19 +39,19 @@ int	main(int ac, char **av)
 	int			num_events;
 
 	/* ************************** ERASE ************************** */
-	t_listen	listen;
+	t_listen listen;
 	listen.host = "0.0.0.0";
 	listen.port = "9999";
 
 	ServerConfig server;
 	LocationConfig	location;
 	location.name = "/linuxleo";
-	location.root = "var/www/html";
+	location.root = "var/www";
 	location.indexes.push_back("index.html");
 	location.autoindex = AUTOINDEX_ON;
-	
+
 	server.autoindex = AUTOINDEX_OFF;
-	server.root = "var/www/html";
+	server.root = "var/www";
 	server.server_name = "prueba.com";
 	server.upload_store = "var/www/uploads";
 	server.cgi_handlers["py"] = "/usr/bin/python3";
@@ -64,8 +64,10 @@ int	main(int ac, char **av)
 
 	/* ************************** ERASE *************************** */
 
-	if (parse_file(av[1]) < 0)
+	ConfigParser	config_parser;
+	if (config_parser.parse_config(av[1], &webserv.servers) < 0)
 		return 1;
+
 	if (webserv.prepare_listeners() < 0)
 	{
 		webserv.free_all();
@@ -79,7 +81,8 @@ int	main(int ac, char **av)
 	init_allowedMethods();
 	while (g_signal)
 	{
-		num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events, MAX_CONNECTIONS, -1);
+		num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events,
+				MAX_CONNECTIONS, -1);
 		if (num_events < 0)
 		{
 			if (errno == EINTR)
@@ -89,7 +92,7 @@ int	main(int ac, char **av)
 		}
 		if (num_events == 0)
 			continue;
-		
+
 		if (webserv.process_connections(num_events) < 0)
 			break;
 	}
