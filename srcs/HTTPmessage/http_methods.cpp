@@ -1,4 +1,6 @@
 #include "HTTPmessage.hpp"
+#include "ConfigParser.hpp"
+#include "utils.hpp"
 
 /* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
 int HTTPmessage::httpGET()

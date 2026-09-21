@@ -1,4 +1,7 @@
 #include "HTTPmessage.hpp"
+#include "ConfigParser.hpp"
+#include "utils.hpp"
+#include <cstring>
 
 void	HTTPmessage::filefromCGIbin(size_t cgibin_pos)
 {

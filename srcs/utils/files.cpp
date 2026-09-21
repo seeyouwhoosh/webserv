@@ -1,4 +1,6 @@
 #include "utils.hpp"
+#include "ConfigParser.hpp"
+#include "HTTPmessage.hpp"
 
 std::string	getFileExtension(std::string file)
 {

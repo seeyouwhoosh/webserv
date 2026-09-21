@@ -1,4 +1,6 @@
 #include "HTTPmessage.hpp"
+#include "ConfigParser.hpp"
+#include "utils.hpp"
 
 void	HTTPmessage::fillCGIenv()
 {

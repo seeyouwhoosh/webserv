@@ -1,7 +1,7 @@
 #pragma once
 
 #include <netdb.h>
-#include <sys/stat.h> 
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <string>
@@ -10,9 +10,9 @@
 #include <fstream>
 #include <cstring>
 #include <cerrno>
+#include <vector>
 
-#include "Config.hpp"
-#include "HTTPmessage.hpp"
+class LocationConfig;
 
 template <typename T>
 std::string toString(const T val)
@@ -54,7 +54,8 @@ void		init_allowedMethods();
 
 std::string	getMIMEtype(std::string ext);
 
-int			getLocationIndex(std::vector<LocationConfig> &locations, std::string path);
+int			getLocationIndex(std::vector<LocationConfig> &locations,
+				std::string path);
 
 int			pipePipes(int pipe_in[2], int pipe_out[2]);
 

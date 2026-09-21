@@ -23,9 +23,8 @@ SRC_DIR		= srcs
 SOURCES		= main.cpp \
 				HTTPmessage/HTTPmessage.cpp HTTPmessage/http_methods.cpp HTTPmessage/generate_response.cpp HTTPmessage/file_handler.cpp HTTPmessage/cgi_handler.cpp HTTPmessage/cgi_utils.cpp HTTPmessage/autoindex.cpp \
 				WebServer/WebServer.cpp WebServer/epoll.cpp WebServer/client.cpp WebServer/listener.cpp \
-				utils/conversion.cpp utils/files.cpp utils/general.cpp utils/init.cpp\
-				Config.cpp RequestParser.cpp Client.cpp
-
+				utils/conversion.cpp utils/files.cpp utils/general.cpp utils/init.cpp \
+				ConfigParser/ConfigParser.cpp
 # Objects
 OBJ_DIR		= objs
 OBJ			= $(SOURCES:.cpp=.o)

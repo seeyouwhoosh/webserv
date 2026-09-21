@@ -1,4 +1,6 @@
 #include "HTTPmessage.hpp"
+#include "ConfigParser.hpp"
+#include "utils.hpp"
 #include <iostream>//borrar
 
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */

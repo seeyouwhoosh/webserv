@@ -1,4 +1,6 @@
 #include "utils.hpp"
+#include "ConfigParser.hpp"
+#include "HTTPmessage.hpp"
 
 stringmap					mime_types;
 std::map<int, const char *>	responses;

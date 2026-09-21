@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "ConfigParser.hpp"
+#include "utils.hpp"
 
 /* ORTHODOX CANONICAL FORM */
 
@@ -217,7 +218,7 @@ void eraseComments(std::string &s)
 	}
 }
 
-int	ConfigParser::parse_config(char *file, std::vector<ServerConfig> *servers);
+int	ConfigParser::parse_config(char *file, std::vector<ServerConfig> *servers)
 
 {
 	std::fstream	f(file, std::ios::in | std::ios::binary);
