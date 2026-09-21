@@ -106,8 +106,8 @@ int	ConfigParser::parse_config(char *file, std::vector<ServerConfig> *servers)
 	// dumpear todo en un string o así
 
 	// Mirar que los brackets están emparejados
-/* 	if (unmatchedBrackets())
-		return error_msg(1, "parse", "unmatched brackets"); */
+	if (unmatchedBrackets())
+		return error_msg(1, "parse", "unmatched brackets");
 	// ir dumpeando linea a linea el string y parsear
 	f.close();
 	return 0;
