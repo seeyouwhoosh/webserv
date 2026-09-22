@@ -53,7 +53,6 @@ public:
 	std::vector<std::string>	allowed_methods;
 	size_t						client_max_body_size;
 	cgi_handler_type			cgi_handlers;
-	int							limit_except;
 	std::string					upload_store;
 	std::pair<int, std::string>	return_status;
 	std::map<int, std::string>	error_pages;
@@ -69,13 +68,12 @@ public:
 
 	std::vector<LocationConfig>		locations;
 	std::vector<t_listen>			listens;
-	std::string						server_name;
+	std::string						server_name; // está permitido varios nombres
 	std::string						root;
 	std::vector<std::string>		indexes;
 	bool							autoindex;
-	std::vector<std::string>		allowed_methods;
-	size_t							client_max_body_size;
-	std::string						upload_store;
+	std::string						str_max_body_size;
+	size_t							max_body_size;
 	cgi_handler_type				cgi_handlers;
 	std::map<int, std::string>		error_pages;
 };
@@ -90,8 +88,8 @@ private:
 	int		handleQuote(std::stringstream &ss, std::string starter, char quote_char);
 	int		sendParseError(int error, const std::string &par);
 	void	push_separately(std::string &s, size_t pos);
-	bool	incompleteSemicolons(std::string &s);
-	tuple	&fillDirectives();
+	tuple	&fillDirectives(std::vector<ServerConfig> *servers);
+	void	fillDefaults(std::vector<ServerConfig> *servers);
 
 public:
 	ConfigParser();
@@ -101,8 +99,9 @@ public:
 
 	std::string					root;
 	std::vector<std::string>	indexes;
-	bool						autoindex;
-	size_t						client_max_body_size;
+	short						autoindex;
+	std::string					str_max_body_size;
+	size_t						max_body_size;
 	std::map<int, std::string>	error_pages;
 
 	int	parseConfig(char *file, std::vector<ServerConfig> *servers);

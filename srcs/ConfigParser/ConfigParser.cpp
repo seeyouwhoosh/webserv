@@ -15,7 +15,7 @@
 
 /* ORTHODOX CANONICAL FORM */
 
-ConfigParser::ConfigParser() {}
+ConfigParser::ConfigParser(): autoindex(AUTOINDEX_UNSET) {}
 
 ConfigParser::~ConfigParser() {}
 
@@ -29,13 +29,20 @@ ConfigParser	&ConfigParser::operator=(const ConfigParser &other)
 	root = other.root;
 	indexes = other.indexes;
 	autoindex = other.autoindex;
-	client_max_body_size = other.client_max_body_size;
+	str_max_body_size = other.str_max_body_size;
+	max_body_size = other.max_body_size;
 	error_pages = other.error_pages;
 
 	return *this;
 }
 
-ServerConfig::ServerConfig() {}
+ServerConfig::ServerConfig()
+{
+	server_name = "";
+	root = "html";
+	indexes.push_back("index.html");
+	LocationConfig
+}
 
 ServerConfig::~ServerConfig() {}
 
@@ -221,9 +228,20 @@ void	eraseComments(std::string &s)
 	}
 }
 
-tuple	&ConfigParser::fillDirectives()
+tuple	&ConfigParser::fillDirectives(std::vector<ServerConfig> *servers)
 {
 	tuple	p(0, "");
+	if (!servers)
+	{
+		p.first = GENERIC_ERROR;
+		return p;
+	}
+
+	for (std::vector<std::string>::iterator it = tokens.begin(); it != tokens.end(); it++)
+	{
+		
+	}
+	
 
 	return p;
 }
@@ -251,7 +269,59 @@ int	ConfigParser::parseConfig(char *file, std::vector<ServerConfig> *servers)
 		return sendParseError(status, "");
 
 	tuple	p;
-	if (!(p = fillDirectives()).first)
+	if (!(p = fillDirectives(servers)).first)
 		return sendParseError(p.first, p.second);
 	return 0;
+}
+
+void	ConfigParser::fillDefaults(std::vector<ServerConfig> *servers)
+{
+	if (root.empty())
+		root = "html";
+	if (indexes.empty())
+		indexes.push_back("index.html");
+	if (autoindex == AUTOINDEX_UNSET)
+		autoindex = AUTOINDEX_OFF;
+	if (str_max_body_size.empty())
+	{
+		str_max_body_size = "1m";
+		max_body_size = 1000000;
+	}
+	for (std::vector<ServerConfig>::iterator it = servers->begin(); it != servers->end(); it++)
+	{
+		if (it->locations.empty())
+		{
+			LocationConfig	default_location("/");
+			it->locations.push_back(default_location);
+		}
+		if (it->listens.empty())
+		{
+			t_listen	default_listen = {
+				.host = "0.0.0.0",
+				.port = "8080"
+			};
+			it->listens.push_back(default_listen);
+		}
+		if (it->server_name.empty())
+			it->server_name = "";
+		if (it->root.empty())
+			it->root = root;
+		if (it->indexes.empty())
+			it->indexes.push_back("index.html");
+		if ((it->autoindex = AUTOINDEX_UNSET))
+			it->autoindex = autoindex;
+		if (it->str_max_body_size.empty())
+		{
+			it->str_max_body_size = str_max_body_size;
+			it->max_body_size = max_body_size;
+		}
+		for (std::vector<LocationConfig>::iterator jt = it->locations.begin(); jt != it->locations.end() ; jt++)
+		{
+			if (jt->root.empty())
+				jt->root = root;
+			if ((jt->autoindex = AUTOINDEX_UNSET))
+				jt->autoindex = autoindex;
+
+		}
+	}
 }
