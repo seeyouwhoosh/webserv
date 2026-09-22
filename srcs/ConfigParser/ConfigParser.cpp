@@ -138,7 +138,7 @@ int ConfigParser::handleQuote(std::stringstream &ss, std::string starter, char q
 {
 	size_t		remainder_index = starter.find(quote_char);
 	std::string	remainder = starter.substr(0, remainder_index);
-	v.push_back(remainder);
+	tokens.push_back(remainder);
 
 	size_t		end_quote = starter.find(quote_char, remainder_index + 1);
 	std::string quote;
@@ -169,49 +169,13 @@ int ConfigParser::handleQuote(std::stringstream &ss, std::string starter, char q
 	}
 }
 
-std::string	&dumptoString(std::fstream f)
+void	ConfigParser::push_separately(std::string &s, size_t index)
 {
-	if (isFileEmpty(f))
-		return "";
-
-	std::stringstream ss;
-	ss << f.rdbuf();
-	
-	std::string	s = ss.str();
-	
-	return s;
-}
-
-bool	unmatchedBracket(std::string s)
-{
-	int		par = 0;
-	bool	in_comment = false;
-
-	for (size_t i = 0; i < s.size(); i++)
-	{
-		if (c == '#')
-		{
-			in_comment = true;
-			continue;
-		}
-		if (in_comment)
-		{
-			if (c == '\n')
-				in_comment = false;
-			continue;
-		}
-		if (s[i] == '{')
-			par++;
-		else if (s[i] == '}')
-		{
-			par--;
-			if (par < 0)
-				return false;
-		}
-	}
-	if (par)
-		return false;
-	return true;
+	std::string	remainder = s.substr(0, index);
+	tokens.push_back(remainder);
+	tokens.push_back(";");
+	if ((index + 1) < s.length())
+		tokens.push_back(s.substr(index + 1));
 }
 
 int	ConfigParser::getTokens()
@@ -223,10 +187,13 @@ int	ConfigParser::getTokens()
 
 	while (ss >> temp)
 	{
+		size_t	index;
+		if ((index = temp.find(';')) != std::string::npos)
+			push_separately(temp, index);
 		if (temp.find('{'))
-			;
+			push_separately(temp, index);
 		if (temp.find('}'))
-			;
+			push_separately(temp, index);
 		size_t	quote_pos = temp.find('\'') == std::string::npos ? temp.find('\'') : temp.find('\"');
 		if (quote_pos != std::string::npos && (status = handleQuote(ss, temp, temp[quote_pos])))
 			return status;
@@ -254,34 +221,14 @@ void	eraseComments(std::string &s)
 	}
 }
 
-bool	incompleteSemicolons(std::string &s)
-{
-	std::stringstream	ss(s);
-	std::string			buff;
-
-	while (std::getline(ss, buff))
-	{
-		if (buff.find_first_not_of(" \t\r\n") == std::string::npos)
-			continue;
-
-		if (buff.find('{') != std::string::npos || buff.find('}') != std::string::npos)
-			continue;
-
-		size_t last_char = buff.find_last_not_of(" \t\r\n");
-		if (last_char == std::string::npos || buff[last_char] != ';')
-			return true;
-	}
-	return false;
-}
-
-tuple	ConfigParser::fillDirectives()
+tuple	&ConfigParser::fillDirectives()
 {
 	tuple	p(0, "");
 
 	return p;
 }
 
-int	ConfigParser::parse_config(char *file, std::vector<ServerConfig> *servers)
+int	ConfigParser::parseConfig(char *file, std::vector<ServerConfig> *servers)
 {
 	std::fstream	f(file, std::ios::in | std::ios::binary);
 	int				status;
@@ -300,11 +247,11 @@ int	ConfigParser::parse_config(char *file, std::vector<ServerConfig> *servers)
 	if (incompleteSemicolons(raw))
 		return sendParseError(MISSING_SEMICOLON, "");
 
-	if ((status = getTokens(s)))
+	if ((status = getTokens()))
 		return sendParseError(status, "");
 
 	tuple	p;
-	if ((p = fillDirectives()))
+	if (!(p = fillDirectives()).first)
 		return sendParseError(p.first, p.second);
 	return 0;
 }

@@ -7,7 +7,7 @@
 #include <fstream>
 
 typedef	std::map<std::string, std::string>	cgi_handler_type;
-typedef	std::pair<int, std::string &>		tuple;
+typedef	std::pair<int, std::string>			tuple;
 
 enum e_autoindex
 {
@@ -67,7 +67,7 @@ public:
 	ServerConfig(const ServerConfig &other);
 	ServerConfig	&operator=(const ServerConfig &other);
 
-	std::vector<LocationConfig>	locations;
+	std::vector<LocationConfig>		locations;
 	std::vector<t_listen>			listens;
 	std::string						server_name;
 	std::string						root;
@@ -89,7 +89,9 @@ private:
 	int		getTokens();
 	int		handleQuote(std::stringstream &ss, std::string starter, char quote_char);
 	int		sendParseError(int error, const std::string &par);
-	tuple	fillDirectives();
+	void	push_separately(std::string &s, size_t pos);
+	bool	incompleteSemicolons(std::string &s);
+	tuple	&fillDirectives();
 
 public:
 	ConfigParser();
@@ -103,5 +105,5 @@ public:
 	size_t						client_max_body_size;
 	std::map<int, std::string>	error_pages;
 
-	int	parse_config(char *file, std::vector<ServerConfig> *servers);
+	int	parseConfig(char *file, std::vector<ServerConfig> *servers);
 };

@@ -65,7 +65,7 @@ int	main(int ac, char **av)
 	/* ************************** ERASE *************************** */
 
 /* 	ConfigParser	config_parser;
-	if (config_parser.parse_config(av[1], &webserv.servers) < 0)
+	if (config_parser.parseConfig(av[1], &webserv.servers) < 0)
 		return 1;
  */
 	if (webserv.prepare_listeners() < 0)
