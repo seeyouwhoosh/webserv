@@ -15,7 +15,7 @@
 
 /* ORTHODOX CANONICAL FORM */
 
-ConfigParser::ConfigParser(): autoindex(AUTOINDEX_UNSET) {}
+ConfigParser::ConfigParser(): autoindex(AUTOINDEX_UNSET), flags(NONE) {}
 
 ConfigParser::~ConfigParser() {}
 

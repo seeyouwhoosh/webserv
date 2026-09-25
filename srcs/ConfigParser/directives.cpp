@@ -4,7 +4,10 @@
 int	ConfigParser::parseRoot(std::string &value)
 {
 	if (root.empty())
+	{
+		flags = flags | ROOT;
 		root = value;
+	}
 	else
 	{
 		error_par = "root";
@@ -17,6 +20,7 @@ int	ConfigParser::parseAutoindex(std::string &value)
 {
 	if (autoindex == AUTOINDEX_UNSET)
 	{
+		flags = flags | AUTOINDEX;
 		if (value == "on")
 			autoindex = AUTOINDEX_ON;
 		else if (value == "off")
@@ -37,6 +41,7 @@ int	ConfigParser::parseAutoindex(std::string &value)
 
 int	ConfigParser::parseMaxbody(std::string &value)
 {
+	flags = flags | BODY_SIZE;
 	if (str_max_body_size.empty())
 	{
 		str_max_body_size = value;

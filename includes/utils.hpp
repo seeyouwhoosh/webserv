@@ -36,6 +36,8 @@ int			listen_socket(struct addrinfo *addr, int listen_num);
 
 bool		all_digits(std::string s);
 
+int			matchDirective(std::string &s);
+
 /* Files */
 
 std::string	getFileExtension(std::string file);

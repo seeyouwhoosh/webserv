@@ -24,6 +24,11 @@ int	ConfigParser::fillServer(std::vector<std::string>::iterator &start, std::vec
 
 	if (start != tokens.end() && *start != "{")
 	{
+		if (*start == ";")
+		{
+			error_par = "server";
+			return EMPTY_VALUE;
+		}
 		error_par = *start;
 		return INVALID_VALUE;
 	}
@@ -50,7 +55,10 @@ int	ConfigParser::fillServer(std::vector<std::string>::iterator &start, std::vec
 			}
 
 			if (*start == "root")
+			{
+				error_par = *start;
 				return DUPLICATED_DIRECTIVE;
+			}
 			directive = *start;
 			continue;
 		}
@@ -70,10 +78,20 @@ int	ConfigParser::fillServer(std::vector<std::string>::iterator &start, std::vec
 				return status;
 			else if (directive == "error_page" && (status = temp_server.parseErrorPage(start, error_keys)))
 				return status;
+			else if (directive == "listen")
+			{
+				if (*(start + 1) != ";")
+				return MULTIPLE_VALUES;
+				if ((status = temp_server.parseListens(*start)))
+					return status;
+			}
 			else if (directive == "index")
 				temp_server.indexes.push_back(*start);
 			else
-				return INVALID_DIRECTIVE;
+			{
+				error_par = directive;
+				return UNKNOWN_DIRECTIVE;
+			}
 		}
 	}
 	servers->push_back(temp_server);
@@ -99,7 +117,6 @@ int	ConfigParser::fillDirectives(std::vector<ServerConfig> *servers)
 				return EMPTY_DIRECTIVE;
 			}
 			directive.clear();
-			continue;
 		}
 		else if (directive.empty())
 		{
@@ -112,10 +129,12 @@ int	ConfigParser::fillDirectives(std::vector<ServerConfig> *servers)
 				return EMPTY_VALUE;
 			}
 
-			if (*it == "root")
+			if (matchDirective(*it) & flags)
+			{
+				error_par = *it;
 				return DUPLICATED_DIRECTIVE;
+			}
 			directive = *it;
-			continue;
 		}
 		else
 		{
@@ -136,7 +155,10 @@ int	ConfigParser::fillDirectives(std::vector<ServerConfig> *servers)
 			else if (directive == "index")
 				indexes.push_back(*it);
 			else
-				return INVALID_DIRECTIVE;
+			{
+				error_par = directive;
+				return UNKNOWN_DIRECTIVE;
+			}
 		}
 	}
 	return 0;

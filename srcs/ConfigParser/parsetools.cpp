@@ -22,23 +22,17 @@ int	ConfigParser::sendParseError(int error, const std::string &par)
 	case EMPTY_DIRECTIVE:
 		msg = "empty directive";
 		break;
-	case INVALID_DIRECTIVE:
-		msg = "invalid directive";
-		break;
-	case NOT_IMPLEMENTED:
-		msg = "directive not implemented";
-		break;
-	case MISSING_DIRECTIVE:
-		msg = "missing directive";
+	case UNKNOWN_DIRECTIVE:
+		msg = "unknown directive \"" + par + "\"";
 		break;
 	case DUPLICATED_DIRECTIVE:
-		msg = "this directive doesn't allow duplicates";
+		msg = "directive \"" + par + "\" doesn't allow duplicates";
 		break;
 	case INVALID_VALUE:
 		msg = "invalid value in directive \"" + par + "\"";
 		break;
 	case MULTIPLE_VALUES:
-		msg = "this directive doesn't allow multiple values";
+		msg = "directive \"" + par + "\" doesn't allow multiple values";
 		break;
 	case EMPTY_VALUE:
 		msg = "empty value in directive \"" + par + "\"";
@@ -132,3 +126,4 @@ int	ConfigParser::toMaxBodySize(std::string s)
 
 	max_body_size = strtoInt(s) * offset;
 }
+

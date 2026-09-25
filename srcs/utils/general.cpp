@@ -97,3 +97,15 @@ bool	all_digits(std::string s)
 	}
 	return true;
 }
+
+int matchDirective(std::string &s)
+{
+	const char	*d[] = {"root", "autoindex", "max_body_size", "limit_except", "upload_store", "return"};
+
+	for (size_t i = 0; i < 6; i++)
+	{
+		if (s == d[i])
+			return 1 << i;
+	}
+	return 0;
+}
