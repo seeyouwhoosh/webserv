@@ -43,48 +43,6 @@ typedef struct s_listen
 	int						sockfd;
 }	t_listen;
 
-class LocationConfig
-{
-public:
-	LocationConfig();
-	LocationConfig(const std::string name);
-	~LocationConfig();
-	LocationConfig(const LocationConfig &other);
-	LocationConfig	&operator=(const LocationConfig &other);
-
-	std::string					name;
-	std::string					root;
-	std::vector<std::string>	indexes;
-	bool						autoindex;
-	std::vector<std::string>	allowed_methods;
-	std::string					str_max_body_size;
-	size_t						max_body_size;
-	std::map<int, std::string>	error_pages;
-	cgi_handler_type			cgi_handlers;
-	std::string					upload_store;
-	std::pair<int, std::string>	return_status;
-};
-
-class ServerConfig
-{
-public:
-	ServerConfig();
-	~ServerConfig();
-	ServerConfig(const ServerConfig &other);
-	ServerConfig	&operator=(const ServerConfig &other);
-
-	std::vector<LocationConfig>		locations;
-	std::vector<t_listen>			listens;
-	std::string						server_name; // está permitido varios nombres
-	std::string						root;
-	std::vector<std::string>		indexes;
-	bool							autoindex;
-	std::string						str_max_body_size;
-	size_t							max_body_size;
-	std::map<int, std::string>		error_pages;
-	cgi_handler_type				cgi_handlers;
-};
-
 class ConfigParser
 {
 private:
@@ -103,10 +61,6 @@ private:
 	int		fillLocation(std::vector<std::string>::iterator &start);
 	void	fillDefaults(std::vector<ServerConfig> *servers);
 
-	int		parseRoot(std::string value);
-	int		parseAutoindex(std::string value);
-	int		parseMaxbody(std::string value);
-	int		parseErrorPage(std::vector<std::string>::iterator it, std::vector<int> &error_keys);
 public:
 	ConfigParser();
 	~ConfigParser();
@@ -120,5 +74,49 @@ public:
 	size_t						max_body_size;
 	std::map<int, std::string>	error_pages;
 
+	int		parseRoot(std::string &value);
+	int		parseAutoindex(std::string &value);
+	int		parseMaxbody(std::string &value);
+	int		parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys);
+
 	int	parseConfig(char *file, std::vector<ServerConfig> *servers);
 };
+
+class ServerConfig: public ConfigParser
+{
+public:
+	ServerConfig();
+	~ServerConfig();
+	ServerConfig(const ServerConfig &other);
+	ServerConfig	&operator=(const ServerConfig &other);
+
+	std::vector<LocationConfig>		locations;
+	std::vector<t_listen>			listens;
+	std::string						server_name;
+	cgi_handler_type				cgi_handlers;
+
+	int	parseListens(std::string &value);
+	int	parseServerName(std::string &value);
+	int	parseCGIHandler(std::string &value);
+};
+
+class LocationConfig: public ServerConfig
+{
+public:
+	LocationConfig();
+	LocationConfig(const std::string name);
+	~LocationConfig();
+	LocationConfig(const LocationConfig &other);
+	LocationConfig	&operator=(const LocationConfig &other);
+
+	std::string					name;
+	std::vector<std::string>	allowed_methods;
+	std::string					upload_store;
+	std::pair<int, std::string>	return_status;
+
+	int	parseLocationName(std::string &value);
+	int	parseAllowedMethods(std::string &value);
+	int	parseUpload(std::string &value);
+	int	parseReturnstatus(std::string &value);
+};
+

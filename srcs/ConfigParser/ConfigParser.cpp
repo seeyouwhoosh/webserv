@@ -36,7 +36,7 @@ ConfigParser	&ConfigParser::operator=(const ConfigParser &other)
 	return *this;
 }
 
-ServerConfig::ServerConfig(): autoindex(AUTOINDEX_UNSET) {}
+ServerConfig::ServerConfig() {}
 
 ServerConfig::~ServerConfig() {}
 
@@ -60,11 +60,11 @@ ServerConfig	&ServerConfig::operator=(const ServerConfig &other)
 	return *this;
 }
 
-LocationConfig::LocationConfig(): autoindex(AUTOINDEX_UNSET) {}
+LocationConfig::LocationConfig() {}
 
 LocationConfig::~LocationConfig() {}
 
-LocationConfig::LocationConfig(const std::string name): name(name), autoindex(AUTOINDEX_UNSET) {}
+LocationConfig::LocationConfig(const std::string name): name(name) {}
 
 LocationConfig::LocationConfig(const LocationConfig &other)
 {

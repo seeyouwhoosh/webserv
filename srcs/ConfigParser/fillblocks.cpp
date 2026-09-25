@@ -17,20 +17,64 @@ int	ConfigParser::fillLocation(std::vector<std::string>::iterator &start)
 
 int	ConfigParser::fillServer(std::vector<std::string>::iterator &start, std::vector<ServerConfig> *servers)
 {
-	ServerConfig	temp_server;
-	int				status;
+	ServerConfig		temp_server;
+	int					status;
+	std::vector<int>	error_keys;
+	std::string			directive;
 
-	if (start == tokens.end() ||  *start == "{")
+	if (start != tokens.end() && *start != "{")
 	{
-		if (start != tokens.end())
-			error_par = *start;
+		error_par = *start;
 		return INVALID_VALUE;
 	}
+	start++;
 
 	for (; start != tokens.end() && *start != "}"; start++)
 	{
-		if (*start == "location" && (status = fillLocation(start)))
-			return status;
+		if (*start == ";")
+		{
+			if (!directive.empty())
+			{
+				error_par = directive;
+				return EMPTY_DIRECTIVE;
+			}
+			directive.clear();
+			continue;
+		}
+		else if (directive.empty())
+		{
+			if ((start + 1) == tokens.end() || *(start + 1) == ";")
+			{
+				error_par = *start;
+				return EMPTY_VALUE;
+			}
+
+			if (*start == "root")
+				return DUPLICATED_DIRECTIVE;
+			directive = *start;
+			continue;
+		}
+		else
+		{
+			if (*start == "location")
+			{
+				if ((status = fillServer(start, servers)))
+					return status;
+				directive.clear();
+			}
+			else if (directive == "root" && (status = temp_server.parseRoot(*start)))
+				return status;
+			else if (directive == "autoindex" && (status = temp_server.parseAutoindex(*start)))
+				return status;
+			else if (directive == "client_max_body_size" && (status = temp_server.parseAutoindex(*start)))
+				return status;
+			else if (directive == "error_page" && (status = temp_server.parseErrorPage(start, error_keys)))
+				return status;
+			else if (directive == "index")
+				temp_server.indexes.push_back(*start);
+			else
+				return INVALID_DIRECTIVE;
+		}
 	}
 	servers->push_back(temp_server);
 	return 0;
@@ -49,10 +93,15 @@ int	ConfigParser::fillDirectives(std::vector<ServerConfig> *servers)
 	{
 		if (*it == ";")
 		{
+			if (!directive.empty())
+			{
+				error_par = directive;
+				return EMPTY_DIRECTIVE;
+			}
 			directive.clear();
 			continue;
 		}
-		if (directive.empty())
+		else if (directive.empty())
 		{
 			if (*it == "}" || *it == "{")
 				continue;
@@ -119,7 +168,7 @@ void	ConfigParser::fillDefaults(std::vector<ServerConfig> *servers)
 		{
 			t_listen	default_listen = {
 				.host = "0.0.0.0",
-				.port = "8080"
+				.port = "8000"
 			};
 			it->listens.push_back(default_listen);
 		}
