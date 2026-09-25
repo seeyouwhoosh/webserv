@@ -87,3 +87,13 @@ int	listen_socket(struct addrinfo *addr, int listen_num)
 	}
 	return error_msg(status, "listen_socket", NULL);
 }
+
+bool	all_digits(std::string s)
+{
+	for (size_t i = 0; i < s.size(); i++)
+	{
+		if (!std::isdigit(s[i]))
+			return false;
+	}
+	return true;
+}

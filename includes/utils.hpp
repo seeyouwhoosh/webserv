@@ -34,6 +34,8 @@ void		closePipes(int pipe_in[2], int pipe_out[2]);
 
 int			listen_socket(struct addrinfo *addr, int listen_num);
 
+bool		all_digits(std::string s);
+
 /* Files */
 
 std::string	getFileExtension(std::string file);
@@ -58,7 +60,7 @@ void		toupperString(std::string &s);
 
 int			hexToAscii(std::string s);
 
-int			strtoInt(std::string s);
+long		strtoInt(std::string s);
 
 
 /* INITs */

@@ -63,10 +63,10 @@ std::string	inet_ntop(int af, const void *src)
 	return s;
 }
 
-int	strtoInt(std::string s)
+long	strtoInt(std::string s)
 {
 	std::stringstream	ss(s.c_str());
-	int					n;
+	long				n;
 
 	ss >> n;
 	return n;
