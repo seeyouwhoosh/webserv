@@ -103,10 +103,10 @@ private:
 	int		fillLocation(std::vector<std::string>::iterator &start);
 	void	fillDefaults(std::vector<ServerConfig> *servers);
 
-	int	parseRoot(std::string value);
-	int	parseAutoindex(std::string value);
-	int	parseMaxbody(std::string value);
-	int	parseErrorPage(std::vector<std::string>::iterator it, std::vector<int> &error_keys);
+	int		parseRoot(std::string value);
+	int		parseAutoindex(std::string value);
+	int		parseMaxbody(std::string value);
+	int		parseErrorPage(std::vector<std::string>::iterator it, std::vector<int> &error_keys);
 public:
 	ConfigParser();
 	~ConfigParser();
