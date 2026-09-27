@@ -3,16 +3,11 @@
 
 int	ConfigParser::parseRoot(std::string &value)
 {
-	if (root.empty())
-	{
-		flags = flags | ROOT;
-		root = value;
-	}
-	else
-	{
-		error_par = "root";
+	if (!root.empty())
 		return MULTIPLE_VALUES;
-	}
+
+	flags = flags | ROOT;
+	root = value;
 	return 0;
 }
 
@@ -26,10 +21,7 @@ int	ConfigParser::parseAutoindex(std::string &value)
 		else if (value == "off")
 			autoindex = AUTOINDEX_OFF;
 		else
-		{
-			error_par = value;
 			return INVALID_VALUE;
-		}
 	}
 	else
 	{
@@ -41,9 +33,9 @@ int	ConfigParser::parseAutoindex(std::string &value)
 
 int	ConfigParser::parseMaxbody(std::string &value)
 {
-	flags = flags | BODY_SIZE;
 	if (str_max_body_size.empty())
 	{
+		flags = flags | BODY_SIZE;
 		str_max_body_size = value;
 		if (toMaxBodySize(value))
 		{
@@ -71,10 +63,7 @@ int	ConfigParser::parseErrorPage(std::vector<std::string>::iterator &it, std::ve
 	else
 	{
 		if (!all_digits(*it))
-		{
-			error_par = *it;
 			return INVALID_VALUE;
-		}
 		error_keys.push_back(strtoInt(*it));
 	}
 	return 0;
@@ -123,10 +112,11 @@ int	ServerConfig::parseListens(std::string &value)
 	{
 		if (it->port == temp_listen.port)
 		{
+			
 			if (it->host == temp_listen.host)
-				return MULTIPLE_VALUES;
+				return DUPLICATED_VALUE;
 			if (it->host == "0.0.0.0" || temp_listen.host == "0.0.0.0" || it->host == "*" || temp_listen.host == "*")
-				return MULTIPLE_VALUES;
+				return DUPLICATED_VALUE;
 		}
 	}
 
@@ -134,32 +124,69 @@ int	ServerConfig::parseListens(std::string &value)
 	return 0;
 }
 
+// NO HE DADO SOPORTE PARA WILDCARDS
 int	ServerConfig::parseServerName(std::string &value)
 {
-
+	for (std::vector<std::string>::iterator it = server_name.begin(); it != server_name.end(); it++)
+	{
+		if (value == *it)
+			return DUPLICATED_VALUE;
+	}
+	server_name.push_back(value);
+	return 0;
 }
 
+// mirar si suele pasar con el punto o no, porque yo lo suelo parsear sin punto, creo
 int	ServerConfig::parseCGIHandler(std::string &value)
 {
-
-}
-
-int	LocationConfig::parseLocationName(std::string &value)
-{
-
+	if (cgi_file.empty())
+		cgi_file = value;
+	else
+	{
+		if (cgi_handlers.find(value) != cgi_handlers.end())
+			return DUPLICATED_VALUE;
+		cgi_handlers.insert(cgi_file, value);
+		cgi_file.clear();
+	}
+	return 0;
 }
 
 int	LocationConfig::parseAllowedMethods(std::string &value)
 {
-
+	for (std::vector<std::string>::iterator it = allowed_methods.begin(); it != allowed_methods.end(); it++)
+	{
+		if (*it == value)
+			return DUPLICATED_VALUE;
+	}
+	if (value != "GET" || value != "POST" || value != "UPLOAD")
+		return INVALID_VALUE;
+	allowed_methods.push_back(value);
+	return 0;
 }
 
 int	LocationConfig::parseUpload(std::string &value)
 {
+	if (!upload_store.empty())
+		return MULTIPLE_VALUES;
 
+	flags = flags | ROOT;
+	upload_store = value;
+	return 0;
 }
 
 int	LocationConfig::parseReturnstatus(std::string &value)
 {
-
+	if (page_return.empty())
+	{
+		if (!all_digits(value) || value.length() > 3)
+			return INVALID_VALUE;
+		page_return = value;
+	}
+	else
+	{
+		return_status.first = strtoInt(page_return);
+		return_status.second = value;
+		flags = flags | RETURN;
+	}
+	return 0;
 }

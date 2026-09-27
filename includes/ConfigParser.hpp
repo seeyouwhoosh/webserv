@@ -28,6 +28,7 @@ enum e_parserror
 	EMPTY_DIRECTIVE,
 	UNKNOWN_DIRECTIVE,
 	DUPLICATED_DIRECTIVE,
+	DUPLICATED_VALUE,
 	MULTIPLE_VALUES,
 	INVALID_VALUE,
 	EMPTY_VALUE
@@ -57,19 +58,20 @@ class ConfigParser
 private:
 	std::vector<std::string>	tokens;
 	std::string					raw;
-	std::string					error_par;
 	std::vector<ServerConfig>	servers;
-	int							flags;
 
 	int		getTokens();
 	int		handleQuote(std::stringstream &ss, std::string starter, char quote_char);
-	int		sendParseError(int error, const std::string &par);
 	void	push_separately(std::string &s, size_t pos);
 	int		fillDirectives(std::vector<ServerConfig> *servers);
 	int		toMaxBodySize(std::string s);
 	int		fillServer(std::vector<std::string>::iterator &start, std::vector<ServerConfig> *servers);
 	int		fillLocation(std::vector<std::string>::iterator &start);
 	void	fillDefaults(std::vector<ServerConfig> *servers);
+
+protected:
+	std::string	error_par;
+	int			flags;
 
 public:
 	ConfigParser();
@@ -89,11 +91,16 @@ public:
 	int		parseMaxbody(std::string &value);
 	int		parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys);
 
+	int		sendParseError(int error, const std::string &par);
+
 	int	parseConfig(char *file, std::vector<ServerConfig> *servers);
 };
 
 class ServerConfig: public ConfigParser
 {
+private:
+	std::string		cgi_file;
+
 public:
 	ServerConfig();
 	~ServerConfig();
@@ -102,7 +109,7 @@ public:
 
 	std::vector<LocationConfig>		locations;
 	std::vector<t_listen>			listens;
-	std::string						server_name;
+	std::vector<std::string>		server_name;
 	cgi_handler_type				cgi_handlers;
 
 	int	parseListens(std::string &value);
@@ -112,6 +119,8 @@ public:
 
 class LocationConfig: public ServerConfig
 {
+private:
+	std::string		page_return;
 public:
 	LocationConfig();
 	LocationConfig(const std::string name);

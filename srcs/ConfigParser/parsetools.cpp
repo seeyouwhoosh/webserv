@@ -28,6 +28,9 @@ int	ConfigParser::sendParseError(int error, const std::string &par)
 	case DUPLICATED_DIRECTIVE:
 		msg = "directive \"" + par + "\" doesn't allow duplicates";
 		break;
+	case DUPLICATED_VALUE:
+		msg = "directive \"" + par + "\" doesn't allow duplicated values";
+		break;
 	case INVALID_VALUE:
 		msg = "invalid value in directive \"" + par + "\"";
 		break;
