@@ -150,11 +150,11 @@ int	HTTPmessage::httpPOST()
 	if ((status = handleSpecialType()) != 1)
 		return status;
 
-	if ((locationconf && locationconf->upload_store.empty()) || serverconf->upload_store.empty())
+	if ((locationconf && locationconf->upload_store.empty()))
 		return -setStatusCode(NOT_FOUND);
 	
 	struct stat	st;
-	std::string	upload_store = locationconf ? locationconf->upload_store : serverconf->upload_store;
+	std::string	upload_store = locationconf->upload_store;
 
 	if (stat(upload_store.c_str(), &st) < 0 || access(upload_store.c_str(), X_OK | W_OK) < 0)
 		return -setStatusCode(FORBIDDEN);

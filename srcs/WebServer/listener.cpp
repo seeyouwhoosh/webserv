@@ -27,7 +27,7 @@ int	WebServer::prepare_listeners()
 				free_all();
 				return servers[i].listens[j].sockfd;
 			}
-			std::cout << "\033[1m[webserv]\33[0m " << servers[i].server_name << " listening on " << servers[i].listens[j].host << ":" << servers[i].listens[j].port << "\n";
+			std::cout << "\033[1m[webserv]\33[0m " << servers[i].server_name[0] << " listening on " << servers[i].listens[j].host << ":" << servers[i].listens[j].port << "\n";
 			listeners.push_back(servers[i].listens[j].sockfd);
 		}
 	}

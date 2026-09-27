@@ -11,7 +11,7 @@ void	HTTPmessage::fillCGIenv()
 	
 	cgi_env.push_back("SERVER_PROTOCOL=" + rq_startline.version);
 	cgi_env.push_back("SERVER_PORT=" + server_port);
-	cgi_env.push_back("SERVER_NAME=" + serverconf->server_name);
+	cgi_env.push_back("SERVER_NAME=" + serverconf->server_name[0]);
 	cgi_env.push_back("REQUEST_METHOD=" + rq_startline.method);
 	cgi_env.push_back("QUERY_STRING=" + rq_startline.query);
 

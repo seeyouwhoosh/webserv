@@ -6,7 +6,7 @@ int main(int argc, char* argv[]) {
 	ConfigParser				parser;
 	std::vector<ServerConfig>	servers;
 
-	if (parser.parseConfig(filepath, &servers) < 0)
+	if (parser.parseConfig(&filepath[0], &servers) < 0)
 		return 0;
 
 

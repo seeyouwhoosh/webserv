@@ -1,9 +1,7 @@
-#include "ConfigParser.hpp"
+#include "HTTPContext.hpp"
 #include "utils.hpp"
 
-// por cambiar
-
-void	ConfigParser::fillDefaults(std::vector<ServerConfig> *servers)
+void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 {
 	if (root.empty())
 		root = "html";

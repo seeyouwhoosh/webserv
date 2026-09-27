@@ -38,7 +38,6 @@ private:
 	void	push_separately(std::string &s, size_t pos);
 	int		fillDirectives(std::vector<ServerConfig> *servers);
 	int		fillLocation(std::vector<std::string>::iterator &start);
-	void	fillDefaults(std::vector<ServerConfig> *servers);
 
 public:
 	ConfigParser();

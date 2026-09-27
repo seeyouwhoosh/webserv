@@ -25,6 +25,8 @@ enum solo_directives
 	RETURN = 1 << 5
 };
 
+class ServerConfig;
+
 class HTTPContext
 {
 protected:
@@ -56,6 +58,7 @@ public:
 	int		parseCGIHandler(std::string &value);
 
 	int		fillDirectives(std::vector<ServerConfig> *servers);
+	void	fillDefaults(std::vector<ServerConfig> *servers);
 
 
 	void	setTokens(std::vector<std::string> &tokens);

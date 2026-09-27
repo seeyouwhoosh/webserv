@@ -189,7 +189,7 @@ int	HTTPmessage::sendResponse(int client)
 	else if (!rs_body.empty() && totalSent < total_to_send + 2)
 	{
 		size_t	end_offset = totalSent - total_to_send;
-		sent = send(client, "\r\n" + end_offset, 2 - end_offset, MSG_NOSIGNAL);
+		sent = send(client, &"\r\n"[end_offset], 2 - end_offset, MSG_NOSIGNAL);
 	}
 	if (sent < 0)
 		return error_msg(errno, "send", NULL);

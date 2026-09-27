@@ -16,16 +16,15 @@ typedef struct s_listen
 
 class ServerConfig: public HTTPContext
 {
-private:
-	std::vector<std::string>		server_name;
-	std::vector<t_listen>			listens;
-	std::vector<LocationConfig>		locations;
-
 public:
 	ServerConfig();
 	~ServerConfig();
 	ServerConfig(const ServerConfig &other);
 	ServerConfig	&operator=(const ServerConfig &other);
+
+	std::vector<std::string>		server_name;
+	std::vector<t_listen>			listens;
+	std::vector<LocationConfig>		locations;
 
 	int	parseListens(std::string &value);
 	int	parseServerName(std::string &value);
@@ -33,5 +32,4 @@ public:
 	int	fillServer(std::vector<std::string>::iterator &start);
 
 	void	clear();
-
 };
