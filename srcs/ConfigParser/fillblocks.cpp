@@ -86,7 +86,7 @@ int	ConfigParser::fillLocation(std::vector<std::string>::iterator &start)
 			}
 		}
 	}
-	servers->push_back(temp_location);
+	(servers.end() - 1)->locations.push_back(temp_location);
 	return 0;
 }
 

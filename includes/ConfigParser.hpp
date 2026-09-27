@@ -53,6 +53,73 @@ typedef struct s_listen
 	int						sockfd;
 }	t_listen;
 
+class HTTPContext
+{
+protected:
+	std::string	error_par;
+	int			flags;
+	std::string	cgi_file;
+
+public:
+	HTTPContext();
+	virtual ~HTTPContext();
+	HTTPContext(const HTTPContext &other);
+	HTTPContext	&operator=(const HTTPContext &other);
+
+	std::string					root;
+	std::vector<std::string>	indexes;
+	short						autoindex;
+	std::string					str_max_body_size;
+	size_t						max_body_size;
+	std::map<int, std::string>	error_pages;
+	cgi_handler_type			cgi_handlers;
+
+	int		parseRoot(std::string &value);
+	int		parseAutoindex(std::string &value);
+	int		parseMaxbody(std::string &value);
+	int		parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys);
+};
+
+class LocationConfig: public ServerConfig
+{
+private:
+	std::string		page_return;
+
+public:
+	LocationConfig();
+	LocationConfig(const std::string name);
+	~LocationConfig();
+	LocationConfig(const LocationConfig &other);
+	LocationConfig	&operator=(const LocationConfig &other);
+
+	std::string					name;
+	std::vector<std::string>	allowed_methods;
+	std::string					upload_store;
+	std::pair<int, std::string>	return_status;
+
+	int	parseAllowedMethods(std::string &value);
+	int	parseUpload(std::string &value);
+	int	parseReturnstatus(std::string &value);
+};
+
+
+class ServerConfig: public ConfigParser
+{
+private:
+	std::vector<std::string>		server_name;
+	std::vector<t_listen>			listens;
+	std::vector<LocationConfig>		locations;
+
+public:
+	ServerConfig();
+	~ServerConfig();
+	ServerConfig(const ServerConfig &other);
+	ServerConfig	&operator=(const ServerConfig &other);
+
+	int	parseListens(std::string &value);
+	int	parseServerName(std::string &value);
+};
+
 class ConfigParser
 {
 private:
@@ -69,73 +136,14 @@ private:
 	int		fillLocation(std::vector<std::string>::iterator &start);
 	void	fillDefaults(std::vector<ServerConfig> *servers);
 
-protected:
-	std::string	error_par;
-	int			flags;
-
 public:
 	ConfigParser();
 	~ConfigParser();
 	ConfigParser(const ConfigParser &other);
 	ConfigParser	&operator=(const ConfigParser &other);
 
-	std::string					root;
-	std::vector<std::string>	indexes;
-	short						autoindex;
-	std::string					str_max_body_size;
-	size_t						max_body_size;
-	std::map<int, std::string>	error_pages;
-
-	int		parseRoot(std::string &value);
-	int		parseAutoindex(std::string &value);
-	int		parseMaxbody(std::string &value);
-	int		parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys);
-
 	int		sendParseError(int error, const std::string &par);
 
-	int	parseConfig(char *file, std::vector<ServerConfig> *servers);
-};
-
-class ServerConfig: public ConfigParser
-{
-private:
-	std::string		cgi_file;
-
-public:
-	ServerConfig();
-	~ServerConfig();
-	ServerConfig(const ServerConfig &other);
-	ServerConfig	&operator=(const ServerConfig &other);
-
-	std::vector<LocationConfig>		locations;
-	std::vector<t_listen>			listens;
-	std::vector<std::string>		server_name;
-	cgi_handler_type				cgi_handlers;
-
-	int	parseListens(std::string &value);
-	int	parseServerName(std::string &value);
-	int	parseCGIHandler(std::string &value);
-};
-
-class LocationConfig: public ServerConfig
-{
-private:
-	std::string		page_return;
-public:
-	LocationConfig();
-	LocationConfig(const std::string name);
-	~LocationConfig();
-	LocationConfig(const LocationConfig &other);
-	LocationConfig	&operator=(const LocationConfig &other);
-
-	std::string					name;
-	std::vector<std::string>	allowed_methods;
-	std::string					upload_store;
-	std::pair<int, std::string>	return_status;
-
-	int	parseLocationName(std::string &value);
-	int	parseAllowedMethods(std::string &value);
-	int	parseUpload(std::string &value);
-	int	parseReturnstatus(std::string &value);
+	int		parseConfig(char *file, std::vector<ServerConfig> *servers);
 };
 

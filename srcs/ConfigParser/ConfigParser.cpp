@@ -15,27 +15,6 @@
 
 /* ORTHODOX CANONICAL FORM */
 
-ConfigParser::ConfigParser(): autoindex(AUTOINDEX_UNSET), flags(NONE) {}
-
-ConfigParser::~ConfigParser() {}
-
-ConfigParser::ConfigParser(const ConfigParser &other)
-{
-	*this = other;
-}
-
-ConfigParser	&ConfigParser::operator=(const ConfigParser &other)
-{
-	root = other.root;
-	indexes = other.indexes;
-	autoindex = other.autoindex;
-	str_max_body_size = other.str_max_body_size;
-	max_body_size = other.max_body_size;
-	error_pages = other.error_pages;
-
-	return *this;
-}
-
 ServerConfig::ServerConfig() {}
 
 ServerConfig::~ServerConfig() {}
@@ -87,6 +66,14 @@ LocationConfig	&LocationConfig::operator=(const LocationConfig &other)
 	return_status = other.return_status;
 	return *this;
 }
+
+ConfigParser::ConfigParser() {}
+
+ConfigParser::~ConfigParser() {}
+
+ConfigParser::ConfigParser(const ConfigParser &other) {}
+
+ConfigParser	&ConfigParser::operator=(const ConfigParser &other) {}
 
 static void	eraseComments(std::string &s)
 {
