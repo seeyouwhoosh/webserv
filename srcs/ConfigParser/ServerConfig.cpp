@@ -93,3 +93,111 @@ int	ServerConfig::parseServerName(std::string &value)
 	server_name.push_back(value);
 	return 0;
 }
+
+int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
+{
+	LocationConfig		location;
+	int					status;
+	std::vector<int>	error_keys;
+	std::string			directive;
+
+	location.setTokens(*tokens);
+	if (!tokens)
+		return GENERIC_ERROR;
+	if (start != tokens->end() && *start != "{")
+	{
+		error_par = *start;
+		if (*start == ";")
+		{
+			error_par = "server";
+			return EMPTY_VALUE;
+		}
+		return INVALID_VALUE;
+	}
+	start++;
+
+	for (; start != tokens->end() && *start != "}"; start++)
+	{
+		error_par = *start;
+		if (*start == ";")
+		{
+			if (!directive.empty())
+			{
+				error_par = directive;
+				return EMPTY_DIRECTIVE;
+			}
+			directive.clear();
+		}
+		else if (directive.empty())
+		{
+			if ((start + 1) == tokens->end() || *(start + 1) == ";")
+				return EMPTY_VALUE;
+
+			if (matchDirective(*start) & flags)
+				return DUPLICATED_DIRECTIVE;
+			directive = *start;
+		}
+		else
+		{
+			if (*start == "location")
+			{
+				if ((status = location.fillLocation(start)))
+				{
+					error_par = location.error_par;
+					return status;
+				}
+				locations.push_back(location);
+				location.clear();
+				directive.clear();
+			}
+			else if (directive == "root" && (status = parseRoot(*start)))
+				return status;
+			else if (directive == "autoindex" && (status = parseAutoindex(*start)))
+				return status;
+			else if (directive == "client_max_body_size" && (status = parseAutoindex(*start)))
+				return status;
+			else if (directive == "error_page" && (status = parseErrorPage(start, error_keys)))
+				return status;
+			else if (directive == "listen")
+			{
+				error_par = "listen";
+				if (*(start + 1) != ";")
+					return MULTIPLE_VALUES;
+				if ((status = parseListens(*start)))
+					return status;
+			}
+			else if (directive == "server_name" && (status = parseServerName(*start)))
+				return status;
+			else if (directive == "cgi" && (status = parseCGIHandler(*start)))
+				return status;
+			else if (directive == "index")
+				indexes.push_back(*start);
+			else
+			{
+				error_par = directive;
+				return UNKNOWN_DIRECTIVE;
+			}
+			directive.clear();
+		}
+	}
+	return 0;
+}
+
+
+void	ServerConfig::clear()
+{
+	error_par.clear();
+	flags = NONE;
+	cgi_file.clear();
+	root.clear();
+	indexes.clear();
+	autoindex = AUTOINDEX_UNSET;
+	str_max_body_size.clear();
+	max_body_size = 0;
+	error_pages.clear();
+	cgi_handlers.clear();
+
+	server_name.clear();
+	listens.clear();
+	locations.clear();
+}

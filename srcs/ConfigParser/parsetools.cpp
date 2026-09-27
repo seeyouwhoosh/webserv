@@ -1,7 +1,7 @@
 #include "ConfigParser.hpp"
 #include "utils.hpp"
 
-int	ConfigParser::sendParseError(int error, const std::string &par)
+int	ConfigParser::sendParseError(int error)
 {
 	std::string	msg;
 
@@ -23,22 +23,22 @@ int	ConfigParser::sendParseError(int error, const std::string &par)
 		msg = "empty directive";
 		break;
 	case UNKNOWN_DIRECTIVE:
-		msg = "unknown directive \"" + par + "\"";
+		msg = "unknown directive \"" + error_par + "\"";
 		break;
 	case DUPLICATED_DIRECTIVE:
-		msg = "directive \"" + par + "\" doesn't allow duplicates";
+		msg = "directive \"" + error_par + "\" doesn't allow duplicates";
 		break;
 	case DUPLICATED_VALUE:
-		msg = "directive \"" + par + "\" doesn't allow duplicated values";
+		msg = "directive \"" + error_par + "\" doesn't allow duplicated values";
 		break;
 	case INVALID_VALUE:
-		msg = "invalid value in directive \"" + par + "\"";
+		msg = "invalid value in directive \"" + error_par + "\"";
 		break;
 	case MULTIPLE_VALUES:
-		msg = "directive \"" + par + "\" doesn't allow multiple values";
+		msg = "directive \"" + error_par + "\" doesn't allow multiple values";
 		break;
 	case EMPTY_VALUE:
-		msg = "empty value in directive \"" + par + "\"";
+		msg = "empty value in directive \"" + error_par + "\"";
 		break;
 	default:
 		break;
@@ -92,10 +92,10 @@ void	ConfigParser::push_separately(std::string &s, size_t index)
 
 int	ConfigParser::getTokens()
 {
-	std::stringstream			ss(raw);
-	std::string					temp;
-	char						c;
-	int							status;
+	std::stringstream	ss(raw);
+	std::string			temp;
+	char				c;
+	int					status;
 
 	while (ss >> temp)
 	{
@@ -113,20 +113,4 @@ int	ConfigParser::getTokens()
 	return 0;
 }
 
-int	ConfigParser::toMaxBodySize(std::string s)
-{
-	toupperString(s);
-
-	size_t	last = s.size() - 1;
-	for (size_t i = 0; i < s.size(); i++)
-	{
-		if (i == (last) && (s[i] != 'K' || s[i] != 'M' || !std::isdigit(s[i])))
-			return 1;
-		else if (!std::isdigit(s[i]))
-		return 1;
-	}
-	int	offset = s[last] == 'K' ? 1000 : s[last] == 'M' ? 1000000 : 1;
-
-	max_body_size = strtoInt(s) * offset;
-}
 

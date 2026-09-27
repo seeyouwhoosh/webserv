@@ -9,15 +9,7 @@
 #include <string>
 #include <fstream>
 
-typedef	std::map<std::string, std::string>	cgi_handler_type;
-typedef	std::pair<int, std::string>			tuple;
-
-enum e_autoindex
-{
-	AUTOINDEX_UNSET = -1,
-	AUTOINDEX_OFF,
-	AUTOINDEX_ON
-};
+#include "ServerConfig.hpp"
 
 enum e_parserror
 {
@@ -34,92 +26,6 @@ enum e_parserror
 	EMPTY_VALUE
 };
 
-enum solo_directives
-{
-	NONE = 0,
-	ROOT = 1 << 0,
-	AUTOINDEX = 1 << 1,
-	BODY_SIZE = 1 << 2,
-	ALLOWED_METHODS = 1 << 3,
-	UPLOAD = 1 << 4,
-	RETURN = 1 << 5
-};
-
-typedef struct s_listen
-{
-	std::string				host;
-	std::string				port;
-	struct addrinfo			*serversock_info;
-	int						sockfd;
-}	t_listen;
-
-class HTTPContext
-{
-protected:
-	std::string	error_par;
-	int			flags;
-	std::string	cgi_file;
-
-public:
-	HTTPContext();
-	virtual ~HTTPContext();
-	HTTPContext(const HTTPContext &other);
-	HTTPContext	&operator=(const HTTPContext &other);
-
-	std::string					root;
-	std::vector<std::string>	indexes;
-	short						autoindex;
-	std::string					str_max_body_size;
-	size_t						max_body_size;
-	std::map<int, std::string>	error_pages;
-	cgi_handler_type			cgi_handlers;
-
-	int		parseRoot(std::string &value);
-	int		parseAutoindex(std::string &value);
-	int		parseMaxbody(std::string &value);
-	int		parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys);
-};
-
-class LocationConfig: public ServerConfig
-{
-private:
-	std::string		page_return;
-
-public:
-	LocationConfig();
-	LocationConfig(const std::string name);
-	~LocationConfig();
-	LocationConfig(const LocationConfig &other);
-	LocationConfig	&operator=(const LocationConfig &other);
-
-	std::string					name;
-	std::vector<std::string>	allowed_methods;
-	std::string					upload_store;
-	std::pair<int, std::string>	return_status;
-
-	int	parseAllowedMethods(std::string &value);
-	int	parseUpload(std::string &value);
-	int	parseReturnstatus(std::string &value);
-};
-
-
-class ServerConfig: public ConfigParser
-{
-private:
-	std::vector<std::string>		server_name;
-	std::vector<t_listen>			listens;
-	std::vector<LocationConfig>		locations;
-
-public:
-	ServerConfig();
-	~ServerConfig();
-	ServerConfig(const ServerConfig &other);
-	ServerConfig	&operator=(const ServerConfig &other);
-
-	int	parseListens(std::string &value);
-	int	parseServerName(std::string &value);
-};
-
 class ConfigParser
 {
 private:
@@ -131,8 +37,6 @@ private:
 	int		handleQuote(std::stringstream &ss, std::string starter, char quote_char);
 	void	push_separately(std::string &s, size_t pos);
 	int		fillDirectives(std::vector<ServerConfig> *servers);
-	int		toMaxBodySize(std::string s);
-	int		fillServer(std::vector<std::string>::iterator &start, std::vector<ServerConfig> *servers);
 	int		fillLocation(std::vector<std::string>::iterator &start);
 	void	fillDefaults(std::vector<ServerConfig> *servers);
 
@@ -142,8 +46,9 @@ public:
 	ConfigParser(const ConfigParser &other);
 	ConfigParser	&operator=(const ConfigParser &other);
 
-	int		sendParseError(int error, const std::string &par);
+	std::string					error_par;
 
+	int		sendParseError(int error);
 	int		parseConfig(char *file, std::vector<ServerConfig> *servers);
 };
 

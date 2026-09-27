@@ -15,58 +15,6 @@
 
 /* ORTHODOX CANONICAL FORM */
 
-ServerConfig::ServerConfig() {}
-
-ServerConfig::~ServerConfig() {}
-
-ServerConfig::ServerConfig(const ServerConfig &other)
-{
-	*this = other;
-}
-ServerConfig	&ServerConfig::operator=(const ServerConfig &other)
-{
-	locations = other.locations;
-	listens = other.listens;
-	server_name = other.server_name;
-	root = other.root;
-	indexes = other.indexes;
-	autoindex = other.autoindex;
-	str_max_body_size = other.str_max_body_size;
-	max_body_size = other.max_body_size;
-	cgi_handlers = other.cgi_handlers;
-	error_pages = other.error_pages;
-
-	return *this;
-}
-
-LocationConfig::LocationConfig() {}
-
-LocationConfig::~LocationConfig() {}
-
-LocationConfig::LocationConfig(const std::string name): name(name) {}
-
-LocationConfig::LocationConfig(const LocationConfig &other)
-{
-	*this = other;
-}
-
-LocationConfig	&LocationConfig::operator=(const LocationConfig &other)
-{
-	name = other.name;
-	root = other.root;
-	indexes = other.indexes;
-	cgi_handlers = other.cgi_handlers;
-	allowed_methods = other.allowed_methods;
-	error_pages = other.error_pages;
-	autoindex = other.autoindex;
-	str_max_body_size = other.str_max_body_size;
-	max_body_size = other.max_body_size;
-	allowed_methods = other.allowed_methods;
-	upload_store = other.upload_store;
-	return_status = other.return_status;
-	return *this;
-}
-
 ConfigParser::ConfigParser() {}
 
 ConfigParser::~ConfigParser() {}
@@ -74,6 +22,8 @@ ConfigParser::~ConfigParser() {}
 ConfigParser::ConfigParser(const ConfigParser &other) {}
 
 ConfigParser	&ConfigParser::operator=(const ConfigParser &other) {}
+
+/* MEMBER FUNCTIONS */
 
 static void	eraseComments(std::string &s)
 {
@@ -99,6 +49,7 @@ int	ConfigParser::parseConfig(char *file, std::vector<ServerConfig> *servers)
 {
 	std::fstream	f(file, std::ios::in | std::ios::binary);
 	int				status;
+	HTTPContext		globalconf;
 
 	if (!f.is_open())
 		return error_msg(1, "open", "can't open the file");
@@ -109,15 +60,19 @@ int	ConfigParser::parseConfig(char *file, std::vector<ServerConfig> *servers)
 	eraseComments(raw);
 
 	if (unmatchedBracket(raw))
-		return sendParseError(UNMATCHED_BRACKET, "");
+		return sendParseError(UNMATCHED_BRACKET);
 
 	if (incompleteSemicolons(raw))
-		return sendParseError(MISSING_SEMICOLON, "");
+		return sendParseError(MISSING_SEMICOLON);
 
 	if ((status = getTokens()))
-		return sendParseError(status, "");
+		return sendParseError(status);
 
-	if ((status = fillDirectives(servers)))
-		return sendParseError(status, error_par);
+	globalconf.setTokens(tokens);
+	if ((status = globalconf.fillDirectives(servers)))
+	{
+		error_par = globalconf.error_par;
+		return sendParseError(status);
+	}
 	return 0;
 }

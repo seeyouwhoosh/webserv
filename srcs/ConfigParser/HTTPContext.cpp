@@ -24,6 +24,13 @@ HTTPContext	&HTTPContext::operator=(const HTTPContext &other)
 	return *this;
 }
 
+/* SETTERS */
+
+void	HTTPContext::setTokens(std::vector<std::string> &tokens)
+{
+	this->tokens = &tokens;
+}
+
 int	HTTPContext::parseRoot(std::string &value)
 {
 	if (!root.empty())
@@ -54,6 +61,23 @@ int	HTTPContext::parseAutoindex(std::string &value)
 	return 0;
 }
 
+int	HTTPContext::toMaxBodySize(std::string s)
+{
+	toupperString(s);
+
+	size_t	last = s.size() - 1;
+	for (size_t i = 0; i < s.size(); i++)
+	{
+		if (i == (last) && (s[i] != 'K' || s[i] != 'M' || !std::isdigit(s[i])))
+			return 1;
+		else if (!std::isdigit(s[i]))
+		return 1;
+	}
+	int	offset = s[last] == 'K' ? 1000 : s[last] == 'M' ? 1000000 : 1;
+
+	max_body_size = strtoInt(s) * offset;
+}
+
 int	HTTPContext::parseMaxbody(std::string &value)
 {
 	if (str_max_body_size.empty())
@@ -76,7 +100,7 @@ int	HTTPContext::parseMaxbody(std::string &value)
 
 int	HTTPContext::parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys)
 {
-	if (!all_digits(*it) && (it + 1) != tokens.end() && *(it + 1) == ";")
+	if (!all_digits(*it) && (it + 1) != tokens->end() && *(it + 1) == ";")
 	{
 		std::string	error_page = *it;
 		for (size_t i = 0; i < error_keys.size(); i++)
@@ -103,6 +127,76 @@ int	HTTPContext::parseCGIHandler(std::string &value)
 			return DUPLICATED_VALUE;
 		cgi_handlers.insert(cgi_file, value);
 		cgi_file.clear();
+	}
+	return 0;
+}
+
+int	HTTPContext::fillDirectives(std::vector<ServerConfig> *servers)
+{
+	ServerConfig	server;
+	int					status;
+	std::vector<int>	error_keys;
+	std::string			directive;
+
+	if (!servers || !tokens)
+		return GENERIC_ERROR;
+
+	server.setTokens(*tokens);
+	for (std::vector<std::string>::iterator it = tokens->begin(); it != tokens->end(); it++)
+	{
+		error_par = *it;
+		if (*it == ";")
+		{
+			if (!directive.empty())
+			{
+				error_par = directive;
+				return EMPTY_DIRECTIVE;
+			}
+			directive.clear();
+			continue;
+		}
+		if (directive.empty())
+		{
+			if (*it == "}" || *it == "{")
+				continue;
+
+			if ((it + 1) == tokens->end() || *(it + 1) == ";")
+				return EMPTY_VALUE;
+
+			if (matchDirective(*it) & flags)
+				return DUPLICATED_DIRECTIVE;
+			directive = *it;
+		}
+		else
+		{
+			if (directive == "server")
+			{
+				if ((status = server.fillServer(it)))
+				{
+					error_par = server.error_par;
+					return status;
+				}
+				servers->push_back(server);
+				server.clear();
+				directive.clear();
+			}
+			else if (directive == "root" && (status = parseRoot(*it)))
+				return status;
+			else if (directive == "autoindex" && (status = parseAutoindex(*it)))
+				return status;
+			else if (directive == "client_max_body_size" && (status = parseAutoindex(*it)))
+				return status;
+			else if (directive == "error_page" && (status = parseErrorPage(it, error_keys)))
+				return status;
+			else if (directive == "index")
+				indexes.push_back(*it);
+			else
+			{
+				error_par = directive;
+				return UNKNOWN_DIRECTIVE;
+			}
+			directive.clear();
+		}
 	}
 	return 0;
 }
