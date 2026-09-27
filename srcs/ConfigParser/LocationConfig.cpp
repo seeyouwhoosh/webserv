@@ -9,7 +9,7 @@ LocationConfig::~LocationConfig() {}
 
 LocationConfig::LocationConfig(const std::string name): name(name) {}
 
-LocationConfig::LocationConfig(const LocationConfig &other)
+LocationConfig::LocationConfig(const LocationConfig &other): HTTPContext(other)
 {
 	*this = other;
 }

@@ -50,7 +50,7 @@ std::string	getMIMEtype(std::string ext);
 
 int			getLocationIndex(std::vector<LocationConfig> &locations, std::string path);
 
-std::string	&dumptoString(std::fstream &f);
+std::string	dumptoString(std::fstream &f);
 
 void		refactorFile(std::string &path, std::string &file);
 

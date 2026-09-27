@@ -83,17 +83,13 @@ void	refactorFile(std::string &path, std::string &file)
 }
 
 /* takes a file stream and dump it all into a string */
-std::string	&dumptoString(std::fstream &f)
+std::string	dumptoString(std::fstream &f)
 {
-	std::string	s = "";
-
 	if (isFileEmpty(f))
-		return s;
+		return "";
 
 	std::stringstream ss;
 	ss << f.rdbuf();
 	
-	std::string	s = ss.str();
-	
-	return s;
+	return ss.str();
 }

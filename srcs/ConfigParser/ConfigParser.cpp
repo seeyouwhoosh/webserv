@@ -19,9 +19,20 @@ ConfigParser::ConfigParser() {}
 
 ConfigParser::~ConfigParser() {}
 
-ConfigParser::ConfigParser(const ConfigParser &other) {}
+ConfigParser::ConfigParser(const ConfigParser &other)
+{
+	*this = other;
+}
 
-ConfigParser	&ConfigParser::operator=(const ConfigParser &other) {}
+ConfigParser	&ConfigParser::operator=(const ConfigParser &other)
+{
+	tokens = other.tokens;
+	raw = other.raw;
+	servers = other.servers;
+	error_par = other.error_par;
+
+	return *this;
+}
 
 /* MEMBER FUNCTIONS */
 

@@ -54,9 +54,11 @@ bool RequestParser::parseRequestLine(const std::string& line, HTTPmessage& reque
 
 bool RequestParser::isValidMethod(const std::string& method) const
 {
-	std::map<char *, int>::iterator	it = allowedMethods.find(method);
-
-	if (it != allowedMethods.end())
+	if (method == "POST")
+		return true;
+	if (method == "GET")
+		return true;
+	if (method == "DELETE")
 		return true;
 	return false;
 }

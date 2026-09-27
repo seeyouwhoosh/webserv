@@ -136,5 +136,5 @@ int	WebServer::process_connections(int num_events)
 
 int WebServer::parse_config(char *file)
 {
-	return globalconf.parse_config(file, &servers);
+	return globalconf.parseConfig(file, &servers);
 }

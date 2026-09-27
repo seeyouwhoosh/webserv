@@ -3,7 +3,7 @@
 
 /* ORTHODOX CANONICAL FORM */
 
-HTTPContext::HTTPContext(): autoindex(AUTOINDEX_UNSET), flags(NONE) {}
+HTTPContext::HTTPContext(): flags(NONE), autoindex(AUTOINDEX_UNSET) {}
 
 HTTPContext::~HTTPContext() {}
 
@@ -76,6 +76,8 @@ int	HTTPContext::toMaxBodySize(std::string s)
 	int	offset = s[last] == 'K' ? 1000 : s[last] == 'M' ? 1000000 : 1;
 
 	max_body_size = strtoInt(s) * offset;
+
+	return 0;
 }
 
 int	HTTPContext::parseMaxbody(std::string &value)
@@ -125,7 +127,7 @@ int	HTTPContext::parseCGIHandler(std::string &value)
 	{
 		if (cgi_handlers.find(value) != cgi_handlers.end())
 			return DUPLICATED_VALUE;
-		cgi_handlers.insert(cgi_file, value);
+		cgi_handlers.insert(std::make_pair(cgi_file, value));
 		cgi_file.clear();
 	}
 	return 0;

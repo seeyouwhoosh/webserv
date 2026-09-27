@@ -3,8 +3,6 @@
 #include <map>
 #include <string>
 
-#include "ServerConfig.hpp"
-
 typedef	std::map<std::string, std::string>	cgi_handler_type;
 
 enum e_autoindex

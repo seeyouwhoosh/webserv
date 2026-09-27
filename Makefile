@@ -24,7 +24,9 @@ SOURCES		= test.cpp \
 				HTTPmessage/HTTPmessage.cpp HTTPmessage/http_methods.cpp HTTPmessage/generate_response.cpp HTTPmessage/file_handler.cpp HTTPmessage/cgi_handler.cpp HTTPmessage/cgi_utils.cpp HTTPmessage/autoindex.cpp \
 				WebServer/WebServer.cpp WebServer/epoll.cpp WebServer/client.cpp WebServer/listener.cpp \
 				utils/conversion.cpp utils/files.cpp utils/general.cpp utils/init.cpp utils/checkers.cpp \
-				ConfigParser/ConfigParser.cpp ConfigParser/HTTPContext.cpp ConfigParser/ServerConfig.cpp ConfigParser/LocationConfig.cpp ConfigParser/fill_default.cpp ConfigParser/parse_tools.cpp
+				ConfigParser/ConfigParser.cpp ConfigParser/HTTPContext.cpp ConfigParser/ServerConfig.cpp ConfigParser/LocationConfig.cpp ConfigParser/fill_default.cpp ConfigParser/parse_tools.cpp \
+				Client.cpp \
+				RequestParser/RequestParser.cpp
 # Objects
 OBJ_DIR		= objs
 OBJ			= $(SOURCES:.cpp=.o)
@@ -48,7 +50,7 @@ $(NAME): $(OBJECTS)
 	@echo "$(BBLUE)$(NAME)$(NC): $(GREEN)$(NAME)$(NC) created"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR) $(OBJ_DIR)/HTTPmessage $(OBJ_DIR)/WebServer $(OBJ_DIR)/utils
+	@mkdir -p $(OBJ_DIR) $(OBJ_DIR)/HTTPmessage $(OBJ_DIR)/WebServer $(OBJ_DIR)/ConfigParser $(OBJ_DIR)/utils $(OBJ_DIR)/RequestParser
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ 
 
 # Bonus program

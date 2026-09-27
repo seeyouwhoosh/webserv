@@ -1,5 +1,6 @@
 #include "HTTPContext.hpp"
 #include "utils.hpp"
+#include "ServerConfig.hpp"
 
 void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 {
@@ -25,10 +26,9 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 		}
 		if (it->listens.empty())
 		{
-			t_listen	default_listen = {
-				.host = "0.0.0.0",
-				.port = "8000"
-			};
+			t_listen	default_listen;
+			default_listen.host = "0.0.0.0";
+			default_listen.port = "8000";
 			it->listens.push_back(default_listen);
 		}
 		if (it->server_name.empty())

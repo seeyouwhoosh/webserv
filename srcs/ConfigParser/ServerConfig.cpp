@@ -7,7 +7,7 @@ ServerConfig::ServerConfig() {}
 
 ServerConfig::~ServerConfig() {}
 
-ServerConfig::ServerConfig(const ServerConfig &other)
+ServerConfig::ServerConfig(const ServerConfig &other): HTTPContext(other)
 {
 	*this = other;
 }
@@ -29,10 +29,10 @@ ServerConfig	&ServerConfig::operator=(const ServerConfig &other)
 
 int	ServerConfig::parseListens(std::string &value)
 {
-	t_listen	temp_listen = {
-		.host = "0.0.0.0",
-		.port = "8000"
-	};
+	t_listen	temp_listen;
+	temp_listen.host = "0.0.0.0";
+	temp_listen.port = "8000";
+
 	size_t		ipv6_end = value.find(']');
 	size_t		sep;
 

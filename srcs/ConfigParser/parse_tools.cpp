@@ -94,7 +94,6 @@ int	ConfigParser::getTokens()
 {
 	std::stringstream	ss(raw);
 	std::string			temp;
-	char				c;
 	int					status;
 
 	while (ss >> temp)
