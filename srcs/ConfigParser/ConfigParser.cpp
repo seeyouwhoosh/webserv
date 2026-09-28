@@ -78,12 +78,13 @@ int	ConfigParser::parseConfig(char *file, std::vector<ServerConfig> *servers)
 
 	if ((status = getTokens()))
 		return sendParseError(status);
-
+	
 	globalconf.setTokens(tokens);
 	if ((status = globalconf.fillDirectives(servers)))
 	{
 		error_par = globalconf.error_par;
 		return sendParseError(status);
 	}
+	globalconf.fillDefaults(servers);
 	return 0;
 }

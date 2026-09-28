@@ -34,10 +34,8 @@ private:
 	std::vector<ServerConfig>	servers;
 
 	int		getTokens();
-	int		handleQuote(std::stringstream &ss, std::string starter, char quote_char);
+	int		handleQuote(std::stringstream &ss, std::string &starter, char quote_char);
 	void	push_separately(std::string &s, size_t pos);
-	int		fillDirectives(std::vector<ServerConfig> *servers);
-	int		fillLocation(std::vector<std::string>::iterator &start);
 
 public:
 	ConfigParser();

@@ -46,31 +46,34 @@ int	ConfigParser::sendParseError(int error)
 	return error_msg(1, "parse", msg.c_str());
 }
 
-int ConfigParser::handleQuote(std::stringstream &ss, std::string starter, char quote_char)
+int ConfigParser::handleQuote(std::stringstream &ss, std::string &starter, char quote_char)
 {
 	size_t		remainder_index = starter.find(quote_char);
 	std::string	remainder = starter.substr(0, remainder_index);
-	tokens.push_back(remainder);
+	if (!remainder.empty())
+		tokens.push_back(remainder);
 
 	size_t		end_quote = starter.find(quote_char, remainder_index + 1);
 	std::string quote;
 
+	/* Quote ends in the same token*/
 	if (end_quote != std::string::npos)
 	{
 		quote = starter.substr(remainder_index + 1, end_quote - remainder_index - 1);
 		tokens.push_back(quote);
 		
-		remainder = starter.substr(end_quote + 1);
-		tokens.push_back(remainder);
+		starter.erase(0, end_quote + 1);
 		return 0;
 	}
 
+	/* Quote doesn't end in the same token */
 	quote = starter.substr(remainder_index + 1);
 	std::string	str;
 	if (std::getline(ss, str, quote_char))
 	{
 		quote += str;
 		tokens.push_back(quote);
+		starter.clear();
 		return 0;
 	}
 	else
@@ -84,10 +87,9 @@ int ConfigParser::handleQuote(std::stringstream &ss, std::string starter, char q
 void	ConfigParser::push_separately(std::string &s, size_t index)
 {
 	std::string	remainder = s.substr(0, index);
-	tokens.push_back(remainder);
-	tokens.push_back(";");
-	if ((index + 1) < s.length())
-		tokens.push_back(s.substr(index + 1));
+	if (!remainder.empty())
+		tokens.push_back(remainder);
+	s.erase(0, index);
 }
 
 int	ConfigParser::getTokens()
@@ -97,18 +99,22 @@ int	ConfigParser::getTokens()
 	int					status;
 
 	while (ss >> temp)
-	{
-		size_t	index;
+	{		size_t	index;
 		if ((index = temp.find(';')) != std::string::npos)
 			push_separately(temp, index);
-		if (temp.find('{'))
+		if ((index = temp.find('{'))!= std::string::npos)
 			push_separately(temp, index);
-		if (temp.find('}'))
+		if ((index = temp.find('}'))!= std::string::npos)
 			push_separately(temp, index);
-		size_t	quote_pos = temp.find('\'') == std::string::npos ? temp.find('\'') : temp.find('\"');
+
+		size_t	quote_pos = temp.find('\'') != std::string::npos ? temp.find('\'') : temp.find('\"');
 		if (quote_pos != std::string::npos && (status = handleQuote(ss, temp, temp[quote_pos])))
 			return status;
+
+		if (!temp.empty())
+			tokens.push_back(temp);
 	}
+
 	return 0;
 }
 

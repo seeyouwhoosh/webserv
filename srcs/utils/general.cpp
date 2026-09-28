@@ -7,7 +7,7 @@ int	error_msg(int err_code, const char *func, const char *msg)
 	if (func)
 		std::cerr << func << ": ";
 	if (msg)
-		std::cerr << msg << "\n";
+		std::cerr << msg << "\n\033[0m";
 	else
 		std::cerr << strerror(err_code) << "\n\033[0m";
 	return -err_code;

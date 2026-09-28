@@ -51,7 +51,10 @@ int	HTTPContext::parseAutoindex(std::string &value)
 		else if (value == "off")
 			autoindex = AUTOINDEX_OFF;
 		else
+		{
+			error_par = "autoindex";
 			return INVALID_VALUE;
+		}
 	}
 	else
 	{
@@ -66,13 +69,15 @@ int	HTTPContext::toMaxBodySize(std::string s)
 	toupperString(s);
 
 	size_t	last = s.size() - 1;
-	for (size_t i = 0; i < s.size(); i++)
+	size_t	i = 0;
+	for (; i < s.size() - 1; i++)
 	{
-		if (i == (last) && (s[i] != 'K' || s[i] != 'M' || !std::isdigit(s[i])))
+		if (!std::isdigit(s[i]))
 			return 1;
-		else if (!std::isdigit(s[i]))
-		return 1;
 	}
+
+	if  (s[i] != 'K' && s[i] != 'M' && !std::isdigit(s[i]))
+		return 1;
 	int	offset = s[last] == 'K' ? 1000 : s[last] == 'M' ? 1000000 : 1;
 
 	max_body_size = strtoInt(s) * offset;
@@ -88,7 +93,7 @@ int	HTTPContext::parseMaxbody(std::string &value)
 		str_max_body_size = value;
 		if (toMaxBodySize(value))
 		{
-			error_par = value;
+			error_par = "client_max_body_size";
 			return INVALID_VALUE;
 		}
 	}
@@ -135,7 +140,7 @@ int	HTTPContext::parseCGIHandler(std::string &value)
 
 int	HTTPContext::fillDirectives(std::vector<ServerConfig> *servers)
 {
-	ServerConfig	server;
+	ServerConfig		server;
 	int					status;
 	std::vector<int>	error_keys;
 	std::string			directive;

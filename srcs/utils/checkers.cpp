@@ -45,10 +45,11 @@ bool	unmatchedBracket(std::string &s)
 		{
 			par--;
 			if (par < 0)
-				return false;
+				return true;
 		}
 	}
+
 	if (par)
-		return false;
-	return true;
+		return true;
+	return false;
 }

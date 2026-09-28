@@ -38,7 +38,7 @@ int	LocationConfig::parseAllowedMethods(std::string &value)
 		if (*it == value)
 			return DUPLICATED_VALUE;
 	}
-	if (value != "GET" || value != "POST" || value != "UPLOAD")
+	if (value != "GET" && value != "POST" && value != "DELETE")
 		return INVALID_VALUE;
 	allowed_methods.push_back(value);
 	return 0;
@@ -117,14 +117,12 @@ int	LocationConfig::fillLocation(std::vector<std::string>::iterator &start)
 
 	for (; start != tokens->end() && *start != "}"; start++)
 	{
+		status = UNKNOWN_DIRECTIVE;
 		error_par = *start;
 		if (*start == ";")
 		{
-			if (!directive.empty())
-			{
-				error_par = directive;
+			if (directive.empty())
 				return EMPTY_DIRECTIVE;
-			}
 			directive.clear();
 			continue;
 		}
@@ -143,7 +141,7 @@ int	LocationConfig::fillLocation(std::vector<std::string>::iterator &start)
 				return status;
 			else if (directive == "autoindex" && (status = parseAutoindex(*start)))
 				return status;
-			else if (directive == "client_max_body_size" && (status = parseAutoindex(*start)))
+			else if (directive == "client_max_body_size" && (status = parseMaxbody(*start)))
 				return status;
 			else if (directive == "error_page" && (status = parseErrorPage(start, error_keys)))
 				return status;
@@ -153,14 +151,17 @@ int	LocationConfig::fillLocation(std::vector<std::string>::iterator &start)
 				return status;
 			else if ((directive == "upload" || directive == "upload_store") && (status = parseUpload(*start)))
 				return status;
-			else if ((directive == "return" || directive == "upload_store") && (status = parseUpload(*start)))
+			else if ((directive == "return") && (status = parseReturnstatus(*start)))
 				return status;
 			else if (directive == "index")
 				indexes.push_back(*start);
 			else
 			{
-				error_par = directive;
-				return UNKNOWN_DIRECTIVE;
+				if (status != 0)
+				{
+					error_par = directive;
+					return status;
+				}
 			}
 		}
 	}

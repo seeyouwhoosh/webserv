@@ -118,17 +118,16 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 
 	for (; start != tokens->end() && *start != "}"; start++)
 	{
+		status = UNKNOWN_DIRECTIVE;
 		error_par = *start;
 		if (*start == ";")
 		{
-			if (!directive.empty())
-			{
-				error_par = directive;
+			if (directive.empty())
 				return EMPTY_DIRECTIVE;
-			}
 			directive.clear();
+			continue;
 		}
-		else if (directive.empty())
+		if (directive.empty())
 		{
 			if ((start + 1) == tokens->end() || *(start + 1) == ";")
 				return EMPTY_VALUE;
@@ -139,7 +138,7 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 		}
 		else
 		{
-			if (*start == "location")
+			if (directive == "location")
 			{
 				if ((status = location.fillLocation(start)))
 				{
@@ -154,7 +153,7 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 				return status;
 			else if (directive == "autoindex" && (status = parseAutoindex(*start)))
 				return status;
-			else if (directive == "client_max_body_size" && (status = parseAutoindex(*start)))
+			else if (directive == "client_max_body_size" && (status = parseMaxbody(*start)))
 				return status;
 			else if (directive == "error_page" && (status = parseErrorPage(start, error_keys)))
 				return status;
@@ -174,10 +173,12 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 				indexes.push_back(*start);
 			else
 			{
-				error_par = directive;
-				return UNKNOWN_DIRECTIVE;
+				if (status != 0)
+				{
+					error_par = directive;
+					return status;
+				}
 			}
-			directive.clear();
 		}
 	}
 	return 0;
