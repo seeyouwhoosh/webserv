@@ -84,6 +84,7 @@ void	init_responses()
 	responses[FORBIDDEN]				= "Forbidden";
 	responses[NOT_FOUND]				= "Not Found";
 	responses[METHOD_NOT_ALLOWED]		= "Method Not Allowed";
+	responses[CONTENT_TOO_LARGE]		= "Content Too Large";
 	responses[UNSUPPORTED_MEDIA_TYPE]	= "Unsupported Media Type";
 	responses[UNPROCESSABLE_CONTENT]	= "Unprocessable Content";
 	responses[INTERNAL_SERVER_ERROR]	= "Internal Server Error";

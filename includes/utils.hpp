@@ -3,6 +3,7 @@
 #include <netdb.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <string>
 #include <sstream>

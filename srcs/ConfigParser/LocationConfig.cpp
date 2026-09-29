@@ -47,7 +47,10 @@ int	LocationConfig::parseAllowedMethods(std::string &value)
 int	LocationConfig::parseUpload(std::string &value)
 {
 	if (!upload_store.empty())
+	{
+		error_par = "upload_store";
 		return MULTIPLE_VALUES;
+	}
 
 	flags = flags | ROOT;
 	upload_store = value;

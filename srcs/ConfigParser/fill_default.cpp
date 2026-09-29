@@ -66,6 +66,8 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 				jt->error_pages = it->error_pages;
 			if (jt->cgi_handlers.empty())
 				jt->cgi_handlers = it->cgi_handlers;
+			if (jt->indexes.empty())
+				jt->indexes = it->indexes;
 		}
 	}
 }

@@ -34,7 +34,10 @@ void	HTTPContext::setTokens(std::vector<std::string> &tokens)
 int	HTTPContext::parseRoot(std::string &value)
 {
 	if (!root.empty())
+	{
+		error_par = "root";
 		return MULTIPLE_VALUES;
+	}
 
 	flags = flags | ROOT;
 	root = value;

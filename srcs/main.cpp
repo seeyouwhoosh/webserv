@@ -38,36 +38,10 @@ int	main(int ac, char **av)
 	WebServer	webserv;
 	int			num_events;
 
-	/* ************************** ERASE ************************** */
-	t_listen listen;
-	listen.host = "0.0.0.0";
-	listen.port = "9999";
-
-	ServerConfig server;
-	LocationConfig	location;
-	location.name = "/linuxleo";
-	location.root = "var/www";
-	location.indexes.push_back("index.html");
-	location.autoindex = AUTOINDEX_ON;
-
-	server.autoindex = AUTOINDEX_OFF;
-	server.root = "var/www";
-	server.server_name = "prueba.com";
-	server.upload_store = "var/www/uploads";
-	server.cgi_handlers["py"] = "/usr/bin/python3";
-	server.cgi_handlers["php"] = "/usr/bin/php-cgi";
-	server.cgi_handlers["sh"] = "/bin/bash";
-	server.indexes.push_back("index.html");
-	server.locations.push_back(location);
-	server.listens.push_back(listen);
-	webserv.servers.push_back(server);
-
-	/* ************************** ERASE *************************** */
-
-/* 	ConfigParser	config_parser;
+	ConfigParser	config_parser;
 	if (config_parser.parseConfig(av[1], &webserv.servers) < 0)
 		return 1;
- */
+
 	if (webserv.prepare_listeners() < 0)
 	{
 		webserv.free_all();
