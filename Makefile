@@ -20,7 +20,7 @@ INCLUDES	= -I$(INCLUDE_DIR)
 
 # Sources
 SRC_DIR		= srcs
-SOURCES		= test.cpp \
+SOURCES		= main.cpp \
 				HTTPmessage/HTTPmessage.cpp HTTPmessage/http_methods.cpp HTTPmessage/generate_response.cpp HTTPmessage/file_handler.cpp HTTPmessage/cgi_handler.cpp HTTPmessage/cgi_utils.cpp HTTPmessage/autoindex.cpp \
 				WebServer/WebServer.cpp WebServer/epoll.cpp WebServer/client.cpp WebServer/listener.cpp \
 				utils/conversion.cpp utils/files.cpp utils/general.cpp utils/init.cpp utils/checkers.cpp \
