@@ -14,6 +14,8 @@ bool	incompleteSemicolons(std::string &s)
 		if (buff.find('{') != std::string::npos || buff.find('}') != std::string::npos)
 			continue;
 
+		if (buff.find("server") != std::string::npos || buff.find("location") != std::string::npos)
+			continue;
 		size_t last_char = buff.find_last_not_of(" \t\r\n");
 		if (last_char == std::string::npos || buff[last_char] != ';')
 			return true;

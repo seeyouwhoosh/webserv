@@ -194,7 +194,7 @@ int	HTTPContext::fillDirectives(std::vector<ServerConfig> *servers)
 				return status;
 			else if (directive == "autoindex" && (status = parseAutoindex(*it)))
 				return status;
-			else if (directive == "client_max_body_size" && (status = parseAutoindex(*it)))
+			else if (directive == "client_max_body_size" && (status = parseMaxbody(*it)))
 				return status;
 			else if (directive == "error_page" && (status = parseErrorPage(it, error_keys)))
 				return status;
@@ -202,8 +202,11 @@ int	HTTPContext::fillDirectives(std::vector<ServerConfig> *servers)
 				indexes.push_back(*it);
 			else
 			{
-				error_par = directive;
-				return UNKNOWN_DIRECTIVE;
+				if (status != 0)
+				{
+					error_par = directive;
+					return UNKNOWN_DIRECTIVE;
+				}
 			}
 			directive.clear();
 		}
