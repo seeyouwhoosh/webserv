@@ -18,6 +18,7 @@
 #include "ConfigParser.hpp"
 #include "Client.hpp"
 #include "utils.hpp"
+#include "Session.hpp"
 
 #define MAX_CONNECTIONS	512
 
@@ -44,6 +45,7 @@ public:
 	int							epoll_instance;
 	std::vector<int>			listeners;
 	std::map<int, Client>		clients;
+	std::map<std::string, Session> sessions; //bonus session
 	size_t						num_connections;
 	struct epoll_event			*epoll_events;
 
