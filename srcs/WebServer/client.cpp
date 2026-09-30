@@ -38,27 +38,6 @@ int	WebServer::handle_new_connection(int listener)
 		return error_msg(errno, "fcntl", NULL);
 	}
 
-	/******************** TO ERASE ******************* */
-	char str[INET6_ADDRSTRLEN] = {0};
-	int port = 0;
-
-	if (clientaddr.ss_family == AF_INET)
-	{
-		struct sockaddr_in *addr4 = (struct sockaddr_in *)&clientaddr;
-		inet_ntop(AF_INET, &addr4->sin_addr, str, sizeof(str));
-		port = ntohs(addr4->sin_port);
-	}
-	else if (clientaddr.ss_family == AF_INET6)
-	{
-		struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)&clientaddr;
-		inet_ntop(AF_INET6, &addr6->sin6_addr, str, sizeof(str));
-		port = ntohs(addr6->sin6_port);
-	}
-	
-	std::cout << "\033[1m[webserv]\33[0m New incoming connection from " 
-				<< str << ":" << port << std::endl;
-	/******************** TO ERASE ******************* */
-
 	if (epoll_add_fd(clientsock) < 0)
 	{
 		close(clientsock);

@@ -71,12 +71,12 @@ int	listen_socket(struct addrinfo *addr, int listen_num)
 			status = errno;
 			continue;
 		}
-		setsockopt(serversock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 		if (fcntl(serversock, F_SETFL, O_NONBLOCK) < 0)
 		{
 			close(serversock);
 			return error_msg(errno, "fcntl", NULL);
 		}
+		setsockopt(serversock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 		if (bind(serversock, p->ai_addr, p->ai_addrlen) < 0)
 		{
 			status = errno;

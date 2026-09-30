@@ -1,4 +1,4 @@
-- [ ] setupear el nonblocking para los sockets también
+- [x] setupear el nonblocking para los sockets también
 - [ ] mirar cómo gestionar los wildcards
 - [x] añadir . al cgi handler
 - [x] The same applies to the output of the CGI. If no content_length is returned from the CGI, EOF will mark the end of the returned data.
