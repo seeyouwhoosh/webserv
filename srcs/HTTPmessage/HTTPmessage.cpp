@@ -185,12 +185,14 @@ int	HTTPmessage::matchMethod(std::string &method)
 		BAD_METHOD,
 	};
 
-	for (size_t i = 0; i < allowedMethods.size(); i++)
-	{
-		if (method == allowedMethods[i])
-			return e_methods[i];
-	}
-	return BAD_METHOD;
+	if (method == "GET")
+		return GET;
+	else if (method == "POST")
+		return POST;
+	else if (method == "DELETE")
+		return DELETE;
+	else
+		return BAD_METHOD;
 }
 
 bool	HTTPmessage::isComplete() const

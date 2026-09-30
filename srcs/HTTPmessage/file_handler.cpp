@@ -133,20 +133,20 @@ LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 		return NULL;
 	}
 
-	LocationConfig	&locationconf = serverconf->locations[location_pos];
+	locationconf = &serverconf->locations[location_pos];
 	std::string		root;
-	if (!locationconf.alias.empty())
+	if (!locationconf->alias.empty())
 	{
-		root = locationconf.alias;
-		full_path.erase(0, locationconf.name.length());
+		root = locationconf->alias;
+		full_path.erase(0, locationconf->name.length());
 	}
 	else
-		root = locationconf.root.empty() ? serverconf->root : locationconf.root;
+		root = locationconf->root.empty() ? serverconf->root : locationconf->root;
 	refactorFile(root, full_path);
 
-	CGIparse(&locationconf);
+	CGIparse(locationconf);
 
-	return &locationconf;
+	return locationconf;
 }
 
 /* When the GET path is like "/thing" meaning to grab a file but it's actually a directory*/

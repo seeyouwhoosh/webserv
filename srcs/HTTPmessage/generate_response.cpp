@@ -119,15 +119,14 @@ void	HTTPmessage::setAllowHeader()
 {
 	std::stringstream	header;
 
-	for (size_t i = 0; i < allowedMethods.size(); i++)
+	for (std::vector<std::string>::iterator it = locationconf->allowed_methods.begin(); it != locationconf->allowed_methods.end(); it++)
 	{
-		header << allowedMethods[i];
-		if (i != allowedMethods.size() - 1)
+		header << *it;
+		if (it != locationconf->allowed_methods.end() - 1)
 			header << ", ";
 		else
 			header << "\r\n";
 	}
-
 	rs_headers["Allow"] = header.str();
 }
 

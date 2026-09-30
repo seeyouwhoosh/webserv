@@ -52,7 +52,7 @@ int	main(int ac, char **av)
 
 	init_MIMEtypes();
 	init_responses();
-	init_allowedMethods();
+
 	while (g_signal)
 	{
 		num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events,

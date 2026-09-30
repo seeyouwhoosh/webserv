@@ -72,8 +72,6 @@ void		init_responses();
 
 void		init_MIMEtypes();
 
-void		init_allowedMethods();
-
 /* Checkers */
 
 bool		unmatchedBracket(std::string &s);
