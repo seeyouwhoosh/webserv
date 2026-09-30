@@ -31,10 +31,10 @@ int	main(int ac, char **av)
 	char *file;
 	if (ac < 2)
 	{
-		std::cout << "Wrong arguments encountered, using default file \"config/sample.conf\"\n";
+		std::cout << "Wrong arguments encountered, using default file \"config_files/default.conf\"\n";
 		std::cout << "\033[1mUsage\33[0m: ./webserv [config file]\n";
 
-		file = (char *)"config_file/sample.conf";
+		file = (char *)"config_files/default.conf";
 	}
 	else
 		file = av[1];
@@ -65,6 +65,8 @@ int	main(int ac, char **av)
 				MAX_CONNECTIONS, -1);
 		if (num_events < 0)
 		{
+			if (errno == EINTR)
+				break;
 			webserv.free_all();
 			return error_msg(errno, "epoll_wait", NULL);
 		}

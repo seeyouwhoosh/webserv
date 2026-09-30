@@ -90,7 +90,11 @@ int	ServerConfig::parseServerName(std::string &value)
 		if (value == *it)
 			return DUPLICATED_VALUE;
 	}
+	
 	server_name.push_back(value);
+
+	if (value == "_")
+		return MOVE_SERVER_UPFRONT;
 	return 0;
 }
 

@@ -24,7 +24,8 @@ enum e_parserror
 	MULTIPLE_VALUES,
 	INVALID_VALUE,
 	EMPTY_VALUE,
-	ALIAS_ROOT
+	ALIAS_ROOT,
+	MOVE_SERVER_UPFRONT
 };
 
 class ConfigParser

@@ -200,10 +200,16 @@ int	HTTPContext::fillDirectives(std::vector<ServerConfig> *servers)
 			{
 				if ((status = server.fillServer(it)))
 				{
-					error_par = server.error_par;
-					return status;
+					if (status != MOVE_SERVER_UPFRONT)
+					{
+						error_par = server.error_par;
+						return status;
+					}
 				}
-				servers->push_back(server);
+				if (status == MOVE_SERVER_UPFRONT)
+					servers->insert(servers->begin(), server);
+				else
+					servers->push_back(server);
 				server.clear();
 				directive.clear();
 			}

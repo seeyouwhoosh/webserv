@@ -2,6 +2,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <algorithm>
 
 typedef	std::map<std::string, std::string>	cgi_handler_type;
 
