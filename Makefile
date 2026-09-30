@@ -26,7 +26,7 @@ SOURCES		= main.cpp \
 				utils/conversion.cpp utils/files.cpp utils/general.cpp utils/init.cpp utils/checkers.cpp \
 				ConfigParser/ConfigParser.cpp ConfigParser/HTTPContext.cpp ConfigParser/ServerConfig.cpp ConfigParser/LocationConfig.cpp ConfigParser/fill_default.cpp ConfigParser/parse_tools.cpp \
 				Client.cpp \
-				RequestParser/RequestParser.cpp
+				RequestParser/RequestParser.cpp RequestParser/RequestParserRequestLine.cpp RequestParser/RequestParserHeaders.cpp RequestParser/RequestParserBody.cpp RequestParser/RequestParserChunked.cpp
 # Objects
 OBJ_DIR		= objs
 OBJ			= $(SOURCES:.cpp=.o)
