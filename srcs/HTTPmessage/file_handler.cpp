@@ -129,7 +129,7 @@ LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 	{
 		std::string root = serverconf->root;
 		refactorFile(root, full_path);
-		CGIparse(NULL);
+		CGIparse();
 		return NULL;
 	}
 
@@ -144,7 +144,7 @@ LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 		root = locationconf->root.empty() ? serverconf->root : locationconf->root;
 	refactorFile(root, full_path);
 
-	CGIparse(locationconf);
+	CGIparse();
 
 	return locationconf;
 }

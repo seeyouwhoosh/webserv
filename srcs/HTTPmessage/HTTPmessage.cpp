@@ -5,6 +5,7 @@
 HTTPmessage::HTTPmessage()
 {
 	serverconf = NULL;
+	locationconf = NULL;
 	server_port = "";
 	client_addr = "";
 	rs_startline.version = "HTTP/1.1";

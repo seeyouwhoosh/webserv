@@ -41,11 +41,16 @@ void	HTTPmessage::fillCGIenv()
 	}
 }
 
-std::string	HTTPmessage::matchCGI(std::string extension, ServerConfig &serverconf, LocationConfig *locationconf)
+std::string	HTTPmessage::matchCGI(std::string extension)
 {
-	cgi_handler_type::iterator	it = locationconf ? locationconf->cgi_handlers.find(extension) : serverconf.cgi_handlers.find(extension);
+	cgi_handler_type::iterator	it;
+	std::cout << locationconf->name << std::endl;
+	if (locationconf)
+		it = locationconf->cgi_handlers.find(extension);
+	if (!locationconf || it == locationconf->cgi_handlers.end())
+		it = serverconf->cgi_handlers.find(extension);
 
-	if (it == serverconf.cgi_handlers.end())
+	if (it == serverconf->cgi_handlers.end())
 		return "";
 	
 	return it->second;

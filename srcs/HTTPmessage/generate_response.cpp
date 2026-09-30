@@ -136,6 +136,7 @@ int	HTTPmessage::generateResponse()
 {
 	int	error = 0;
 
+	std::cout << "header file: " << rq_startline.raw_path << std::endl;
 	if (rs_startline.status_code == OK)
 	{
 		std::string	m = rq_startline.method;
@@ -165,7 +166,6 @@ int	HTTPmessage::generateResponse()
 	if (error && generateErrorResponse(error) < 0)
 		return -1;
 
-	std::cout << rq_startline.raw_path << " " << full_path << std::endl;
 	rs_headers["Date"] = getDate();
 	setResponse();
 	return 0;

@@ -111,9 +111,9 @@ private:
 
 	/* CGI */
 	void			filefromCGIbin(size_t cgibin_pos);
-	void			indepCGIexecutable(size_t app_pos, LocationConfig *locationconf);
-	void			CGIparse(LocationConfig *locationconf);
-	std::string		matchCGI(std::string extension, ServerConfig &serverconf, LocationConfig *locationconf);
+	void			indepCGIexecutable(size_t app_pos);
+	void			CGIparse();
+	std::string		matchCGI(std::string extension);
 	void			fillCGIenv();
 	void			fillArgvEnvp(std::vector<char *> &argv, std::vector<char *> &envp);
 	int				handleCGI();
