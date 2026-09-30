@@ -27,11 +27,15 @@ void	sigint_handler(int sig)
 int	main(int ac, char **av)
 {
 	(void)av;
-	if (ac != 2)
+	if (ac < 2)
 	{
+		std::cout << "Wrong arguments encountered, using default file \"config/sample.conf\"\n";
 		std::cout << "\033[1mUsage\33[0m: ./webserv [config file]\n";
-		return 1;
+
+		char	*file = "config_file/sample.conf";
 	}
+
+	char	*file = av[1];
 
 	signal(SIGINT, sigint_handler);
 
@@ -39,7 +43,7 @@ int	main(int ac, char **av)
 	int			num_events;
 
 	ConfigParser	config_parser;
-	if (config_parser.parseConfig(av[1], &webserv.servers) < 0)
+	if (config_parser.parseConfig(file, &webserv.servers) < 0)
 		return 1;
 
 	if (webserv.prepare_listeners() < 0)
@@ -59,8 +63,6 @@ int	main(int ac, char **av)
 				MAX_CONNECTIONS, -1);
 		if (num_events < 0)
 		{
-			if (errno == EINTR)
-				break;
 			webserv.free_all();
 			return error_msg(errno, "epoll_wait", NULL);
 		}
