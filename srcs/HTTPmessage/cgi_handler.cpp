@@ -42,11 +42,11 @@ void	HTTPmessage::filefromCGIbin(size_t cgibin_pos)
 void	HTTPmessage::indepCGIexecutable(size_t app_pos, LocationConfig *locationconf)
 {
 	size_t		app_end = full_path.find('/', app_pos);
-	std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos + 1) : full_path.substr(app_pos + 1, app_end - app_pos - 1);
+	std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos) : full_path.substr(app_pos, app_end - app_pos);
 
 	struct stat	st;
 	stat(full_path.c_str(), &st);
-	if ((((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, *serverconf, locationconf)) != "") || app_ext == "cgi")
+	if ((((st.st_mode & S_IFMT) == S_IFREG) && (cgi_path = matchCGI(app_ext, *serverconf, locationconf)) != "") || app_ext == ".cgi")
 	{
 		rq_startline.iscgi = true;
 		if (app_end != std::string::npos)
@@ -171,8 +171,16 @@ int	HTTPmessage::handleCGI()
 			return INTERNAL_SERVER_ERROR;
 
 		parseCGIoutput(cgi_output);
-		this->rs_body = cgi_output; 
-		rs_content_length = cgi_output.size();
+
+		std::string	content_len;
+		if (!(content_len = rs_headers["Content-Length"]).empty())
+		{
+			rs_content_length = strtoInt(content_len);
+			if (rs_content_length == cgi_output.size())
+				this->rs_body = cgi_output; 
+			else
+				this->rs_body = cgi_output.substr(0, rs_content_length);
+		}
 
 		return OK;
 	}
