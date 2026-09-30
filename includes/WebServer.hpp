@@ -58,6 +58,7 @@ public:
 
 	void		create_new_client(int clientsock, int listener, void *clientaddr);
 	int			handle_client_data(int client);
+	int			send_data_client(int client);
 	int			close_connection(int fd);
 
 	void		free_all();

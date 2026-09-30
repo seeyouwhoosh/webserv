@@ -100,34 +100,17 @@ int	WebServer::process_connections(int num_events)
 		}
 		if (epoll_events[i].events & EPOLLOUT)
 		{
-			int	sent_size = clients[fd].sendResponse();
-
-			if (sent_size < 0)
-			{
-				if (close_connection(fd) < 0)
-					return -1;
-				continue;
-			}
-			if (clients[fd].responseComplete())
-			{
-				epoll_delflag_fd(fd, EPOLLOUT);
-				if (!clients[fd].askkeepAlive())
-				{
-					if (close_connection(fd) < 0)
-						return -1;
-				}
-				else
-					clients[fd].clear();
-			}
+			if (send_data_client(fd) < 0)
+				return -1;
 		}
 		if (epoll_events[i].events & EPOLLIN)
 		{
 			if (is_listener(epoll_events[i].data.fd))
 			{
-				if (handle_new_connection(epoll_events[i].data.fd) < 0)
+				if (handle_new_connection(fd) < 0)
 					return -1;
 			}
-			else if (handle_client_data(epoll_events[i].data.fd) < 0)
+			else if (handle_client_data(fd) < 0)
 				return -1;
 		}
 	}

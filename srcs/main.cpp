@@ -27,15 +27,17 @@ void	sigint_handler(int sig)
 int	main(int ac, char **av)
 {
 	(void)av;
+
+	char *file;
 	if (ac < 2)
 	{
 		std::cout << "Wrong arguments encountered, using default file \"config/sample.conf\"\n";
 		std::cout << "\033[1mUsage\33[0m: ./webserv [config file]\n";
 
-		char	*file = "config_file/sample.conf";
+		file = (char *)"config_file/sample.conf";
 	}
-
-	char	*file = av[1];
+	else
+		file = av[1];
 
 	signal(SIGINT, sigint_handler);
 

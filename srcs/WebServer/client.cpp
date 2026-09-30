@@ -49,6 +49,30 @@ int	WebServer::handle_new_connection(int listener)
 	return 0;
 }
 
+int	WebServer::send_data_client(int client)
+{
+	int	sent_size = clients[client].sendResponse();
+
+	if (sent_size < 0)
+	{
+		if (close_connection(client) < 0)
+			return -1;
+		return 0;
+	}
+	if (clients[client].responseComplete())
+	{
+		epoll_delflag_fd(client, EPOLLOUT);
+		if (!clients[client].askkeepAlive())
+		{
+			if (close_connection(client) < 0)
+				return -1;
+		}
+		else
+			clients[client].clear();
+	}
+	return 0;
+}
+
 int	WebServer::handle_client_data(int client)
 {
 	Client				&clientUnit = clients[client];
