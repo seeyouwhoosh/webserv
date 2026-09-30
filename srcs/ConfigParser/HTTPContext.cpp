@@ -33,7 +33,9 @@ void	HTTPContext::setTokens(std::vector<std::string> &tokens)
 
 int	HTTPContext::parseRoot(std::string &value)
 {
-	if (!root.empty())
+	if (flags & ALIAS)
+		return ALIAS_ROOT;
+	if (flags & ROOT)
 	{
 		error_par = "root";
 		return MULTIPLE_VALUES;
@@ -41,6 +43,21 @@ int	HTTPContext::parseRoot(std::string &value)
 
 	flags = flags | ROOT;
 	root = value;
+	return 0;
+}
+
+int	HTTPContext::parseAlias(std::string &value)
+{
+	if (flags & ALIAS)
+		return ALIAS_ROOT;
+	if (flags & ROOT)
+	{
+		error_par = "alias";
+		return MULTIPLE_VALUES;
+	}
+
+	flags = flags | ALIAS;
+	alias = value;
 	return 0;
 }
 

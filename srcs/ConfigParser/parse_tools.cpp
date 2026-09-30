@@ -40,6 +40,9 @@ int	ConfigParser::sendParseError(int error)
 	case EMPTY_VALUE:
 		msg = "empty value in directive \"" + error_par + "\"";
 		break;
+	case ALIAS_ROOT:
+		msg = "cannot have both directives \"alias\" and \"root\"";
+		break;
 	default:
 		break;
 	}

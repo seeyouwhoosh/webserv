@@ -23,7 +23,8 @@ enum e_parserror
 	DUPLICATED_VALUE,
 	MULTIPLE_VALUES,
 	INVALID_VALUE,
-	EMPTY_VALUE
+	EMPTY_VALUE,
+	ALIAS_ROOT
 };
 
 class ConfigParser

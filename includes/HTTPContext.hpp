@@ -16,11 +16,12 @@ enum solo_directives
 {
 	NONE = 0,
 	ROOT = 1 << 0,
-	AUTOINDEX = 1 << 1,
-	BODY_SIZE = 1 << 2,
-	ALLOWED_METHODS = 1 << 3,
-	UPLOAD = 1 << 4,
-	RETURN = 1 << 5
+	ALIAS = 1 << 1,
+	AUTOINDEX = 1 << 2,
+	BODY_SIZE = 1 << 3,
+	ALLOWED_METHODS = 1 << 4,
+	UPLOAD = 1 << 5,
+	RETURN = 1 << 6
 };
 
 class ServerConfig;
@@ -41,6 +42,7 @@ public:
 	std::string					error_par;
 
 	std::string					root;
+	std::string					alias;
 	std::vector<std::string>	indexes;
 	short						autoindex;
 	std::string					str_max_body_size;
@@ -49,6 +51,7 @@ public:
 	cgi_handler_type			cgi_handlers;
 
 	int		parseRoot(std::string &value);
+	int		parseAlias(std::string &value);
 	int		parseAutoindex(std::string &value);
 	int		toMaxBodySize(std::string s);
 	int		parseMaxbody(std::string &value);

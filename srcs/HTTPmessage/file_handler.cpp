@@ -133,10 +133,15 @@ LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 		return NULL;
 	}
 
-	LocationConfig &locationconf = serverconf->locations[location_pos];
-	std::string root = locationconf.root.empty()
-		? serverconf->root
-		: locationconf.root;
+	LocationConfig	&locationconf = serverconf->locations[location_pos];
+	std::string		root;
+	if (!locationconf.alias.empty())
+	{
+		root = locationconf.alias;
+		full_path.erase(0, locationconf.name.length());
+	}
+	else
+		root = locationconf.root.empty() ? serverconf->root : locationconf.root;
 	refactorFile(root, full_path);
 
 	CGIparse(&locationconf);

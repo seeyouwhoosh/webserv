@@ -2,7 +2,7 @@
 - [ ] mirar cómo gestionar los wildcards
 - [x] añadir . al cgi handler
 - [x] The same applies to the output of the CGI. If no content_length is returned from the CGI, EOF will mark the end of the returned data.
-- [ ] Directory where the requested file should be located (e.g., if URL /kapouet is rooted to /tmp/www, URL /kapouet/pouic/toto/pouet will search for /tmp/www/pouic/toto/pouet).
+- [x] Directory where the requested file should be located (e.g., if URL /kapouet is rooted to /tmp/www, URL /kapouet/pouic/toto/pouet will search for /tmp/www/pouic/toto/pouet).
 
 # webserv
 

@@ -151,6 +151,8 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 			}
 			else if (directive == "root" && (status = parseRoot(*start)))
 				return status;
+			else if (directive == "alias" && (status = parseAlias(*start)))
+				return status;
 			else if (directive == "autoindex" && (status = parseAutoindex(*start)))
 				return status;
 			else if (directive == "client_max_body_size" && (status = parseMaxbody(*start)))
