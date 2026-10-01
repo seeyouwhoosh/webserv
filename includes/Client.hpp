@@ -37,5 +37,6 @@ public:
 	int		generateResponse();
 	int		sendResponse();
 	int		responseComplete();
-	void	clear();
+	void	clearResponse();
+	void	clearParser();
 };

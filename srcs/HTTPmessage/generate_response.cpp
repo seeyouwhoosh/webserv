@@ -136,7 +136,7 @@ int	HTTPmessage::generateResponse()
 {
 	int	error = 0;
 
-	std::cout << "header file: " << rq_startline.raw_path << std::endl;
+	std::cout << "Raw File: " << rq_startline.raw_path << std::endl;
 	if (rs_startline.status_code == OK)
 	{
 		std::string	m = rq_startline.method;

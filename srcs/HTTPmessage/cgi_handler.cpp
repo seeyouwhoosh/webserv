@@ -45,7 +45,10 @@ void	HTTPmessage::indepCGIexecutable(size_t app_pos)
 	std::string	app_ext = (app_end == std::string::npos) ? full_path.substr(app_pos) : full_path.substr(app_pos, app_end - app_pos);
 
 	struct stat	st;
-	stat(full_path.c_str(), &st);
+	if (stat(full_path.c_str(), &st) < 0)
+		return;
+	std::cout << "Extensión: " << app_ext << std::endl;
+
 	if (((st.st_mode & S_IFMT) == S_IFREG) && (!(cgi_path = matchCGI(app_ext)).empty() || app_ext == ".cgi"))
 	{
 		rq_startline.iscgi = true;

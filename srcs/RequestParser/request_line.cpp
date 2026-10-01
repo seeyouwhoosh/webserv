@@ -1,6 +1,7 @@
 #include "RequestParser.hpp"
 #include "HTTPmessage.hpp"
 #include <sstream>
+#include <iostream>
 
 bool RequestParser::parseRequestLine(const std::string& line,
 									 HTTPmessage& request)

@@ -1,5 +1,6 @@
 #include "RequestParser.hpp"
 #include "HTTPmessage.hpp"
+#include <iostream>
 
 RequestParser::RequestParser()
 	: _state(REQUEST_LINE), _contentLength(0),
@@ -11,7 +12,7 @@ RequestParser::~RequestParser()
 {
 }
 
-void RequestParser::reset()
+void RequestParser::clear()
 {
 	_state = REQUEST_LINE;
 	_contentLength = 0;
@@ -36,7 +37,6 @@ ParseResult RequestParser::parse(HTTPmessage& request)
 				return PARSE_INCOMPLETE;
 			if (!parseRequestLine(line, request))
 				return PARSE_ERROR;
-
 			_state = HEADERS;
 		}
 		else if (_state == HEADERS)

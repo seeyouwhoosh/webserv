@@ -106,6 +106,8 @@ int	Client::setStatusCode(int code)
 
 int	Client::generateResponse()
 {
+	std::cout << "Status code: " << message.getStatusCode() << std::endl;
+	std::cout << "Received raw path: " << message.rq_startline.raw_path << std::endl;
 	return message.generateResponse();
 }
 
@@ -119,7 +121,13 @@ int	Client::responseComplete()
 	return message.isComplete();
 }
 
-void	Client::clear()
+void	Client::clearParser()
+{
+	parser.clear();
+}
+
+
+void	Client::clearResponse()
 {
 	message.clear();
 }

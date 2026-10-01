@@ -29,7 +29,7 @@ public:
 	~RequestParser();
 
 	void appendData(const std::string& data); //buffer
-	void reset();
+	void clear();
 	
 	ParseResult parse(HTTPmessage& request);
 

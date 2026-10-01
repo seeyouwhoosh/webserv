@@ -3,6 +3,7 @@
 #include <sstream>
 #include <map>
 #include <cctype>
+#include <iostream>
 
 bool RequestParser::parseHeader(const std::string& line,
 								HTTPmessage& request)
@@ -28,6 +29,8 @@ bool RequestParser::parseHeader(const std::string& line,
 
 	while (!value.empty() && value[0] == ' ')
 		value.erase(0, 1);
+
+	std::cout << "He llegado hasta aquí " << std::endl;
 
 	if (request.rq_headers.find(name) != request.rq_headers.end())
 		return false;

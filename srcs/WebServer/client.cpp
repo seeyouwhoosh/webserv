@@ -68,7 +68,7 @@ int	WebServer::send_data_client(int client)
 				return -1;
 		}
 		else
-			clients[client].clear();
+			clients[client].clearResponse();
 	}
 	return 0;
 }
@@ -86,6 +86,7 @@ int	WebServer::handle_client_data(int client)
 		int		parse_status;
 		int		response_status;
 
+		std::cout << "\n\n-- BUFFER:\n" << buff << std::endl;
 		clientUnit.appendData(std::string(buff, read_size));
 
 		parse_status = clientUnit.parse();
@@ -96,6 +97,7 @@ int	WebServer::handle_client_data(int client)
 			return 0;
 		else if (parse_status == PARSE_COMPLETE)
 			clientUnit.setStatusCode(OK);
+		clientUnit.clearParser();
 
 		response_status = clientUnit.generateResponse();
 		if (response_status < 0)
