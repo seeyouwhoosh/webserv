@@ -76,4 +76,6 @@ public:
 	
 	/* Getters and setters*/
 	std::string	getPort(int listener);
+	std::string createSession();//bonus session
+	bool hasSession(const std::string &sessionId) const;//bonus session
 };

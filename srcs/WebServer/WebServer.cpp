@@ -121,3 +121,32 @@ int WebServer::parse_config(char *file)
 {
 	return globalconf.parseConfig(file, &servers);
 }
+
+//bonus session
+std::string WebServer::createSession()
+{
+	std::stringstream ss;
+	std::time_t now = std::time(NULL);
+
+	ss << now << sessions.size();
+
+	std::string id = ss.str();
+
+	Session session;
+	session.id = id;
+	session.last_activity = now;
+	session.visits = 1;
+
+	sessions[id] = session;
+
+	return id;
+}
+
+//bonus session
+bool WebServer::hasSession(const std::string &sessionId) const
+{
+	if (sessions.find(sessionId) == sessions.end())
+		return false;
+
+	return true;
+}

@@ -94,6 +94,37 @@ void Client::initHTTPmessage(std::string &port, std::string address, ServerConfi
 	message.setServerConf(server);
 }
 
+//bonus session
+std::string Client::getSessionId() const
+{
+	stringmap::const_iterator it = message.rq_headers.find("cookie");
+
+	if (it == message.rq_headers.end())
+		return "";
+
+	std::string cookie = it->second;
+
+	size_t pos = cookie.find("session_id=");
+
+	if (pos == std::string::npos)
+		return "";
+
+	pos += 11;
+
+	size_t end = cookie.find(';', pos);
+
+	if (end == std::string::npos)
+		return cookie.substr(pos);
+
+	return cookie.substr(pos, end - pos);
+}
+
+//bonus session
+void Client::setSessionCookie(const std::string &sessionId)
+{
+	message.setHeader("Set-Cookie", "session_id=" + sessionId);
+}
+
 int	Client::parse()
 {
 	return parser.parse(message);
@@ -136,3 +167,4 @@ void Client::appendData(const std::string &data)
 {
 	parser.appendData(data);
 }
+

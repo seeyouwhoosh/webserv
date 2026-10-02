@@ -7,4 +7,5 @@ struct Session
 {
 	std::string id;
 	std::time_t last_activity;
+	int visits;
 };

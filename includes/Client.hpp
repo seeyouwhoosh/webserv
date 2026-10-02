@@ -33,6 +33,8 @@ public:
 
 	/* HTTPmessage functions */
 	void	initHTTPmessage(std::string &port, std::string address, ServerConfig &server);
+	std::string getSessionId() const;//bonus session
+	void	setSessionCookie(const std::string &sessionId);//bonus session
 	int		setStatusCode(int code);
 	int		generateResponse();
 	int		sendResponse();

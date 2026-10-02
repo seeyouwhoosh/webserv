@@ -86,9 +86,7 @@ int	WebServer::handle_client_data(int client)
 		int		parse_status;
 		int		response_status;
 
-		std::cout << "\n\n-- BUFFER:\n" << buff << std::endl;
 		clientUnit.appendData(std::string(buff, read_size));
-
 		parse_status = clientUnit.parse();
 
 		if (parse_status == PARSE_ERROR)
@@ -96,21 +94,34 @@ int	WebServer::handle_client_data(int client)
 		else if (parse_status == PARSE_INCOMPLETE)
 			return 0;
 		else if (parse_status == PARSE_COMPLETE)
+		{
 			clientUnit.setStatusCode(OK);
-		clientUnit.clearParser();
 
+			std::string sessionId = clientUnit.getSessionId();
+
+			if (sessionId.empty() || !hasSession(sessionId))
+			{
+				sessionId = createSession();
+				clientUnit.setSessionCookie(sessionId);
+			}
+			else
+			{
+				sessions[sessionId].visits++;
+			}
+		}
 		response_status = clientUnit.generateResponse();
 		if (response_status < 0)
 		{
 			free_all();
 			return error_msg(1, "generateResponse", "couldn't generate response");
 		}
-
+		clientUnit.clearParser();
 		if (epoll_addflag_fd(client, EPOLLOUT) < 0)
 		{
 			free_all();
 			return -1;
 		}
+
 		clientUnit.updateActivity();
 	}
 	if (!read_size)
@@ -121,5 +132,6 @@ int	WebServer::handle_client_data(int client)
 		if (close_connection(client) < 0)
 			return -1;
 	}
+
 	return 0;
 }
