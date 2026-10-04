@@ -25,14 +25,20 @@ void	WebServer::free_all()
 	{
 		for (size_t j = 0; j < servers[i].listens.size(); j++)
 		{
-			if (servers[i].listens[j].serversock_info)
+			if (servers[i].listens[j].serversock_info != NULL)
 			{
 				freeaddrinfo(servers[i].listens[j].serversock_info);
 				servers[i].listens[j].serversock_info = NULL;
 			}
-			close(servers[i].listens[j].sockfd);
+			if (servers[i].listens[j].sockfd >= 0)
+			{
+				close(servers[i].listens[j].sockfd);
+				servers[i].listens[j].sockfd = -1;
+			}
 		}
 	}
+	listeners.clear();
+
 	if (epoll_events)
 	{
 		delete[] epoll_events;

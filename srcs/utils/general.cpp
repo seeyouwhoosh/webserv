@@ -58,7 +58,7 @@ void	closePipes(int pipe_in[2], int pipe_out[2])
 int	listen_socket(struct addrinfo *addr, int listen_num)
 {
 	int	serversock;
-	int	status;
+	int	status = 1;
 	int	yes = 1;
 
 	if (!addr)
@@ -81,6 +81,7 @@ int	listen_socket(struct addrinfo *addr, int listen_num)
 		{
 			status = errno;
 			close(serversock);
+			serversock = -1;
 			continue;
 		}
 		if (listen(serversock, listen_num) < 0)

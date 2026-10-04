@@ -32,6 +32,8 @@ int	ServerConfig::parseListens(std::string &value)
 	t_listen	temp_listen;
 	temp_listen.host = "0.0.0.0";
 	temp_listen.port = "8000";
+	temp_listen.serversock_info = NULL;
+	temp_listen.sockfd = -1;
 
 	size_t		ipv6_end = value.find(']');
 	size_t		sep;
