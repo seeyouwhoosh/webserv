@@ -68,6 +68,7 @@ int	WebServer::send_data_client(int client)
 		{
 			if (close_connection(client) < 0)
 				return -1;
+			std::cout << "Client " << client << " closed connection\n";
 		}
 		else
 			clients[client].clearResponse();
@@ -90,29 +91,26 @@ int	WebServer::handle_client_data(int client)
 
 		clientUnit.appendData(std::string(buff, read_size));
 
-		while (true)
-		{
 		parse_status = clientUnit.parse();
 
-			if (parse_status == PARSE_ERROR)
-				clientUnit.setStatusCode(BAD_REQUEST);
-			else if (parse_status == PARSE_INCOMPLETE)
-				return 0;
-			else if (parse_status == PARSE_COMPLETE)
+		if (parse_status == PARSE_ERROR)
+			clientUnit.setStatusCode(BAD_REQUEST);
+		else if (parse_status == PARSE_INCOMPLETE)
+			return 0;
+		else if (parse_status == PARSE_COMPLETE)
+		{
+			clientUnit.setStatusCode(OK);
+
+			std::string sessionId = clientUnit.getSessionId();
+
+			if (sessionId.empty() || !hasSession(sessionId))
 			{
-				clientUnit.setStatusCode(OK);
-
-				std::string sessionId = clientUnit.getSessionId();
-
-				if (sessionId.empty() || !hasSession(sessionId))
-				{
-					sessionId = createSession();
-					clientUnit.setSessionCookie(sessionId);
-				}
-				else
-				{
-					sessions[sessionId].visits++;
-				}
+				sessionId = createSession();
+				clientUnit.setSessionCookie(sessionId);
+			}
+			else
+			{
+				sessions[sessionId].visits++;
 			}
 		}
 
@@ -135,11 +133,10 @@ int	WebServer::handle_client_data(int client)
 	}
 	if (!read_size)
 	{
-		std::cout << "Client " << client << " closed connection\n";
-
 		clients.erase(client);
 		if (close_connection(client) < 0)
 			return -1;
+		std::cout << "Client " << client << " closed connection\n";
 	}
 
 	return 0;

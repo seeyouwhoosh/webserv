@@ -58,8 +58,7 @@ int	main(int ac, char **av)
 
 	while (g_signal)
 	{
-		num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events,
-				MAX_CONNECTIONS, -1);
+		num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events, MAX_CONNECTIONS, -1);
 		if (num_events < 0)
 		{
 			if (errno == EINTR)
@@ -69,7 +68,6 @@ int	main(int ac, char **av)
 		}
 		if (num_events == 0)
 			continue;
-
 		if (webserv.process_connections(num_events) < 0)
 			break;
 	}

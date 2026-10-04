@@ -55,7 +55,6 @@ int	WebServer::close_connection(int fd)
 	}
 	close(fd);
 	num_connections--;
-	std::cout << "Client " << fd << " closed connection\n";
 	return 0;
 }
 
