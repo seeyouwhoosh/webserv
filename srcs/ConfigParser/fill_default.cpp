@@ -37,7 +37,7 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 			it->root = root;
 		if (it->indexes.empty())
 			it->indexes.push_back("index.html");
-		if ((it->autoindex = AUTOINDEX_UNSET))
+		if ((it->autoindex == AUTOINDEX_UNSET))
 			it->autoindex = autoindex;
 		if (it->str_max_body_size.empty())
 		{
@@ -50,7 +50,7 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 		{
 			if (jt->root.empty())
 				jt->root = it->root;
-			if ((jt->autoindex = AUTOINDEX_UNSET))
+			if ((jt->autoindex == AUTOINDEX_UNSET))
 				jt->autoindex = it->autoindex;
 			if (jt->allowed_methods.empty())
 			{
