@@ -70,8 +70,6 @@ int	WebServer::send_data_client(int client)
 				return -1;
 			std::cout << "Client " << client << " closed connection\n";
 		}
-		else
-			clients[client].clearResponse();
 	}
 	return 0;
 }
@@ -121,6 +119,7 @@ int	WebServer::handle_client_data(int client)
 			return error_msg(1, "generateResponse", "couldn't generate response");
 		}
 
+		clientUnit.setResponse();
 		clientUnit.clearParser();
 		
 		if (epoll_addflag_fd(client, EPOLLOUT) < 0)

@@ -12,7 +12,6 @@ HTTPmessage::HTTPmessage()
 	rs_startline.reason_phrase = "";
 	rs_startline.status_code = 0;
 	full_path = "";
-	totalSent = 0;
 	rs_header = "";
 	rs_body = "";
 	rs_content_length = 0;
@@ -38,7 +37,6 @@ HTTPmessage::HTTPmessage(ServerConfig *server)
 	rs_startline.reason_phrase = "";
 	rs_startline.status_code = 0;
 	full_path = "";
-	totalSent = 0;
 	rs_header = "";
 	rs_body = "";
 	rs_content_length = 0;
@@ -66,14 +64,12 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 		return *this;
 	rs_startline.version = other.rs_startline.version;
 	serverconf = other.serverconf;
-	totalSent = 0;
 	server_port = other.server_port;
 	client_addr = other.client_addr;
 
 	rs_startline.reason_phrase = other.rs_startline.reason_phrase;
 	rs_startline.status_code = other.rs_startline.status_code;
 	full_path = other.full_path;
-	totalSent = other.totalSent;
 	rs_header = other.rs_header;
 	rs_body = other.rs_body;
 	rs_content_length = other.rs_content_length;
@@ -188,13 +184,6 @@ int	HTTPmessage::matchMethod(std::string &method)
 		return BAD_METHOD;
 }
 
-bool	HTTPmessage::isComplete() const
-{
-	size_t total_expected = rs_header.length() + rs_body.length();
-
-	return totalSent == total_expected;
-}
-
 void	HTTPmessage::printHeaders()
 {
 	std::cout << "\n---------- REQUEST HEADER FROM " << client_addr << " ----------\n" << rq_startline.method << " " << rq_startline.raw_path << " " << rq_startline.version << "\n" << rq_header << std::endl;
@@ -205,7 +194,6 @@ void	HTTPmessage::clear()
 	rs_startline.reason_phrase.clear();
 	rs_startline.status_code = 0;
 	full_path.clear();
-	totalSent = 0;
 	rs_header.clear();
 	rs_body.clear();
 	rs_content_length = 0;

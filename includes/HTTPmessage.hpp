@@ -83,7 +83,6 @@ private:
 	ServerConfig				*serverconf;
 	LocationConfig				*locationconf;
 	std::string					full_path;
-	size_t						totalSent;
 	
 	std::vector<std::string>	cgi_env;
 	std::string					cgi_path;
@@ -131,7 +130,6 @@ private:
 	int				handleSpecialType();
 	void			processURLencoded();
 	int				matchMethod(std::string &method);
-	void			setResponse();
 	void			setAllowHeader();
 	void			printHeaders();
 
@@ -168,7 +166,6 @@ public:
 
 	/* Main user functions */
 	int					generateResponse();
-	bool				isComplete() const;
-	int					sendResponse(int client);
+	std::string			setResponse();
 	void				clear();
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include <ctime>
 #include <sstream>
+#include <queue>
 
 #include "HTTPmessage.hpp"
 #include "RequestParser.hpp"
@@ -8,11 +9,12 @@
 class Client
 {
 private:
-	int		fd;
-	time_t	last_activity;
-	int		keep_alive;
-	int		max_requests;
-	int		n_requests;
+	int						fd;
+	time_t					last_activity;
+	int						keep_alive;
+	int						max_requests;
+	int						n_requests;
+	std::queue<std::string>	http_responses;
 
 	HTTPmessage		message;
 	RequestParser	parser;
@@ -37,8 +39,9 @@ public:
 	void	setSessionCookie(const std::string &sessionId);//bonus session
 	int		setStatusCode(int code);
 	int		generateResponse();
-	int		sendResponse();
+	void	setResponse();
 	int		responseComplete();
 	void	clearResponse();
+	int		sendResponse();
 	void	clearParser();
 };

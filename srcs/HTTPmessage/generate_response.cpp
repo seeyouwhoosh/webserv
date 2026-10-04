@@ -167,38 +167,10 @@ int	HTTPmessage::generateResponse()
 		return -1;
 
 	rs_headers["Date"] = getDate();
-	setResponse();
 	return 0;
 }
 
-int	HTTPmessage::sendResponse(int client)
-{
-	size_t		header_len = rs_header.length();
-	size_t		body_len = rs_body.length();
-	size_t		total_to_send = header_len + body_len;
-	long long	sent = 0;
-
-	if (totalSent < rs_header.size())
-		sent = send(client, rs_header.c_str() + totalSent, header_len - totalSent, MSG_NOSIGNAL);
-	else if (totalSent < total_to_send)
-	{
-		size_t	body_offset = totalSent - header_len;
-		sent = send(client, rs_body.c_str() + body_offset, body_len - body_offset, MSG_NOSIGNAL);
-	}
-	else if (!rs_body.empty() && totalSent < total_to_send + 2)
-	{
-		size_t	end_offset = totalSent - total_to_send;
-		sent = send(client, &"\r\n"[end_offset], 2 - end_offset, MSG_NOSIGNAL);
-	}
-	if (sent < 0)
-		return error_msg(errno, "send", NULL);
-	if (!sent)
-		return 0;
-	totalSent += sent;
-	return sent;
-}
-
-void	HTTPmessage::setResponse()
+std::string	HTTPmessage::setResponse()
 {
 	std::stringstream	responseStream;
 
@@ -207,10 +179,10 @@ void	HTTPmessage::setResponse()
 	for (stringmap::iterator it = rs_headers.begin(); it != rs_headers.end(); it++)
 		responseStream << it->first << ": " << it->second << "\r\n";
 
-	if (!rs_body.empty())
+	if (rs_startline.status_code != 204 && rs_startline.status_code != 304)
 		responseStream << "Content-Length: " << rs_content_length << "\r\n";
 
 	responseStream << "\r\n";
 
-	rs_header = responseStream.str();
+	return responseStream.str() + rs_body;
 }

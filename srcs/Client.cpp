@@ -140,21 +140,22 @@ int	Client::generateResponse()
 	return message.generateResponse();
 }
 
-int	Client::sendResponse()
+void	Client::setResponse()
 {
-	return message.sendResponse(fd);
+	http_responses.push(message.setResponse());
+	message.clear();
 }
+
 
 int	Client::responseComplete()
 {
-	return message.isComplete();
+	return !http_responses.empty();
 }
 
 void	Client::clearParser()
 {
 	parser.clear();
 }
-
 
 void	Client::clearResponse()
 {
@@ -166,3 +167,23 @@ void Client::appendData(const std::string &data)
 	parser.appendData(data);
 }
 
+int	Client::sendResponse()
+{
+	ssize_t		sent = 0;
+
+	if (http_responses.empty())
+		return 0;
+	
+	std::string &currentResponse = http_responses.front();
+	sent = send(fd, currentResponse.data(), currentResponse.size(), MSG_NOSIGNAL);
+	if (sent < 0)
+		return error_msg(errno, "send", NULL);
+	if (!sent)
+		return 0;
+
+	currentResponse.erase(0, sent);
+	if (currentResponse.empty())
+		http_responses.pop();
+
+	return sent;
+}
