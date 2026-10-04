@@ -75,7 +75,6 @@ typedef std::map<std::string, std::string> stringmap;
 
 extern stringmap					mime_types;
 extern std::map<int, const char *>	responses;
-extern std::vector<std::string>		allowedMethods;
 
 class HTTPmessage
 {
@@ -146,6 +145,7 @@ public:
 	/* Request variables */
 	t_rq_startline	rq_startline;
 	std::string		rq_body;
+	std::string		rq_header;
 	size_t			rq_content_length;
 	stringmap		rq_headers;
 

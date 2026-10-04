@@ -205,6 +205,7 @@ void	HTTPmessage::clear()
 	rs_header.clear();
 	rs_body.clear();
 	rs_content_length = 0;
+	rs_headers.clear();
 
 	rq_startline.file.clear();
 	rq_startline.iscgi = false;
@@ -215,4 +216,5 @@ void	HTTPmessage::clear()
 	rq_startline.version.clear();
 	rq_body.clear();
 	rq_content_length = 0;
+	rq_headers.clear();
 }
