@@ -49,10 +49,7 @@ int	main(int ac, char **av)
 		return 1;
 
 	if (webserv.prepare_listeners() < 0)
-	{
-		webserv.free_all();
 		return 1;
-	}
 	if (webserv.epoll_start_instance() < 0)
 		return 1;
 

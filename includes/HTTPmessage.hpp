@@ -133,6 +133,7 @@ private:
 	int				matchMethod(std::string &method);
 	void			setResponse();
 	void			setAllowHeader();
+	void			printHeaders();
 
 public:
 	/* Orthodox Canonical Form */
@@ -157,13 +158,13 @@ public:
 	void				setVersion(const std::string& method);
 	int					setStatusCode(const int code);
 	void				setHeader(const std::string& name, const std::string& value);
+	ServerConfig		*getServerConf() const;
+	std::string			getServerPort() const;
+	std::string			getClientAddress() const;
 	void				setBody(const std::string& body);
 	void				setServerConf(ServerConfig& serverconf);
-	ServerConfig		*getServerConf() const;
 	void				setServerPort(std::string serverPort);
-	std::string			getServerPort() const;
 	void				setClientAddress(std::string client_address);
-	std::string			getClientAddress() const;
 
 	/* Main user functions */
 	int					generateResponse();

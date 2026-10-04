@@ -1,6 +1,5 @@
-
-
 #include "HTTPmessage.hpp"
+#include "utils.hpp"
 
 HTTPmessage::HTTPmessage()
 {
@@ -194,6 +193,11 @@ bool	HTTPmessage::isComplete() const
 	size_t total_expected = rs_header.length() + rs_body.length();
 
 	return totalSent == total_expected;
+}
+
+void	HTTPmessage::printHeaders()
+{
+	std::cout << "\n---------- REQUEST HEADER FROM " << client_addr << " ----------\n" << rq_startline.method << " " << rq_startline.raw_path << " " << rq_startline.version << "\n" << rq_header << std::endl;
 }
 
 void	HTTPmessage::clear()
