@@ -28,6 +28,7 @@ ParseResult RequestParser::parseBody(HTTPmessage& request)
 
 	if (_bodyReceived == _contentLength)
 	{
+		request.rq_content_length = _contentLength;
 		_state = COMPLETE;
 		return PARSE_COMPLETE;
 	}

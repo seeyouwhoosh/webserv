@@ -57,5 +57,5 @@ private:
 
 	ParseResult parseChunkSize();//leer tamaño del chunk
 	ParseResult parseChunkData(HTTPmessage& request);
-	ParseResult parseChunkCRLF();
+	ParseResult parseChunkCRLF(HTTPmessage& request);
 };

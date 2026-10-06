@@ -104,7 +104,7 @@ ParseResult RequestParser::parse(HTTPmessage& request)
 		}
 		else if (_state == CHUNK_CRLF)
 		{
-			ParseResult result = parseChunkCRLF();
+			ParseResult result = parseChunkCRLF(request);
 
 			if (result == PARSE_ERROR)
 				return PARSE_ERROR;
@@ -116,6 +116,6 @@ ParseResult RequestParser::parse(HTTPmessage& request)
 		else
 			return PARSE_ERROR;
 	}
-
+	request.rq_content_length = request.rq_body.size();
 	return PARSE_COMPLETE;
 }

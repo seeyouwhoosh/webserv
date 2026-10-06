@@ -65,7 +65,7 @@ ParseResult RequestParser::parseChunkData(HTTPmessage& request)
 	return PARSE_INCOMPLETE;
 }
 
-ParseResult RequestParser::parseChunkCRLF()
+ParseResult RequestParser::parseChunkCRLF(HTTPmessage& request)
 {
 	if (_buffer.size() < 2)
 		return PARSE_INCOMPLETE;
@@ -77,6 +77,7 @@ ParseResult RequestParser::parseChunkCRLF()
 
 	if (_chunkSize == 0)
 	{
+		request.rq_content_length = request.rq_body.size();
 		_state = COMPLETE;
 		return PARSE_COMPLETE;
 	}
