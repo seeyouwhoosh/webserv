@@ -52,13 +52,13 @@ bool	Client::askkeepAlive()
 
 void	Client::updateActivity()
 {
-	stringmap::iterator conn_it = message.rq_headers.find("Connection");
+	stringmap::iterator conn_it = message.rq_headers.find("connection");
 	if (conn_it != message.rq_headers.end() && conn_it->second == "close")
 		keep_alive = 0;
 	else
 		keep_alive = -1;
 
-	stringmap::iterator	it = message.rq_headers.find("Keep-Alive");
+	stringmap::iterator	it = message.rq_headers.find("keep-alive");
 	if ((keep_alive < 0) && (it != message.rq_headers.end()))
 	{
 		std::stringstream	ss(it->second.c_str());

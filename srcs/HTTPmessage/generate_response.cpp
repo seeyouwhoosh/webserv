@@ -136,7 +136,7 @@ int	HTTPmessage::generateResponse()
 {
 	int	error = 0;
 	
-	printHeaders();
+	printQHeaders();
 	if (rs_startline.status_code == OK)
 	{
 		std::string	m = rq_startline.method;
@@ -184,5 +184,7 @@ std::string	HTTPmessage::setResponse()
 
 	responseStream << "\r\n";
 
-	return responseStream.str() + rs_body;
+	rs_header = responseStream.str();
+	printAHeaders();
+	return rs_header + rs_body;
 }

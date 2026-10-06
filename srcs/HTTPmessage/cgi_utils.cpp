@@ -17,7 +17,7 @@ void	HTTPmessage::fillCGIenv()
 
 	cgi_env.push_back("CONTENT_LENGTH=" + toString(rq_content_length));
 
-	stringmap::iterator it = rq_headers.find("Content-Type");
+	stringmap::iterator it = rq_headers.find("content-type");
 	if (it != rq_headers.end())
 		cgi_env.push_back("CONTENT_TYPE=" + it->second);
 	
@@ -34,6 +34,8 @@ void	HTTPmessage::fillCGIenv()
 
 	for (stringmap::iterator it = rq_headers.begin(); it != rq_headers.end(); it++)
 	{
+		if (it->first == "content-type")
+			continue;
 		std::string	var = it->first;
 		toupperString(var);
 		std::replace(var.begin(), var.end(), '-', '_');
