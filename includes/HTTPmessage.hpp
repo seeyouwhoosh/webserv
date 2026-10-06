@@ -83,6 +83,7 @@ private:
 	ServerConfig				*serverconf;
 	LocationConfig				*locationconf;
 	std::string					full_path;
+	std::string					upload_name;
 	
 	std::vector<std::string>	cgi_env;
 	std::string					cgi_path;
@@ -128,10 +129,12 @@ private:
 
 	/* Other */
 	int				handleSpecialType();
+	int				parseMultipartToBody(const std::string &contentHeader);
 	void			processURLencoded();
 	int				matchMethod(std::string &method);
 	void			setAllowHeader();
-	void			printHeaders();
+	void			printQHeaders();
+	void			printAHeaders();
 
 public:
 	/* Orthodox Canonical Form */

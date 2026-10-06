@@ -112,18 +112,92 @@ void	HTTPmessage::processURLencoded()
 	rs_headers["Content-Type"] = "text/html";
 }
 
+int HTTPmessage::parseMultipartToBody(const std::string& contentHeader)
+{
+	size_t	bPos = contentHeader.find("boundary=");
+	if (bPos == std::string::npos)
+		return false;
+
+	std::string	boundary = "--" + contentHeader.substr(bPos + 9);
+	if (boundary.length() > 2 && boundary[2] == '"')
+	{
+		boundary.erase(2, 1);
+		if (!boundary.empty() && boundary[boundary.length() - 1] == '"')
+			boundary.erase(boundary.length() - 1, 1);
+	}
+
+	std::string	body_copy = "";
+	size_t		pos = 0;
+
+	while ((pos = rq_body.find(boundary, pos)) != std::string::npos)
+	{
+		if (rq_body.substr(pos, boundary.length() + 2) == boundary + "--")
+			break;
+
+		pos += boundary.length();
+
+		size_t	header_end = rq_body.find("\r\n\r\n", pos);
+		size_t	sep_len = 4;
+		if (header_end == std::string::npos)
+		{
+			header_end = rq_body.find("\n\n", pos);
+			sep_len = 2;
+			if (header_end == std::string::npos)
+				break;
+		}
+		std::string	headers = rq_body.substr(pos, header_end - pos + sep_len);
+
+		size_t	filename_pos;
+		if ((filename_pos = headers.find("filename=")) != std::string::npos)
+		{
+			if (headers[filename_pos + 9] != '\"')
+				return -1;
+			size_t		filename_end = headers.find("\"", filename_pos + 10);
+			upload_name = headers.substr(filename_pos + 10, filename_end - filename_pos - 10);
+		}
+
+		size_t	content_start = header_end + sep_len;
+
+		size_t	content_end = rq_body.find(boundary, content_start);
+		if (content_end == std::string::npos)
+			break;
+
+		size_t bodypart_end = content_end;
+		if (bodypart_end >= content_start + 2 && rq_body.substr(bodypart_end - 2, 2) == "\r\n")
+			bodypart_end -= 2;
+		else if (bodypart_end >= content_start + 1 && rq_body[bodypart_end - 1] == '\n')
+			bodypart_end -= 1;
+
+		body_copy.append(rq_body, content_start, bodypart_end - content_start);
+
+		pos = content_end;
+	}
+
+	if (body_copy.empty())
+		return -1;
+
+	rq_body = body_copy;
+	rq_content_length = rq_body.size();
+
+	return 1;
+}
+
 int	HTTPmessage::handleSpecialType()
 {
-	stringmap::iterator it = rq_headers.find("Content-Type");
+	stringmap::iterator it = rq_headers.find("content-type");
 
-	if (it != rq_headers.end() && it->second.find("multipart/form-data") != std::string::npos)
-		return -setStatusCode(NOT_IMPLEMENTED);
-	if (it != rq_headers.end() && it->second.find("application/x-www-form-urlencoded") != std::string::npos)
+	if (it != rq_headers.end())
 	{
-		processURLencoded();
-		setStatusCode(OK);
-		return 0;
+		if (it->second.find("multipart/form-data") != std::string::npos)
+			return parseMultipartToBody(it->second);
+		if (it->second.find("application/x-www-form-urlencoded") != std::string::npos)
+		{
+			processURLencoded();
+			setStatusCode(OK);
+			return 0;
+		}
 	}
+
 	return 1;
 }
 
@@ -159,7 +233,8 @@ int	HTTPmessage::httpPOST()
 	if (stat(upload_store.c_str(), &st) < 0 || access(upload_store.c_str(), X_OK | W_OK) < 0)
 		return -setStatusCode(FORBIDDEN);
 
-	std::string	upload_name = "upload_" + toString(time(NULL));
+	if (upload_name.empty())
+		upload_name = "upload_" + toString(time(NULL));
 	refactorFile(upload_store, upload_name);
 	full_path = upload_name;
 

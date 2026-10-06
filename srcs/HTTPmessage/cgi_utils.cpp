@@ -6,8 +6,8 @@ void	HTTPmessage::fillCGIenv()
 {
 	cgi_env.reserve(rq_headers.size() + 17);
 
-	cgi_env.push_back(std::string("SERVER_SOFTWARE=") + "Custom/1.0");
-	cgi_env.push_back(std::string("GATEWAY_INTERFACE=") + "cgi/1.1");
+	cgi_env.push_back("SERVER_SOFTWARE=Custom/1.0");
+	cgi_env.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	
 	cgi_env.push_back("SERVER_PROTOCOL=" + rq_startline.version);
 	cgi_env.push_back("SERVER_PORT=" + server_port);
@@ -34,7 +34,7 @@ void	HTTPmessage::fillCGIenv()
 
 	for (stringmap::iterator it = rq_headers.begin(); it != rq_headers.end(); it++)
 	{
-		if (it->first == "content-type")
+		if (it->first == "content-type" || it->first == "content-length")
 			continue;
 		std::string	var = it->first;
 		toupperString(var);

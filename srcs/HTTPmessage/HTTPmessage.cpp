@@ -12,6 +12,7 @@ HTTPmessage::HTTPmessage()
 	rs_startline.reason_phrase = "";
 	rs_startline.status_code = 0;
 	full_path = "";
+	upload_name = "";
 	rs_header = "";
 	rs_body = "";
 	rs_content_length = 0;
@@ -37,6 +38,7 @@ HTTPmessage::HTTPmessage(ServerConfig *server)
 	rs_startline.reason_phrase = "";
 	rs_startline.status_code = 0;
 	full_path = "";
+	upload_name = "";
 	rs_header = "";
 	rs_body = "";
 	rs_content_length = 0;
@@ -70,6 +72,7 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 	rs_startline.reason_phrase = other.rs_startline.reason_phrase;
 	rs_startline.status_code = other.rs_startline.status_code;
 	full_path = other.full_path;
+	upload_name = other.upload_name;
 	rs_header = other.rs_header;
 	rs_body = other.rs_body;
 	rs_content_length = other.rs_content_length;
@@ -184,9 +187,14 @@ int	HTTPmessage::matchMethod(std::string &method)
 		return BAD_METHOD;
 }
 
-void	HTTPmessage::printHeaders()
+void	HTTPmessage::printQHeaders()
 {
 	std::cout << "\n---------- REQUEST HEADER FROM " << client_addr << " ----------\n" << rq_startline.method << " " << rq_startline.raw_path << " " << rq_startline.version << "\n" << rq_header << std::endl;
+}
+
+void	HTTPmessage::printAHeaders()
+{
+	std::cout << "\n-------------- RESPONSE --------------\n" << rs_header << std::endl;
 }
 
 void	HTTPmessage::clear()
@@ -194,6 +202,7 @@ void	HTTPmessage::clear()
 	rs_startline.reason_phrase.clear();
 	rs_startline.status_code = 0;
 	full_path.clear();
+	upload_name.clear();
 	rs_header.clear();
 	rs_body.clear();
 	rs_content_length = 0;
