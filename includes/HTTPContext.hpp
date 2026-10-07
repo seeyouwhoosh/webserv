@@ -22,7 +22,8 @@ enum solo_directives
 	BODY_SIZE = 1 << 3,
 	ALLOWED_METHODS = 1 << 4,
 	UPLOAD = 1 << 5,
-	RETURN = 1 << 6
+	RETURN = 1 << 6,
+	TIMEOUT = 1 << 7
 };
 
 class ServerConfig;
@@ -48,6 +49,8 @@ public:
 	short						autoindex;
 	std::string					str_max_body_size;
 	size_t						max_body_size;
+	std::string					str_timeout;
+	size_t						timeout;
 	std::map<int, std::string>	error_pages;
 	cgi_handler_type			cgi_handlers;
 
@@ -56,6 +59,8 @@ public:
 	int		parseAutoindex(std::string &value);
 	int		toMaxBodySize(std::string s);
 	int		parseMaxbody(std::string &value);
+	int		parseTimeOut(std::string &value);
+	int		toTimeOut(std::string s);
 	int		parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys);
 	int		parseCGIHandler(std::string &value);
 

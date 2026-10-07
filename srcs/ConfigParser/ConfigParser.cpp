@@ -60,7 +60,6 @@ int	ConfigParser::parseConfig(char *file, std::vector<ServerConfig> *servers)
 {
 	std::fstream	f(file, std::ios::in | std::ios::binary);
 	int				status;
-	HTTPContext		globalconf;
 
 	if (!f.is_open())
 		return error_msg(1, "open", "can't open the file");

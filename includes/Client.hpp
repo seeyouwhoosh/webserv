@@ -30,7 +30,7 @@ public:
 	void	appendData(const std::string &data);
 
 	/* Keep Alive */
-	bool	askkeepAlive();
+	bool	askkeepAlive(size_t timeout);
 	void	updateActivity();
 
 	/* HTTPmessage functions */

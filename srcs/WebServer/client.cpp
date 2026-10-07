@@ -65,7 +65,7 @@ int	WebServer::send_data_client(int client)
 	if (clients[client].responseComplete())
 	{
 		epoll_delflag_fd(client, EPOLLOUT);
-		if (!clients[client].askkeepAlive())
+		if (!clients[client].askkeepAlive(globalconf.globalconf.timeout))
 		{
 			if (close_connection(client) < 0)
 				return -1;
@@ -79,6 +79,13 @@ int	WebServer::send_data_client(int client)
 int	WebServer::handle_client_data(int client)
 {
 	Client				&clientUnit = clients[client];
+	if (!clientUnit.askkeepAlive(globalconf.globalconf.timeout))
+	{
+		if (close_connection(client) < 0)
+			return -1;
+		if (SHOW_LOGS)
+			std::cout << "Client " << client << " closed connection due to timeout\n";
+	}
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
 
@@ -132,9 +139,9 @@ int	WebServer::handle_client_data(int client)
 
 		clientUnit.updateActivity();
 	}
-	if (!read_size && !clientUnit.askkeepAlive())
+	if (!read_size && !clientUnit.askkeepAlive(globalconf.globalconf.timeout))
 	{
-		clients.erase(client);
+		clients.erase(client); // Aún queda por optimizar
 		if (close_connection(client) < 0)
 			return -1;
 		if (SHOW_LOGS)

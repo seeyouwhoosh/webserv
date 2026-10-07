@@ -42,12 +42,12 @@ public:
 	std::vector<ServerConfig>	servers;
 
 	/* Connection variables */
-	int							epoll_instance;
-	std::vector<int>			listeners;
-	std::map<int, Client>		clients;
-	std::map<std::string, Session> sessions; //bonus session
-	size_t						num_connections;
-	struct epoll_event			*epoll_events;
+	int								epoll_instance;
+	std::vector<int>				listeners;
+	std::map<int, Client>			clients;
+	std::map<std::string, Session>	sessions; //bonus session
+	size_t							num_connections;
+	struct epoll_event				*epoll_events;
 
 	/* Parser */
 	int			parse_config(char *file);

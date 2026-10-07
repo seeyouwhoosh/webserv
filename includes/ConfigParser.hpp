@@ -45,7 +45,8 @@ public:
 	ConfigParser(const ConfigParser &other);
 	ConfigParser	&operator=(const ConfigParser &other);
 
-	std::string					error_par;
+	std::string	error_par;
+	HTTPContext	globalconf;
 
 	int		sendParseError(int error);
 	int		parseConfig(char *file, std::vector<ServerConfig> *servers);

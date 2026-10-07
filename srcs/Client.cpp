@@ -37,7 +37,7 @@ Client	&Client::operator=(const Client &other)
 
 Client::~Client() {}
 
-bool	Client::askkeepAlive()
+bool	Client::askkeepAlive(size_t timeout)
 {
 	if (keep_alive < 0)
 		return 1;
@@ -45,7 +45,9 @@ bool	Client::askkeepAlive()
 		return 0;
 
 	time_t		now = time(NULL);
-	if ((now - last_activity > keep_alive) || (max_requests > 0 && n_requests <= max_requests))
+	if ((size_t)(now - last_activity) > timeout)
+		return 0;
+	if ((now - last_activity < keep_alive) || (max_requests > 0 && n_requests <= max_requests))
 		return 1;
 	return 0;
 }

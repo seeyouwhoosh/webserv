@@ -15,6 +15,11 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 		str_max_body_size = "1m";
 		max_body_size = 1000000;
 	}
+	if (str_timeout.empty())
+	{
+		str_timeout = "1m";
+		timeout = 60;
+	}
 
 	for (std::vector<ServerConfig>::iterator it = servers->begin(); it != servers->end(); it++)
 	{
@@ -44,7 +49,11 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 			it->str_max_body_size = str_max_body_size;
 			it->max_body_size = max_body_size;
 		}
-
+		if (str_timeout.empty())
+		{
+			str_timeout = "1m";
+			timeout = 60;
+		}
 		/* Location config */
 		for (std::vector<LocationConfig>::iterator jt = it->locations.begin(); jt != it->locations.end() ; jt++)
 		{
