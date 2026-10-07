@@ -20,7 +20,7 @@
 #include "utils.hpp"
 #include "Session.hpp"
 
-#define MAX_CONNECTIONS	512
+#define MAX_CONNECTIONS	1024
 
 #ifndef BUFFER_SIZE
 # define BUFFER_SIZE 1024

@@ -46,7 +46,8 @@ int	WebServer::handle_new_connection(int listener)
 
 	create_new_client(clientsock, listener, &clientaddr);
 
-	std::cout << "Opened connection for client " << clientsock << std::endl;
+	if (SHOW_LOGS)
+		std::cout << "Opened connection for client " << clientsock << std::endl;
 
 	return 0;
 }
@@ -68,7 +69,8 @@ int	WebServer::send_data_client(int client)
 		{
 			if (close_connection(client) < 0)
 				return -1;
-			std::cout << "Client " << client << " closed connection\n";
+			if (SHOW_LOGS)
+				std::cout << "Client " << client << " closed connection\n";
 		}
 	}
 	return 0;
@@ -135,7 +137,8 @@ int	WebServer::handle_client_data(int client)
 		clients.erase(client);
 		if (close_connection(client) < 0)
 			return -1;
-		std::cout << "Client " << client << " closed connection\n";
+		if (SHOW_LOGS)
+			std::cout << "Client " << client << " closed connection\n";
 	}
 
 	return 0;

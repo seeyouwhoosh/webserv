@@ -13,6 +13,10 @@
 #include <cerrno>
 #include <vector>
 
+#ifndef SHOW_LOGS
+ # define SHOW_LOGS 0
+#endif
+
 class LocationConfig;
 
 template <typename T>

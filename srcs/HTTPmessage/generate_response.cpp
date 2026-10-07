@@ -135,8 +135,9 @@ If method function returns -1, error is set and the error generating function is
 int	HTTPmessage::generateResponse()
 {
 	int	error = 0;
-	
-	printQHeaders();
+
+	if (SHOW_LOGS)
+		printQHeaders();
 	if (rs_startline.status_code == OK)
 	{
 		std::string	m = rq_startline.method;
@@ -185,6 +186,7 @@ std::string	HTTPmessage::setResponse()
 	responseStream << "\r\n";
 
 	rs_header = responseStream.str();
-	printAHeaders();
+	if (SHOW_LOGS)
+		printAHeaders();
 	return rs_header + rs_body;
 }
