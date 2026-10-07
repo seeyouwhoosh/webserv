@@ -31,8 +31,11 @@ int	main(int ac, char **av)
 	char *file;
 	if (ac < 2)
 	{
-		std::cout << "Wrong arguments encountered, using default file \"config_files/default.conf\"\n";
-		std::cout << "\033[1mUsage\33[0m: ./webserv [config file]\n";
+		if (SHOW_LOGS)
+		{
+			std::cout << "Wrong arguments encountered, using default file \"config_files/default.conf\"\n";
+			std::cout << "\033[1mUsage\33[0m: ./webserv [config file]\n";
+		}
 
 		file = (char *)"config_files/default.conf";
 	}

@@ -8,12 +8,14 @@ int	WebServer::epoll_start_instance()
 		return error_msg(errno, "epoll_create", NULL);
 	}
 	
-	std::cout << "\033[1m[webserv]\33[0m Epoll instance created succesfully" << "\n";
+	if (SHOW_LOGS)
+		std::cout << "\033[1m[webserv]\33[0m Epoll instance created succesfully" << "\n";
 
 	if (epoll_add_listens() < 0)
 		return -1;
 
-	std::cout << "\033[1m[webserv]\33[0m Epoll added listeners to watch. Total connections: " << num_connections << "\n";
+	if (SHOW_LOGS)
+		std::cout << "\033[1m[webserv]\33[0m Epoll added listeners to watch. Total connections: " << num_connections << "\n";
 	return 0;
 }
 
