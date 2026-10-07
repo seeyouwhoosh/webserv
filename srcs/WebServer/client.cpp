@@ -132,7 +132,7 @@ int	WebServer::handle_client_data(int client)
 
 		clientUnit.updateActivity();
 	}
-	if (!read_size)
+	if (!read_size && !clientUnit.askkeepAlive())
 	{
 		clients.erase(client);
 		if (close_connection(client) < 0)
