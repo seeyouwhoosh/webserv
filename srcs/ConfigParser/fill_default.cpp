@@ -49,10 +49,10 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 			it->str_max_body_size = str_max_body_size;
 			it->max_body_size = max_body_size;
 		}
-		if (str_timeout.empty())
+		if (it->str_timeout.empty())
 		{
-			str_timeout = "1m";
-			timeout = 60;
+			it->str_timeout = str_timeout;
+			it->timeout = timeout;
 		}
 		/* Location config */
 		for (std::vector<LocationConfig>::iterator jt = it->locations.begin(); jt != it->locations.end() ; jt++)

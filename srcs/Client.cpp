@@ -37,6 +37,16 @@ Client	&Client::operator=(const Client &other)
 
 Client::~Client() {}
 
+time_t	Client::getLastActivity()
+{
+	return last_activity;
+}
+
+void	Client::setLastActivity(time_t time)
+{
+	last_activity = time;
+}
+
 bool	Client::askkeepAlive(size_t timeout)
 {
 	if (keep_alive < 0)
@@ -183,6 +193,7 @@ int	Client::sendResponse()
 	if (!sent)
 		return 0;
 
+	last_activity = std::time(NULL);
 	currentResponse.erase(0, sent);
 	if (currentResponse.empty())
 		http_responses.pop();

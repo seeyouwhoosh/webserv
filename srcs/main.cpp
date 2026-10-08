@@ -47,8 +47,7 @@ int	main(int ac, char **av)
 	WebServer	webserv;
 	int			num_events;
 
-	ConfigParser	config_parser;
-	if (config_parser.parseConfig(file, &webserv.servers) < 0)
+	if (webserv.parse_config(file) < 0)
 		return 1;
 
 	if (webserv.prepare_listeners() < 0)

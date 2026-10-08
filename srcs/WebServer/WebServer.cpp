@@ -85,6 +85,30 @@ std::string	WebServer::getPort(int listener)
 
 // HANDLE CLIENT REQUESTS
 
+void WebServer::check_timeouts()
+{
+	time_t	now = std::time(NULL);
+	std::map<int, Client>::iterator it = clients.begin();
+
+	while (it != clients.end())
+	{
+		int		client_fd = it->first;
+		Client	&client = it->second;
+	
+		if ((size_t)(now - client.getLastActivity()) > globalconf.globalconf.timeout)
+		{
+			if (SHOW_LOGS)
+				std::cout << "Client " << it->first << " timed out\n";
+			std::map<int, Client>::iterator to_erase = it;
+			++it;
+			close_connection(client_fd);
+			clients.erase(to_erase); 
+		}
+		else
+			++it;
+	}
+}
+
 int	WebServer::process_connections(int num_events)
 {
 	for (int i = 0; i < num_events ; i++)
@@ -118,6 +142,7 @@ int	WebServer::process_connections(int num_events)
 				return -1;
 		}
 	}
+	check_timeouts();
 	return 0;
 }
 

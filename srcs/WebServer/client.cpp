@@ -85,13 +85,25 @@ int	WebServer::handle_client_data(int client)
 			return -1;
 		if (SHOW_LOGS)
 			std::cout << "Client " << client << " closed connection due to timeout\n";
+		return 0;
 	}
 	char				buff[BUFFER_SIZE];
 	std::stringstream	ss;
 
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
+	if (!read_size)
+	{
+		clients.erase(client); // Aún queda por optimizar
+		if (close_connection(client) < 0)
+			return -1;
+		if (SHOW_LOGS)
+			std::cout << "Client " << client << " closed connection\n";
+		return 0;
+	}
 	if (read_size > 0)
 	{
+		clientUnit.setLastActivity(std::time(NULL));
+
 		buff[read_size] = '\0';
 		int		parse_status;
 		int		response_status;
@@ -116,9 +128,7 @@ int	WebServer::handle_client_data(int client)
 				clientUnit.setSessionCookie(sessionId);
 			}
 			else
-			{
 				sessions[sessionId].visits++;
-			}
 		}
 
 		response_status = clientUnit.generateResponse();
@@ -139,14 +149,5 @@ int	WebServer::handle_client_data(int client)
 
 		clientUnit.updateActivity();
 	}
-	if (!read_size && !clientUnit.askkeepAlive(globalconf.globalconf.timeout))
-	{
-		clients.erase(client); // Aún queda por optimizar
-		if (close_connection(client) < 0)
-			return -1;
-		if (SHOW_LOGS)
-			std::cout << "Client " << client << " closed connection\n";
-	}
-
 	return 0;
 }

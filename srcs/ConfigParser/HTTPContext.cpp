@@ -19,6 +19,8 @@ HTTPContext	&HTTPContext::operator=(const HTTPContext &other)
 	autoindex = other.autoindex;
 	str_max_body_size = other.str_max_body_size;
 	max_body_size = other.max_body_size;
+	str_timeout = other.str_timeout;
+	timeout = other.timeout;
 	error_pages = other.error_pages;
 
 	return *this;
@@ -127,22 +129,26 @@ int	HTTPContext::parseMaxbody(std::string &value)
 
 int	HTTPContext::toTimeOut(std::string s)
 {
+	if (s.empty())
+		return 1;
 	toupperString(s);
 
 	size_t	last = s.size() - 1;
 	size_t	i = 0;
-	for (; i < s.size() - 1; i++)
+	for (; i < last; i++)
 	{
 		if (!std::isdigit(s[i]))
 			return 1;
 	}
 
-	if  (s[i] != 'S' && s[i] != 'M' && !std::isdigit(s[i]))
+	if (!(s[i] == 'S' || s[i] == 'M' || std::isdigit(s[i])))
 		return 1;
 	int	offset = s[last] == 'M' ? 60 : 1;
 
+	long	val = strtoInt(s);
+	if (val <= 0 || val > 86400)
+		return 1;
 	timeout = strtoInt(s) * offset;
-
 	return 0;
 }
 

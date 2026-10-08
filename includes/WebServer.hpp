@@ -57,6 +57,7 @@ public:
 	int			handle_new_connection(int listener);
 	bool		is_listener(int fd);
 	int			process_connections(int num_events);
+	void		check_timeouts();
 
 	void		create_new_client(int clientsock, int listener, void *clientaddr);
 	int			handle_client_data(int client);

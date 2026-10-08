@@ -23,6 +23,8 @@ ServerConfig	&ServerConfig::operator=(const ServerConfig &other)
 	max_body_size = other.max_body_size;
 	cgi_handlers = other.cgi_handlers;
 	error_pages = other.error_pages;
+	str_timeout = other.str_timeout;
+	timeout = other.timeout;
 
 	return *this;
 }

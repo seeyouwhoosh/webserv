@@ -34,14 +34,16 @@ public:
 	void	updateActivity();
 
 	/* HTTPmessage functions */
-	void	initHTTPmessage(std::string &port, std::string address, ServerConfig &server);
-	std::string getSessionId() const;//bonus session
-	void	setSessionCookie(const std::string &sessionId);//bonus session
-	int		setStatusCode(int code);
-	int		generateResponse();
-	void	setResponse();
-	int		responseComplete();
-	void	clearResponse();
-	int		sendResponse();
-	void	clearParser();
+	void		initHTTPmessage(std::string &port, std::string address, ServerConfig &server);
+	std::string	getSessionId() const; //bonus session
+	void		setSessionCookie(const std::string &sessionId); //bonus session
+	time_t		getLastActivity();
+	void		setLastActivity(time_t time);
+	int			setStatusCode(int code);
+	int			generateResponse();
+	void		setResponse();
+	int			responseComplete();
+	void		clearResponse();
+	int			sendResponse();
+	void		clearParser();
 };
