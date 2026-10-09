@@ -88,21 +88,41 @@ int	HTTPContext::parseAutoindex(std::string &value)
 
 int	HTTPContext::toMaxBodySize(std::string s)
 {
+	if (s.empty())
+		return 1;
+
 	toupperString(s);
 
 	size_t	last = s.size() - 1;
+	size_t	multiplier = 1;
 	size_t	i = 0;
-	for (; i < s.size() - 1; i++)
+
+	for (; i < last; i++)
 	{
 		if (!std::isdigit(s[i]))
 			return 1;
 	}
-
-	if  (s[i] != 'K' && s[i] != 'M' && !std::isdigit(s[i]))
+	if (!std::isdigit(s[i]))
+	{
+		if (s[last] == 'K')
+			multiplier = 1024;
+		else if (s[last] == 'M')
+			multiplier = 1024 * 1024;
+		else if (s[last] == 'G') 
+			multiplier = 1024 * 1024 * 1024;
+		else
+			return 1;
+		s.erase(last);
+	}
+	
+	if (s.empty())
 		return 1;
-	int	offset = s[last] == 'K' ? 1000 : s[last] == 'M' ? 1000000 : 1;
 
-	max_body_size = strtoInt(s) * offset;
+	long			number = strtoInt(s);
+	unsigned long	total = number * multiplier;
+	if (SIZE_MAX)
+		return 1;
+	max_body_size = total;
 
 	return 0;
 }
@@ -145,6 +165,8 @@ int	HTTPContext::toTimeOut(std::string s)
 		return 1;
 	int	offset = s[last] == 'M' ? 60 : 1;
 
+	if (s.empty())
+		return 1;
 	long	val = strtoInt(s);
 	if (val <= 0 || val > 86400)
 		return 1;

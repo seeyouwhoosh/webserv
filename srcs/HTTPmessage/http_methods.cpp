@@ -9,6 +9,8 @@ int HTTPmessage::httpGET()
 	struct stat st;
 	LocationConfig *locationconf = getFullPath(full_path);
 
+	if (rq_content_length > locationconf->max_body_size)
+		return setStatusCode(CONTENT_TOO_LARGE);
 	if (locationconf && (locationconf->return_status.first != 0 || !locationconf->return_status.second.empty()))
 	{
 		if (locationconf->return_status.first == 0 && !locationconf->return_status.second.empty())
@@ -209,8 +211,8 @@ int	HTTPmessage::httpPOST()
 	full_path = rq_startline.raw_path;
 	LocationConfig	*locationconf = getFullPath(full_path);
 	
-	if (!locationconf)
-		return -setStatusCode(NOT_FOUND);
+	if (rq_content_length > locationconf->max_body_size)
+		return setStatusCode(CONTENT_TOO_LARGE);
 
 	int				status;
 	if (rq_startline.iscgi)
