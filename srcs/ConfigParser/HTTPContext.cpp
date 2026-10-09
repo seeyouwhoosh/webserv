@@ -120,7 +120,8 @@ int	HTTPContext::toMaxBodySize(std::string s)
 
 	long			number = strtoInt(s);
 	unsigned long	total = number * multiplier;
-	if (SIZE_MAX)
+
+	if (total > SIZE_MAX)
 		return 1;
 	max_body_size = total;
 

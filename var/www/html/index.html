@@ -180,13 +180,14 @@
         <div class="card">
             <h2>3. File Upload (POST)</h2>
             <p>Upload a file to the server using <code>upload_store</code>.</p>
-            <form action="/uploads/" method="POST">
+            <form id="upload-form" onsubmit="handleUpload(event)">
                 <div class="form-group">
                     <label for="file-input">Select a file:</label>
                     <input type="file" name="file" id="file-input" required>
                 </div>
                 <button type="submit" class="btn">Upload File</button>
             </form>
+            <div id="upload-console" class="console"></div>
         </div>
 
         <!-- 4. CLASSIC FORM (POST) -->
@@ -230,6 +231,49 @@
             if (response.ok) {
                 consoleBox.textContent = `Success: File deleted successfully (Code: ${response.status})`;
                 consoleBox.style.color = 'var(--success)';
+            } else {
+                consoleBox.textContent = `Error: Server responded with code ${response.status} (${response.statusText})`;
+                consoleBox.style.color = 'var(--danger)';
+            }
+        } catch (error) {
+            consoleBox.textContent = `Network error: ${error.message}`;
+            consoleBox.style.color = 'var(--danger)';
+        }
+    }
+
+    async function handleUpload(event) {
+        event.preventDefault(); // Evita la recarga tradicional del formulario
+
+        const fileInput = document.getElementById('file-input');
+        const consoleBox = document.getElementById('upload-console');
+        const file = fileInput.files[0];
+
+        consoleBox.style.display = 'block';
+
+        if (!file) {
+            consoleBox.textContent = "Error: Please select a file to upload.";
+            consoleBox.style.color = 'var(--danger)';
+            return;
+        }
+
+        consoleBox.textContent = `Uploading ${file.name}...`;
+        consoleBox.style.color = 'inherit'; // Restablecer color normal mientras sube
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch('/uploads/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok || response.status === 201) {
+                consoleBox.textContent = `Success: File uploaded successfully (Code: ${response.status})`;
+                consoleBox.style.color = 'var(--success)';
+
+                // Redirección opcional tras éxito (descomentar si la necesitas)
+                setTimeout(() => { window.location.href = '/upload_success.html'; }, 1000);
             } else {
                 consoleBox.textContent = `Error: Server responded with code ${response.status} (${response.statusText})`;
                 consoleBox.style.color = 'var(--danger)';
