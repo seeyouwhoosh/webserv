@@ -16,15 +16,8 @@ LocationConfig::LocationConfig(const LocationConfig &other): HTTPContext(other)
 
 LocationConfig	&LocationConfig::operator=(const LocationConfig &other)
 {
+	HTTPContext::operator=(other);
 	name = other.name;
-	root = other.root;
-	indexes = other.indexes;
-	cgi_handlers = other.cgi_handlers;
-	allowed_methods = other.allowed_methods;
-	error_pages = other.error_pages;
-	autoindex = other.autoindex;
-	str_max_body_size = other.str_max_body_size;
-	max_body_size = other.max_body_size;
 	allowed_methods = other.allowed_methods;
 	upload_store = other.upload_store;
 	return_status = other.return_status;

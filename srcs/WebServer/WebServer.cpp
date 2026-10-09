@@ -1,4 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   WebServer.cpp                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
+/*   Updated: 2026/10/09 15:55:08 by xwu              ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "WebServer.hpp"
+
+/* Orthodox Canonical Form */
 
 WebServer::WebServer()
 {
@@ -6,7 +20,11 @@ WebServer::WebServer()
 	num_connections = 0;
 }
 
-WebServer::~WebServer() {}
+WebServer::~WebServer()
+{
+	if (epoll_events)
+		delete[] epoll_events;
+}
 
 WebServer::WebServer(const WebServer &other)
 {
@@ -19,33 +37,30 @@ WebServer &WebServer::operator=(const WebServer &other)
 	return *this;
 }
 
+/* Closing functions */
+
 void	WebServer::free_all()
 {
-	for (size_t i = 0; i < servers.size() ; i++)
+	for (std::map<int, t_listener>::iterator it = listeners.begin();
+			it != listeners.end(); it++)
 	{
-		for (size_t j = 0; j < servers[i].listens.size(); j++)
-		{
-			if (servers[i].listens[j].serversock_info != NULL)
-			{
-				freeaddrinfo(servers[i].listens[j].serversock_info);
-				servers[i].listens[j].serversock_info = NULL;
-			}
-			if (servers[i].listens[j].sockfd >= 0)
-			{
-				close(servers[i].listens[j].sockfd);
-				servers[i].listens[j].sockfd = -1;
-			}
-		}
+		if (it->second.listen->serversock_info)
+			freeaddrinfo(it->second.listen->serversock_info);
+		if (it->second.listen->sockfd >= 0)
+			close(it->second.listen->sockfd);
 	}
 	listeners.clear();
-
 	if (epoll_events)
 	{
 		delete[] epoll_events;
 		epoll_events = NULL;
 	}
 }
-
+/**
+ * @brief Deletes connection from epoll, closes file descriptor and decrements
+ * the number of connections
+ * @return 0 when success; -1 otherwise
+ */
 int	WebServer::close_connection(int fd)
 {
 	if (epoll_del_fd(fd) < 0)
@@ -60,55 +75,47 @@ int	WebServer::close_connection(int fd)
 
 void	WebServer::free_all_addrinfos()
 {
-	for (size_t i = 0; i < servers.size() ; i++)
+	for (std::map<int, t_listener>::iterator it = listeners.begin(); 
+			it != listeners.end(); it++)
 	{
-		for (size_t j = 0; j < servers[i].listens.size(); j++)
-		{
-			if (servers[i].listens[j].serversock_info)
-				freeaddrinfo(servers[i].listens[j].serversock_info);
-		}
+		if (it->second.listen->serversock_info)
+			freeaddrinfo(it->second.listen->serversock_info);
 	}
+	listeners.clear();
 }
 
+/**
+ * @brief Searches in the listens vector one with the corresponding fd
+ * @return std::string port if success; "" otherwise
+ */
 std::string	WebServer::getPort(int listener)
 {
-	for (size_t i = 0; i < servers.size() ; i++)
-	{
-		for (size_t j = 0; j < servers[i].listens.size(); j++)
-		{
-			if (listener == servers[i].listens[j].sockfd)
-				return servers[i].listens[j].port;
-		}
-	}
-	return "";
+	return listeners[listener].listen->port;
 }
+/* Parser */
 
-// HANDLE CLIENT REQUESTS
-
-void WebServer::check_timeouts()
+/**
+ * @brief Calls for the function parseConfig from the class ConfigParser
+ * @param file file to parse, doesn't take into account extensions
+ * @return 0 when success; -1 otherwise
+ */
+int WebServer::parse_config(char *file)
 {
-	time_t	now = std::time(NULL);
-	std::map<int, Client>::iterator it = clients.begin();
-
-	while (it != clients.end())
-	{
-		int		client_fd = it->first;
-		Client	&client = it->second;
-	
-		if ((size_t)(now - client.getLastActivity()) > globalconf.globalconf.timeout)
-		{
-			if (SHOW_LOGS)
-				std::cout << "Client " << it->first << " timed out\n";
-			std::map<int, Client>::iterator to_erase = it;
-			++it;
-			close_connection(client_fd);
-			clients.erase(to_erase); 
-		}
-		else
-			++it;
-	}
+	return globalconf.parseConfig(file, &servers);
 }
 
+/* Main client handler function */
+
+/**
+ * @brief Processes active events returned by epoll_wait.
+ *
+ * Iterates through triggered epoll events to handle socket errors, hangups,
+ * incoming read data (new client connections or request payloads), and 
+ * outgoing write buffers. Checks for timed-out client sockets before returning.
+ * 
+ * @return 0 on success, -1 otherwise
+ * @note Closes connections automatically.
+ */
 int	WebServer::process_connections(int num_events)
 {
 	for (int i = 0; i < num_events ; i++)
@@ -146,12 +153,8 @@ int	WebServer::process_connections(int num_events)
 	return 0;
 }
 
-int WebServer::parse_config(char *file)
-{
-	return globalconf.parseConfig(file, &servers);
-}
+/* Bonus */
 
-//bonus session
 std::string WebServer::createSession()
 {
 	std::stringstream ss;
@@ -171,7 +174,6 @@ std::string WebServer::createSession()
 	return id;
 }
 
-//bonus session
 bool WebServer::hasSession(const std::string &sessionId) const
 {
 	if (sessions.find(sessionId) == sessions.end())

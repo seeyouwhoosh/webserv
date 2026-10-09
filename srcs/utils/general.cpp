@@ -1,6 +1,8 @@
 #include "utils.hpp"
 
-/* outputs error message if msg is not NULL (else, picks from strerror) and return -err_code */
+/**
+ * @brief outputs error message if msg is not NULL (else, picks from strerror) and return -err_code
+ */
 int	error_msg(int err_code, const char *func, const char *msg)
 {
 	std::cerr << "\033[1;31m[Error] \033[0;31m";
@@ -12,7 +14,9 @@ int	error_msg(int err_code, const char *func, const char *msg)
 		std::cerr << strerror(err_code) << "\n\033[0m";
 	return -err_code;
 }
-
+/**
+ * @brief Gets the date in the format "day-of-week, day month year, hour:minutes:second GMT"
+ */
 std::string	getDate()
 {
 	time_t		rawtime;
@@ -54,7 +58,13 @@ void	closePipes(int pipe_in[2], int pipe_out[2])
 	close(pipe_out[1]);
 }
 
-/* prepares listening socket, if it fails, return value < 0, else returns socket */
+/**
+ * @brief Prepares listening socket
+ * 
+ * Created a socket, sets it to non blocking, bind it to addr and starts listening
+ * 
+ * @return If it fails, return value < 0, else returns socket
+ * @note Prints out error messages */
 int	listen_socket(struct addrinfo *addr, int listen_num)
 {
 	int	serversock;
@@ -106,9 +116,9 @@ bool	all_digits(std::string s)
 
 int matchDirective(std::string &s)
 {
-	const char	*d[] = {"root", "autoindex", "max_body_size", "limit_except", "upload_store", "return"};
+	const char	*d[] = {"root", "alias", "autoindex", "max_body_size", "limit_except", "upload_store", "return", "timeout"};
 
-	for (size_t i = 0; i < 6; i++)
+	for (size_t i = 0; i < 8; i++)
 	{
 		if (s == d[i])
 			return 1 << i;

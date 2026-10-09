@@ -89,6 +89,7 @@ private:
 	std::string					cgi_path;
 	std::string					server_port;
 	std::string					client_addr;
+	int							client_fd;
 	
 	/* Response variables */
 	t_rs_startline	rs_startline;
@@ -140,7 +141,6 @@ public:
 	/* Orthodox Canonical Form */
 	HTTPmessage();
 	HTTPmessage(const HTTPmessage &other);
-	HTTPmessage(ServerConfig *server);
 	HTTPmessage	&operator=(const HTTPmessage &other);
 	~HTTPmessage();
 
@@ -163,9 +163,11 @@ public:
 	std::string			getServerPort() const;
 	std::string			getClientAddress() const;
 	void				setBody(const std::string& body);
-	void				setServerConf(ServerConfig& serverconf);
+	void				setServerConf(ServerConfig *serverconf);
 	void				setServerPort(std::string serverPort);
 	void				setClientAddress(std::string client_address);
+	void				setClientfd(int fd);
+	int					getClientfd() const;
 
 	/* Main user functions */
 	int					generateResponse();

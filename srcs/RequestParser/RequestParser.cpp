@@ -71,9 +71,6 @@ ParseResult RequestParser::parse(HTTPmessage& request)
 			{
 				if (!parseHeader(line, request))
 					return PARSE_ERROR;
-				if (!request.rq_header.empty())
-					request.rq_header.append("\n");
-				request.rq_header.append(line);
 			}
 		}
 		else if (_state == BODY)

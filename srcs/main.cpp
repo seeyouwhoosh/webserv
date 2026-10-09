@@ -24,35 +24,37 @@ void	sigint_handler(int sig)
 	g_signal = 0;
 }
 
-int	main(int ac, char **av)
+static char	*handle_args(int ac, char **av)
 {
-	(void)av;
-
-	char *file;
 	if (ac < 2)
 	{
 		if (SHOW_LOGS)
 		{
-			std::cout << "Wrong arguments encountered, using default file \"config_files/default.conf\"\n";
+			std::cout << "Wrong arguments encountered, using default file"
+					<< "\"config_files/default.conf\"\n";
 			std::cout << "\033[1mUsage\33[0m: ./webserv [config file]\n";
 		}
 
-		file = (char *)"config_files/default.conf";
+		return (char *)"config_files/default.conf";
 	}
 	else
-		file = av[1];
+		return av[1];
+}
+
+int	main(int ac, char **av)
+{
+	(void)av;
+
+	char *file = handle_args(ac, av);
 
 	signal(SIGINT, sigint_handler);
 
 	WebServer	webserv;
 	int			num_events;
 
-	if (webserv.parse_config(file) < 0)
-		return 1;
-
-	if (webserv.prepare_listeners() < 0)
-		return 1;
-	if (webserv.epoll_start_instance() < 0)
+	if (webserv.parse_config(file) < 0 ||
+		webserv.prepare_listeners() < 0 ||
+		webserv.epoll_start_instance() < 0)
 		return 1;
 
 	init_MIMEtypes();
@@ -60,10 +62,12 @@ int	main(int ac, char **av)
 
 	while (g_signal)
 	{
-		num_events = epoll_wait(webserv.epoll_instance, webserv.epoll_events, MAX_CONNECTIONS, -1);
+		num_events = epoll_wait(webserv.epoll_instance,
+								webserv.epoll_events,
+								MAX_CONNECTIONS, -1);
 		if (num_events < 0)
 		{
-			if (errno == EINTR)
+			if (!g_signal)
 				break;
 			webserv.free_all();
 			return error_msg(errno, "epoll_wait", NULL);

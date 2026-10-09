@@ -26,10 +26,17 @@
 # define BUFFER_SIZE 1024
 #endif
 
+typedef struct s_listener
+{
+	ServerConfig	*server;
+	t_listen		*listen;
+}					t_listener;
+
 class WebServer
 {
 private:
-	
+	std::map<int, t_listener>	listeners;
+
 public:
 	/* Orthodox Canonical Form */
 	WebServer();
@@ -43,7 +50,6 @@ public:
 
 	/* Connection variables */
 	int								epoll_instance;
-	std::vector<int>				listeners;
 	std::map<int, Client>			clients;
 	std::map<std::string, Session>	sessions; //bonus session
 	size_t							num_connections;
@@ -54,11 +60,10 @@ public:
 
 	/* Sockets and clients handlers */
 	int			prepare_listeners();
-	int			handle_new_connection(int listener);
-	bool		is_listener(int fd);
 	int			process_connections(int num_events);
+	bool		is_listener(int fd);
+	int			handle_new_connection(int listener);
 	void		check_timeouts();
-
 	void		create_new_client(int clientsock, int listener, void *clientaddr);
 	int			handle_client_data(int client);
 	int			send_data_client(int client);
@@ -77,6 +82,8 @@ public:
 	
 	/* Getters and setters*/
 	std::string	getPort(int listener);
-	std::string createSession();//bonus session
-	bool hasSession(const std::string &sessionId) const;//bonus session
+
+	/* Bonus */
+	std::string	createSession();
+	bool		hasSession(const std::string &sessionId) const;
 };

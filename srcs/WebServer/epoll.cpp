@@ -1,5 +1,22 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   epoll.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
+/*   Updated: 2026/10/09 14:00:08 by xwu              ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "WebServer.hpp"
 
+/**
+ * @brief Creates a epoll instance and adds the listens
+ * @return 0 if success; <0 otherwise
+ * @note Shows log messages
+ */
 int	WebServer::epoll_start_instance()
 {
 	if ((epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
@@ -9,27 +26,28 @@ int	WebServer::epoll_start_instance()
 	}
 	
 	if (SHOW_LOGS)
-		std::cout << "\033[1m[webserv]\33[0m Epoll instance created succesfully" << "\n";
+		std::cout << "\033[1m[webserv]\33[0m " <<
+		"Epoll instance created succesfully" << "\n";
 
 	if (epoll_add_listens() < 0)
 		return -1;
 
 	if (SHOW_LOGS)
-		std::cout << "\033[1m[webserv]\33[0m Epoll added listeners to watch. Total connections: " << num_connections << "\n";
+		std::cout << "\033[1m[webserv]\33[0m " <<
+		"Epoll added listeners to watch. Total connections: " <<
+		num_connections << "\n";
 	return 0;
 }
 
 int	WebServer::epoll_add_listens()
 {
-	for (size_t i = 0; i < servers.size() ; i++)
+	for (std::map<int, t_listener>::iterator it = listeners.begin();
+	it != listeners.end(); it++)
 	{
-		for (size_t j = 0; j < servers[i].listens.size(); j++)
+		if (epoll_add_fd(it->second.listen->sockfd) < 0)
 		{
-			if (epoll_add_fd(servers[i].listens[j].sockfd) < 0)
-			{
-				free_all();
-				return -1;
-			}
+			free_all();
+			return -1;
 		}
 	}
 	return 0;

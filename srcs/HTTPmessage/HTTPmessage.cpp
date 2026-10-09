@@ -1,11 +1,13 @@
 #include "HTTPmessage.hpp"
 #include "utils.hpp"
 
+/* Orthodox canonical form */
 HTTPmessage::HTTPmessage()
 {
 	serverconf = NULL;
 	locationconf = NULL;
 	server_port = "";
+	client_fd = 0;
 	client_addr = "";
 	rs_startline.version = "HTTP/1.1";
 
@@ -28,31 +30,6 @@ HTTPmessage::HTTPmessage()
 	rq_content_length = 0;
 }
 
-HTTPmessage::HTTPmessage(ServerConfig *server)
-{
-	rs_startline.version = "HTTP/1.1";
-	serverconf = server;
-	server_port = "";
-	client_addr = "";
-
-	rs_startline.reason_phrase = "";
-	rs_startline.status_code = 0;
-	full_path = "";
-	upload_name = "";
-	rs_header = "";
-	rs_body = "";
-	rs_content_length = 0;
-
-	rq_startline.file = "";
-	rq_startline.iscgi = false;
-	rq_startline.method = "";
-	rq_startline.path_info = "";
-	rq_startline.query = "";
-	rq_startline.raw_path = "";
-	rq_body = "";
-	rq_content_length = 0;
-}
-
 HTTPmessage::~HTTPmessage() {}
 
 HTTPmessage::HTTPmessage(const HTTPmessage &other)
@@ -68,6 +45,7 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 	serverconf = other.serverconf;
 	server_port = other.server_port;
 	client_addr = other.client_addr;
+	client_fd = client_fd;
 
 	rs_startline.reason_phrase = other.rs_startline.reason_phrase;
 	rs_startline.status_code = other.rs_startline.status_code;
@@ -88,25 +66,35 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 	return *this;
 }
 
-/* Get HTTP response version */
+/* Getters and setters */
+
+/**
+ * @brief Get HTTP response version
+*/
 const std::string&	HTTPmessage::getVersion() const
 {
 	return rs_startline.version;
 }
 
-/* Get HTTP response status code */
+/**
+ * @brief Get HTTP response status code
+*/
 int	HTTPmessage::getStatusCode() const
 {
 	return rs_startline.status_code;
 }
 
-/* Set HTTP response version */
+/**
+ * @brief Set HTTP response version
+*/
 void HTTPmessage::setVersion(const std::string& version)
 {
 	rs_startline.version = version;
 }
 
-/* Set HTTP response status code and phrase */
+/**
+ * @brief Set HTTP response status code and phrase
+*/
 int HTTPmessage::setStatusCode(const int code)
 {
 	this->rs_startline.status_code = code;
@@ -114,67 +102,106 @@ int HTTPmessage::setStatusCode(const int code)
 	return code;
 }
 
-/* Set HTTP response headers */
+/**
+ * @brief Set HTTP response headers
+*/
 void HTTPmessage::setHeader(const std::string& name, const std::string& value)
 {
 	rs_headers[name] = value;
 }
 
-/* Get HTTP response headers */
+/**
+ * @brief Get HTTP response headers
+*/
 const std::map<std::string, std::string>& HTTPmessage::getHeaders() const
 {
 	return rs_headers;
 }
 
-/* Set HTTP response body */
+/**
+ * @brief Set HTTP response body
+*/
 void HTTPmessage::setBody(const std::string& body)
 {
 	this->rs_body = body;
 }
 
-/* Get HTTP response body */
+/**
+ * @brief Get HTTP response body
+*/
 const std::string& HTTPmessage::getBody() const
 {
 	return rs_body;
 }
 
-/* Set HTTP serverconf */
-void	HTTPmessage::setServerConf(ServerConfig& serverconf)
+/**
+ * @brief Set HTTP serverconf
+*/
+void	HTTPmessage::setServerConf(ServerConfig *serverconf)
 {
-	this->serverconf = &serverconf;
+	this->serverconf = serverconf;
 }
 
-/* Set HTTP serverconf */
+/**
+ * @brief Set HTTP serverconf
+*/
 ServerConfig	*HTTPmessage::getServerConf() const
 {
 	return this->serverconf;
 }
 
-/* Set HTTP server port */
+/**
+ * @brief Set HTTP server port
+*/
 void	HTTPmessage::setServerPort(std::string ServerPort)
 {
 	server_port = ServerPort;
 }
 
-/* Get HTTP server port */
+/**
+ * @brief Get HTTP server port
+*/
 std::string	HTTPmessage::getServerPort() const
 {
 	return server_port;
 }
 
-/* Set client address */
+/**
+ * @brief Set client fd
+*/
+void	HTTPmessage::setClientfd(int fd)
+{
+	client_fd = fd;
+}
+
+/**
+ * @brief Get client fd
+*/
+int	HTTPmessage::getClientfd() const
+{
+	return client_fd;
+}
+
+/**
+ * @brief Set client address
+*/
 void	HTTPmessage::setClientAddress(std::string client_address)
 {
 	client_addr = client_address;
 }
 
-/* Get client address */
+/**
+ * @brief Get client address
+*/
 std::string	HTTPmessage::getClientAddress() const
 {
 	return client_addr;
 }
 
-/* Match method given in parameters. If non matches, returns -1, else returns method enum */
+/**
+ * @brief Match method given in parameters
+ * @return If non matches, returns -1, else returns method enum
+*/
 int	HTTPmessage::matchMethod(std::string &method)
 {
 	if (method == "GET")
@@ -187,16 +214,23 @@ int	HTTPmessage::matchMethod(std::string &method)
 		return BAD_METHOD;
 }
 
+/**
+ * @brief Shows the request received with headers but no body
+ */
 void	HTTPmessage::printQHeaders()
 {
-	std::cout << "---------- REQUEST HEADER FROM " << client_addr << " ----------\n" << rq_startline.method << " " << rq_startline.raw_path << " " << rq_startline.version << "\n" << rq_header << std::endl;
+	std::cout << "\n---------- REQUEST HEADER FROM FD" << client_fd << " ----------\n" <<
+				rq_startline.method << " " << rq_startline.raw_path << " " <<
+				rq_startline.version << "\n" << rq_header << std::endl;
 }
 
+/**
+ * @brief Shows the response produced
+ */
 void	HTTPmessage::printAHeaders()
 {
-	std::cout << "\n-------------- RESPONSE --------------\n" << rs_header << std::endl;
+	std::cout << "----------------- RESPONSE ----------------\n" << rs_header;
 }
-
 void	HTTPmessage::clear()
 {
 	rs_startline.reason_phrase.clear();

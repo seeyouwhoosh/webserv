@@ -2,6 +2,9 @@
 #include "ConfigParser.hpp"
 #include "HTTPmessage.hpp"
 
+/**
+ * @brief Get the file extension without the dot
+ */
 std::string	getFileExtension(std::string file)
 {
 	size_t dot = file.find_last_of('.');
@@ -18,6 +21,9 @@ bool isFileEmpty(std::fstream &file)
 	return file.peek() == std::ios::traits_type::eof();
 }
 
+/**
+ * @brief Checks if file exists or if user has enough permissions
+ */
 int	checkFileStatus(int flags, std::string &file)
 {
 	struct stat	st;
@@ -31,7 +37,9 @@ int	checkFileStatus(int flags, std::string &file)
 	return OK;
 }
 
-/* Returns location index if it exist, it not, returns -1 */
+/**
+ * @brief Returns location index if it exist, it not, returns -1
+ */
 int	getLocationIndex(std::vector<LocationConfig> &locations, std::string path)
 {
 	size_t		max_len = 0;
@@ -68,7 +76,9 @@ std::string	getMIMEtype(std::string ext)
 	return it->second;
 }
 
-/* Appends path with file, manages primarily backslashes. Modifies file */
+/**
+ * @brief Appends path with file, manages primarily backslashes. Modifies file
+ */
 void	refactorFile(std::string &path, std::string &file)
 {
 	if (path.empty())
@@ -82,7 +92,9 @@ void	refactorFile(std::string &path, std::string &file)
 		file = path + "/" + file;
 }
 
-/* takes a file stream and dump it all into a string */
+/**
+ * @brief Takes a file stream and dump it all into a string
+ */
 std::string	dumptoString(std::fstream &f)
 {
 	if (isFileEmpty(f))

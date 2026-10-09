@@ -13,18 +13,10 @@ ServerConfig::ServerConfig(const ServerConfig &other): HTTPContext(other)
 }
 ServerConfig	&ServerConfig::operator=(const ServerConfig &other)
 {
+	HTTPContext::operator=(other);
 	locations = other.locations;
 	listens = other.listens;
 	server_name = other.server_name;
-	root = other.root;
-	indexes = other.indexes;
-	autoindex = other.autoindex;
-	str_max_body_size = other.str_max_body_size;
-	max_body_size = other.max_body_size;
-	cgi_handlers = other.cgi_handlers;
-	error_pages = other.error_pages;
-	str_timeout = other.str_timeout;
-	timeout = other.timeout;
 
 	return *this;
 }
@@ -86,15 +78,16 @@ int	ServerConfig::parseListens(std::string &value)
 	return 0;
 }
 
-// NO HE DADO SOPORTE PARA WILDCARDS
 int	ServerConfig::parseServerName(std::string &value)
 {
-	for (std::vector<std::string>::iterator it = server_name.begin(); it != server_name.end(); it++)
+	if (value.find('*') != std::string::npos)
 	{
-		if (value == *it)
-			return DUPLICATED_VALUE;
+		error_par = "server_name";
+		return INVALID_VALUE;
 	}
-	
+	if (std::find(server_name.begin(), server_name.end(), value) != server_name.end())
+		return DUPLICATED_VALUE;
+
 	server_name.push_back(value);
 
 	if (value == "_")
@@ -164,6 +157,8 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 			else if (directive == "autoindex" && (status = parseAutoindex(*start)))
 				return status;
 			else if (directive == "client_max_body_size" && (status = parseMaxbody(*start)))
+				return status;
+			else if (directive == "timeout" && (status = parseTimeOut(*start)))
 				return status;
 			else if (directive == "error_page" && (status = parseErrorPage(start, error_keys)))
 				return status;

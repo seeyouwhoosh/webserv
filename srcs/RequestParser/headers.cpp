@@ -35,6 +35,9 @@ bool RequestParser::parseHeader(const std::string& line,
 
 	request.rq_headers[name] = value;
 
+	if (!request.rq_header.empty())
+		request.rq_header.append("\n");
+	request.rq_header.append(line);
 	return true;
 }
 

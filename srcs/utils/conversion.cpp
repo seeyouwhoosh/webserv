@@ -28,7 +28,9 @@ int	hexToAscii(std::string s)
 	return result;
 }
 
-/* convert IPv4 and IPv6 addresses from binary to text form */
+/**
+ * @brief Convert IPv4 and IPv6 addresses from binary to text form
+ * */
 std::string	inet_ntop(int af, const void *src)
 {
 	std::stringstream ss;
