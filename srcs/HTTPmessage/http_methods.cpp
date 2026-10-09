@@ -217,7 +217,8 @@ int	HTTPmessage::httpPOST()
 	int				status;
 	if (rq_startline.iscgi)
 	{
-		status = handleCGI();
+		CGIHandler	cgi;
+		status = cgi.execute();
 		if (status != OK)
 			return -setStatusCode(status);
 		return 0;

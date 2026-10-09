@@ -85,7 +85,6 @@ private:
 	std::string					full_path;
 	std::string					upload_name;
 	
-	std::vector<std::string>	cgi_env;
 	std::string					cgi_path;
 	std::string					server_port;
 	std::string					client_addr;

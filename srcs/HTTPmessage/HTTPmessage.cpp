@@ -219,7 +219,7 @@ int	HTTPmessage::matchMethod(std::string &method)
  */
 void	HTTPmessage::printQHeaders()
 {
-	std::cout << "\n---------- REQUEST HEADER FROM FD" << client_fd << " ----------\n" <<
+	std::cout << "\n---------- REQUEST HEADER FROM FD " << client_fd << " ----------\n" <<
 				rq_startline.method << " " << rq_startline.raw_path << " " <<
 				rq_startline.version << "\n" << rq_header << std::endl;
 }

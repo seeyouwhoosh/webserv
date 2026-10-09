@@ -3,6 +3,13 @@
 #include "utils.hpp"
 #include <cstring>
 
+/**
+ * @brief Having detected "cgi-bin", searches for the executable path
+ * 
+ * After the "cgi-bin/", looks for the next element, if it's a directory, keep searching; else, attach it to the path (for the cgi thingy), the rest of that is attached to path_info
+ * 
+ * @example The full path is "/html/cgi-bin/bin/binary/some/other/words". Then, first we cut to "bin/binary/some/other/words". We get until "binary", because there may be a pseudopath for the cgi to use (see PATH_INFO)
+ */
 void	HTTPmessage::filefromCGIbin(size_t cgibin_pos)
 {
 	std::stringstream	ss(full_path.substr(cgibin_pos + std::strlen("/cgi-bin/")));

@@ -207,19 +207,136 @@
             </form>
         </div>
 
-        <!-- 5. CGI SCRIPTS -->
-        <div class="card full-width">
-            <h2>5. CGI Execution</h2>
-            <p>Run a backend script (Python/Perl) to test environment variable handling and process execution.</p>
-            <div style="display: flex; gap: 10px;">
-                <a href="/cgi-bin/test.py?name=Evaluator&action=test" target="_blank" class="btn">Execute CGI (GET)</a>
-            </div>
+<!-- 5. CGI SCRIPTS -->
+<div class="card full-width">
+    <h2>5. CGI Execution</h2>
+    <p>Run backend scripts (Python, PHP, Bash, C/C++) with dynamic query parameters or body content.</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+        <!-- Selector de Script -->
+        <div class="form-group">
+            <label for="cgi-script">Select CGI Script:</label>
+            <select id="cgi-script">
+                <option value="/cgi.py">Python (/cgi-bin/cgi.py)</option>
+                <option value="/cgi.php">PHP (/cgi-bin/cgi.php)</option>
+                <option value="/cgi.sh">Bash (/cgi-bin/cgi.sh)</option>
+                <option value="/cgi_env.cgi">Binary (/cgi-bin/cgi_env.cgi)</option>
+            </select>
         </div>
-        
+
+        <!-- Selector de Método -->
+        <div class="form-group">
+            <label for="cgi-method" onchange="updateCgiLabel()">HTTP Method:</label>
+            <select id="cgi-method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+            </select>
+        </div>
     </div>
+
+    <!-- Parámetros unificados -->
+    <div class="form-group">
+        <label id="cgi-input-label" for="cgi-data">Query / Body Data:</label>
+        <input type="text" id="cgi-data" value="name=Evaluator&action=test" placeholder="key1=value1&key2=value2">
+    </div>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="runCGI()">Run in Console</button>
+        <button class="btn" onclick="openCGIInNewTab()">Open in New Tab</button>
+    </div>
+
+    <!-- Consola de Resultados -->
+    <div id="cgi-console" class="console" style="display: none;"></div>
 </div>
 
 <script>
+// Actualiza la etiqueta para dar claridad al usuario según el método
+document.getElementById('cgi-method').addEventListener('change', function() {
+    const label = document.getElementById('cgi-input-label');
+    label.textContent = this.value === 'GET' ? 'Query Parameters (URL):' : 'Request Body (POST):';
+});
+
+async function runCGI() {
+    const scriptPath = document.getElementById('cgi-script').value;
+    const method = document.getElementById('cgi-method').value;
+    const rawData = document.getElementById('cgi-data').value.trim();
+    const consoleBox = document.getElementById('cgi-console');
+
+    consoleBox.style.display = 'block';
+    consoleBox.style.color = 'inherit';
+
+    let requestUrl = scriptPath;
+    const options = { method: method };
+
+    if (method === 'GET') {
+        if (rawData) {
+            requestUrl += (scriptPath.includes('?') ? '&' : '?') + rawData;
+        }
+        consoleBox.textContent = `Executing GET ${requestUrl}...`;
+    } else {
+        consoleBox.textContent = `Executing POST ${requestUrl} with body: "${rawData}"...`;
+        options.headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        };
+        options.body = rawData;
+    }
+
+    try {
+        const response = await fetch(requestUrl, options);
+        const resultText = await response.text();
+
+        if (response.ok) {
+            consoleBox.textContent = `Status: ${response.status} (${response.statusText})\n\n--- Output ---\n${resultText}`;
+            consoleBox.style.color = 'var(--success)';
+        } else {
+            consoleBox.textContent = `Error: ${response.status} (${response.statusText})\n\n--- Output ---\n${resultText}`;
+            consoleBox.style.color = 'var(--danger)';
+        }
+    } catch (error) {
+        consoleBox.textContent = `Network/CGI error: ${error.message}`;
+        consoleBox.style.color = 'var(--danger)';
+    }
+}
+
+function openCGIInNewTab() {
+    const scriptPath = document.getElementById('cgi-script').value;
+    const method = document.getElementById('cgi-method').value;
+    const rawData = document.getElementById('cgi-data').value.trim();
+
+    if (method === 'GET') {
+        let url = scriptPath;
+        if (rawData) {
+            url += (scriptPath.includes('?') ? '&' : '?') + rawData;
+        }
+        window.open(url, '_blank');
+    } else {
+        // Para POST creamos un formulario invisible para abrir en pestana nueva
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = scriptPath;
+        form.target = '_blank';
+
+        // Parse de pares clave=valor para inputs del formulario
+        if (rawData) {
+            const pairs = rawData.split('&');
+            pairs.forEach(pair => {
+                const [key, value] = pair.split('=');
+                if (key) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = decodeURIComponent(key);
+                    input.value = value ? decodeURIComponent(value) : '';
+                    form.appendChild(input);
+                }
+            });
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+}
+
     async function sendDelete() {
         const path = document.getElementById('delete-file').value;
         const consoleBox = document.getElementById('delete-console');
