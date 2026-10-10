@@ -171,6 +171,10 @@ int	HTTPmessage::generateResponse()
 	return 0;
 }
 
+/**
+ * @brief Creates a response string
+ * @return Return HTTP response
+ */
 std::string	HTTPmessage::setResponse()
 {
 	std::stringstream	responseStream;

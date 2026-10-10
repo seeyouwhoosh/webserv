@@ -4,49 +4,6 @@
 #include <cstring>
 
 /**
- * @brief Having detected "cgi-bin", searches for the executable path
- * 
- * After the "cgi-bin/", looks for the next element, if it's a directory, keep searching; else, attach it to the path (for the cgi thingy), the rest of that is attached to path_info
- * 
- * @example The full path is "/html/cgi-bin/bin/binary/some/other/words". Then, first we cut to "bin/binary/some/other/words". We get until "binary", because there may be a pseudopath for the cgi to use (see PATH_INFO)
- */
-void	HTTPmessage::filefromCGIbin(size_t cgibin_pos)
-{
-	std::stringstream	ss(full_path.substr(cgibin_pos + std::strlen("/cgi-bin/")));
-	std::string			segment;
-	std::string			current_path = full_path.substr(0, cgibin_pos + std::strlen("/cgi-bin/"));
-	bool				found = false;
-
-	while (std::getline(ss, segment, '/'))
-	{
-		if (segment.empty())
-			break;
-
-		if (found)
-			rq_startline.path_info += "/" + segment;
-		else
-		{
-			current_path += segment;
-
-			struct stat	st;
-			if (stat(current_path.c_str(), &st) == 0)
-			{
-				if ((st.st_mode & S_IFMT)== S_IFREG)
-				{
-					rq_startline.iscgi = true;
-					full_path = current_path;
-					found = true;
-				}
-				else if ((st.st_mode & S_IFMT)== S_IFDIR)
-					current_path += "/";
-			}
-			else
-				break;
-		}
-	}
-}
-
-/**
  * @brief Looks for cgi executable based on their extension
  * 
  * If it's a file that matches with one of the cgi handlers or the extension is ".cgi", then sets path_info accordingly and updates full_path to path_info (else full_path is the same)

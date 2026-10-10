@@ -18,7 +18,7 @@ void	HTTPmessage::autoindexParentPath(std::stringstream &page)
 	page << "<tr><td><a href=\"" << parent_path << "\">Parent directory/</a></td></tr>";
 }
 
-void	HTTPmessage::autoindexAddElement(std::stringstream &page, std::string dir_path, std::string name)
+void	HTTPmessage::autoindexAddElement(std::stringstream &page, const std::string &dir_path, std::string &name)
 {
 	std::string		fullFilePath = dir_path + name;
 	char buffer[20];

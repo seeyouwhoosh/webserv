@@ -17,9 +17,10 @@
 #include <vector>
 #include <algorithm>
 
+#include "CGIHandler.hpp"
+
 class ServerConfig;
 class LocationConfig;
-class CGIHandler;
 
 #define ERRPAGE_DIR	"error_pages"
 #ifndef BUFFER_SIZE
@@ -83,7 +84,7 @@ private:
 	/* General variables */
 	ServerConfig	*serverconf;
 	LocationConfig	*locationconf;
-	CGIHandler		&cgi;
+	CGIHandler		cgi;
 	std::string		full_path;
 	std::string		upload_name;
 	
@@ -106,8 +107,11 @@ private:
 
 	/* Autoindex */
 	void			autoindexParentPath(std::stringstream &page);
-	void			autoindexAddElement(std::stringstream &page, std::string dir_path, std::string name);
-	void			autoindexHtmlHead(std::stringstream &page, std::string virtual_path);
+	void			autoindexAddElement(std::stringstream &page,
+										const std::string &dir_path,
+										std::string &name);
+	void			autoindexHtmlHead(std::stringstream &page,
+										std::string virtual_path);
 	int				createAutoindex(std::string dir);
 
 	/* CGI */ //
@@ -116,7 +120,8 @@ private:
 	void			CGIparse();
 	std::string		matchCGI(std::string extension);
 	void			fillCGIenv();
-	void			fillArgvEnvp(std::vector<char *> &argv, std::vector<char *> &envp);
+	void			fillArgvEnvp(std::vector<char *> &argv,
+									std::vector<char *> &envp);
 	int				handleCGI();
 	void			parseCGIoutput(std::string &cgi_output);
 
@@ -153,22 +158,15 @@ public:
 	stringmap		rq_headers;
 
 	/* Getters and setters */
-	const std::string&	getVersion() const;
-	int					getStatusCode() const;
-	const stringmap&	getHeaders() const;
-	const std::string&	getBody() const;
-	void				setVersion(const std::string& method);
 	int					setStatusCode(const int code);
 	void				setHeader(const std::string& name, const std::string& value);
-	ServerConfig		*getServerConf() const;
-	std::string			getServerPort() const;
 	std::string			getClientAddress() const;
 	void				setBody(const std::string& body);
 	void				setServerConf(ServerConfig *serverconf);
+	ServerConfig		*getServerConf() const;
 	void				setServerPort(std::string serverPort);
 	void				setClientAddress(std::string client_address);
 	void				setClientfd(int fd);
-	int					getClientfd() const;
 
 	/* Main user functions */
 	int					generateResponse();

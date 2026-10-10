@@ -2,7 +2,9 @@
 #include "ConfigParser.hpp"
 #include "utils.hpp"
 
-/* Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content lenght and other needed headers) */
+/**
+ * @brief Get the file descriptor and fill the gaps for the response accordingly (such as status code, body, content length and other needed headers)
+ */
 int HTTPmessage::httpGET()
 {
 	full_path = rq_startline.raw_path;
@@ -48,8 +50,8 @@ int HTTPmessage::httpGET()
 	int status;
 	std::fstream fs;
 
-	if (rq_startline.iscgi)
-		status = handleCGI();
+	if (cgi.isCGI())
+		status = cgi.execute(*this, locationconf);
 	else
 	{
 		if (!locationconf && !serverconf)

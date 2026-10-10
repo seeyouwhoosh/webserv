@@ -69,30 +69,6 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 /* Getters and setters */
 
 /**
- * @brief Get HTTP response version
-*/
-const std::string&	HTTPmessage::getVersion() const
-{
-	return rs_startline.version;
-}
-
-/**
- * @brief Get HTTP response status code
-*/
-int	HTTPmessage::getStatusCode() const
-{
-	return rs_startline.status_code;
-}
-
-/**
- * @brief Set HTTP response version
-*/
-void HTTPmessage::setVersion(const std::string& version)
-{
-	rs_startline.version = version;
-}
-
-/**
  * @brief Set HTTP response status code and phrase
 */
 int HTTPmessage::setStatusCode(const int code)
@@ -110,12 +86,9 @@ void HTTPmessage::setHeader(const std::string& name, const std::string& value)
 	rs_headers[name] = value;
 }
 
-/**
- * @brief Get HTTP response headers
-*/
-const std::map<std::string, std::string>& HTTPmessage::getHeaders() const
+void HTTPmessage::getHeader(const std::string& name)
 {
-	return rs_headers;
+	return (rs_headers[name]);
 }
 
 /**
@@ -127,27 +100,11 @@ void HTTPmessage::setBody(const std::string& body)
 }
 
 /**
- * @brief Get HTTP response body
-*/
-const std::string& HTTPmessage::getBody() const
-{
-	return rs_body;
-}
-
-/**
  * @brief Set HTTP serverconf
 */
 void	HTTPmessage::setServerConf(ServerConfig *serverconf)
 {
 	this->serverconf = serverconf;
-}
-
-/**
- * @brief Set HTTP serverconf
-*/
-ServerConfig	*HTTPmessage::getServerConf() const
-{
-	return this->serverconf;
 }
 
 /**
@@ -159,27 +116,11 @@ void	HTTPmessage::setServerPort(std::string ServerPort)
 }
 
 /**
- * @brief Get HTTP server port
-*/
-std::string	HTTPmessage::getServerPort() const
-{
-	return server_port;
-}
-
-/**
  * @brief Set client fd
 */
 void	HTTPmessage::setClientfd(int fd)
 {
 	client_fd = fd;
-}
-
-/**
- * @brief Get client fd
-*/
-int	HTTPmessage::getClientfd() const
-{
-	return client_fd;
 }
 
 /**
@@ -212,6 +153,11 @@ int	HTTPmessage::matchMethod(std::string &method)
 		return DELETE;
 	else
 		return BAD_METHOD;
+}
+
+ServerConfig	*HTTPmessage::getServerConf() const
+{
+	return serverconf;
 }
 
 /**

@@ -14,15 +14,22 @@ private:
 
 	/* Variables */
 	std::vector<std::string>	cgi_env;
+	std::vector<char *>			argv;
+	std::vector<char *>			envp;
 	std::string					cgi_path;
+	std::string					filename;
 	std::string					path_info;
 	std::string					query;
 	bool						iscgi;
+	std::string					output;
 
-	void	fill_env(HTTPmessage &request);
-	void	fill_argv(std::string &script, std::string &path);
-	void	fill_envp();
-	void	parseCGIbinFile();
+	void			fill_env(const HTTPmessage &request);
+	void			fill_argv();
+	void			fill_envp();
+	void			parseCGIbinFile(size_t cgibin_pos, std::string &full_path);
+	std::string		matchExtension(const std::string &ext, const LocationConfig *location) const;
+	int				gotoDirectory();
+	void			parseOutput(HTTPmessage &request);
 
 public:
 	CGIHandler();
@@ -30,9 +37,9 @@ public:
 	CGIHandler	&operator=(CGIHandler &other);
 	~CGIHandler();
 
-	void	parseFiletoCGI(const HTTPmessage& request, const LocationConfig& config);
+	void	parseFiletoCGI(std::string &full_path, LocationConfig *location);
 
-	int		execute(const HTTPmessage& request, const LocationConfig& config);
+	int		execute(const HTTPmessage& request, const LocationConfig *location);
 	void	clear();
 
 	bool	isCGI();
