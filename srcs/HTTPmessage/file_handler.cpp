@@ -101,37 +101,20 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 	return NOT_FOUND;
 }
 
-/**
- * @brief Cleans the given raw_path from request and returns a string without queries and path_info
- */
-std::string	HTTPmessage::parsePath()
-{
-	std::string	file = rq_startline.raw_path;
-	size_t		query_pos = file.find('?');
-
-	if (query_pos != std::string::npos)
-	{
-		rq_startline.query = file.substr(query_pos + 1);
-		file = file.substr(0, query_pos);
-	}
-	rq_startline.file = file;
-	return file;
-}
-
 /* Constructs the full path of file or directory into string file and returns the current location */
 LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 {
 	if (serverconf == NULL)
 		return NULL;
 
-	full_path = parsePath();
+	cgi->separateQuery(full_path);
 	int location_pos = getLocationIndex(serverconf->locations, full_path);
 
 	if (location_pos < 0)
 	{
 		std::string root = serverconf->root;
 		refactorFile(root, full_path);
-		cgi.parseFiletoCGI(full_path, locationconf);
+		->parseFiletoCGI(full_path, locationconf);
 		return NULL;
 	}
 
@@ -146,7 +129,7 @@ LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 		root = locationconf->root.empty() ? serverconf->root : locationconf->root;
 	refactorFile(root, full_path);
 
-	cgi.parseFiletoCGI(full_path, locationconf);
+	cgi->parseFiletoCGI(full_path, locationconf);
 
 	return locationconf;
 }
@@ -161,8 +144,8 @@ bool	HTTPmessage::manageActuallyDir()
 
 	std::string redirect_url = full_path + "/";
 	
-	if (!rq_startline.query.empty())
-		redirect_url += "?" + rq_startline.query;
+	if (!cgi->getQuery().empty())
+		redirect_url += "?" + cgi->getQuery();
 
 	rs_headers["Location"] = redirect_url;
 

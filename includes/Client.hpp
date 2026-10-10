@@ -5,6 +5,7 @@
 
 #include "HTTPmessage.hpp"
 #include "RequestParser.hpp"
+#include "CGIHandler.hpp"
 
 class Client
 {
@@ -12,7 +13,6 @@ private:
 	int						fd;
 	ServerConfig			*server;
 	RequestParser			parser;
-	HTTPmessage				message;
 	std::queue<std::string>	http_responses;
 
 	/* Keep Alive */
@@ -27,6 +27,9 @@ public:
 	Client(int fd);
 	Client	&operator=(const Client &other);
 	~Client();
+
+	CGIHandler				cgi;
+	HTTPmessage				message;
 
 	/* Parser */
 	int				parse();
@@ -45,7 +48,7 @@ public:
 	void			initHTTPmessage(std::string &port, std::string address, ServerConfig *server);
 	int				setStatusCode(int code);
 	int				generateResponse();
-	void			setResponse();
+	int				setResponse();
 	int				responseComplete();
 	void			clearResponse();
 	int				sendResponse();

@@ -195,6 +195,53 @@ int	HTTPContext::parseTimeOut(std::string &value)
 	return 0;
 }
 
+int	HTTPContext::toCGITimeOut(std::string s)
+{
+	if (s.empty())
+		return 1;
+	toupperString(s);
+
+	size_t	last = s.size() - 1;
+	size_t	i = 0;
+	for (; i < last; i++)
+	{
+		if (!std::isdigit(s[i]))
+			return 1;
+	}
+
+	if (!(s[i] == 'S' || s[i] == 'M' || std::isdigit(s[i])))
+		return 1;
+	int	offset = s[last] == 'M' ? 60 : 1;
+
+	if (s.empty())
+		return 1;
+	long	val = strtoInt(s);
+	if (val <= 0 || val > 86400)
+		return 1;
+	cgi_timeout = strtoInt(s) * offset;
+	return 0;
+}
+
+int	HTTPContext::parseCGITimeOut(std::string &value)
+{
+	if (str_timeout.empty())
+	{
+		flags = flags | CGI_TIMEOUT;
+		str_timeout = value;
+		if (toCGITimeOut(value))
+		{
+			error_par = "cgi_read_timeout";
+			return INVALID_VALUE;
+		}
+	}
+	else
+	{
+		error_par = "cgi_read_timeout";
+		return MULTIPLE_VALUES;
+	}
+	return 0;
+}
+
 int	HTTPContext::parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys)
 {
 	if (!all_digits(*it) && (it + 1) != tokens->end() && *(it + 1) == ";")
@@ -290,6 +337,8 @@ int	HTTPContext::fillDirectives(std::vector<ServerConfig> *servers)
 			else if (directive == "client_max_body_size" && (status = parseMaxbody(*it)))
 				return status;
 			else if (directive == "timeout" && (status = parseTimeOut(*it)))
+				return status;
+			else if (directive == "cgi_read_timeout" && (status = parseCGITimeOut(*it)))
 				return status;
 			else if (directive == "error_page" && (status = parseErrorPage(it, error_keys)))
 				return status;

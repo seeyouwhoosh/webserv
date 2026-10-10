@@ -17,8 +17,6 @@
 #include <vector>
 #include <algorithm>
 
-#include "CGIHandler.hpp"
-
 class ServerConfig;
 class LocationConfig;
 
@@ -59,11 +57,7 @@ typedef	struct t_rq_startline
 {
 	std::string	method;
 	std::string	raw_path;
-	std::string	file;
-	std::string	path_info; //
-	std::string	query; //
 	std::string	version;
-	bool		iscgi; //
 }	t_rq_startline;
 
 typedef	struct t_rs_startline
@@ -82,9 +76,9 @@ class HTTPmessage
 {
 private:	
 	/* General variables */
+	CGIHandler		*cgi;
 	ServerConfig	*serverconf;
 	LocationConfig	*locationconf;
-	CGIHandler		cgi;
 	std::string		full_path;
 	std::string		upload_name;
 	
@@ -114,19 +108,7 @@ private:
 										std::string virtual_path);
 	int				createAutoindex(std::string dir);
 
-	/* CGI */ //
-	void			filefromCGIbin(size_t cgibin_pos);
-	void			indepCGIexecutable(size_t app_pos);
-	void			CGIparse();
-	std::string		matchCGI(std::string extension);
-	void			fillCGIenv();
-	void			fillArgvEnvp(std::vector<char *> &argv,
-									std::vector<char *> &envp);
-	int				handleCGI();
-	void			parseCGIoutput(std::string &cgi_output);
-
 	/* File management */
-	std::string		parsePath(); //
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
 	LocationConfig	*getFullPath(std::string &file);
@@ -161,6 +143,7 @@ public:
 	int					setStatusCode(const int code);
 	void				setHeader(const std::string& name, const std::string& value);
 	std::string			getClientAddress() const;
+	const std::string	getHeader(const std::string& key) const;
 	void				setBody(const std::string& body);
 	void				setServerConf(ServerConfig *serverconf);
 	ServerConfig		*getServerConf() const;

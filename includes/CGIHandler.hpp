@@ -1,4 +1,10 @@
 #pragma once
+
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+
 #include <vector>
 #include <string>
 
@@ -20,8 +26,12 @@ private:
 	std::string					filename;
 	std::string					path_info;
 	std::string					query;
+	pid_t						pid;
+	int							pipe_in[2];
+	int							pipe_out[2];
+	bool						isrunning;
 	bool						iscgi;
-	std::string					output;
+
 
 	void			fill_env(const HTTPmessage &request);
 	void			fill_argv();
@@ -29,24 +39,26 @@ private:
 	void			parseCGIbinFile(size_t cgibin_pos, std::string &full_path);
 	std::string		matchExtension(const std::string &ext, const LocationConfig *location) const;
 	int				gotoDirectory();
-	void			parseOutput(HTTPmessage &request);
-
-public:
+	
+	public:
 	CGIHandler();
 	CGIHandler(CGIHandler &other);
 	CGIHandler	&operator=(CGIHandler &other);
 	~CGIHandler();
+	
+	std::string	output;
+	std::string	start_time;
 
-	void	parseFiletoCGI(std::string &full_path, LocationConfig *location);
+	void				parseFiletoCGI(std::string &full_path, LocationConfig *location);
+	void				separateQuery(std::string &full_path);
+	int					execute(HTTPmessage& request);
+	void				parseOutput(HTTPmessage &request);
+	void				killScript();
+	void				clear();
 
-	int		execute(const HTTPmessage& request, const LocationConfig *location);
-	void	clear();
-
-	bool	isCGI();
+	bool				isCGI();
+	bool				isRunning();
+	void				setRunning(bool b);
+	const std::string	&getQuery() const;
+	void				printParameters();
 };
-
-/**
- * @note Probablemente sería buena idea hacer que el contenido se envíe directamente desde esta clase (solo podemos suponer que está bien tal y como está después de ejecutar) -> No es posible porque hay un queue de respuestas -> mejor enviarlo directamente al cliente 
- * 
- * El programa cgi tampoco puede superar el timeout, empieza contar desde la última actividad del cliente
- */

@@ -23,7 +23,8 @@ enum solo_directives
 	ALLOWED_METHODS = 1 << 4,
 	UPLOAD = 1 << 5,
 	RETURN = 1 << 6,
-	TIMEOUT = 1 << 7
+	TIMEOUT = 1 << 7,
+	CGI_TIMEOUT = 1 << 8
 };
 
 class ServerConfig;
@@ -51,6 +52,8 @@ public:
 	size_t						max_body_size;
 	std::string					str_timeout;
 	size_t						timeout;
+	std::string					str_cgi_timeout;
+	size_t						cgi_timeout;
 	std::map<int, std::string>	error_pages;
 	cgi_handler_type			cgi_handlers;
 
@@ -61,12 +64,13 @@ public:
 	int		parseMaxbody(std::string &value);
 	int		parseTimeOut(std::string &value);
 	int		toTimeOut(std::string s);
+	int		parseCGITimeOut(std::string &value);
+	int		toCGITimeOut(std::string s);
 	int		parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys);
 	int		parseCGIHandler(std::string &value);
 
 	int		fillDirectives(std::vector<ServerConfig> *servers);
 	void	fillDefaults(std::vector<ServerConfig> *servers);
-
 
 	void	setTokens(std::vector<std::string> &tokens);
 };

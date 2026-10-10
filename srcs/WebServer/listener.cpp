@@ -68,3 +68,8 @@ bool	WebServer::is_listener(int fd)
 		return true;
 	return false;
 }
+
+bool	WebServer::is_cgi_pipe(int fd)
+{
+	return cgi_pipes.find(fd) != cgi_pipes.end();
+}

@@ -17,10 +17,14 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 	}
 	if (str_timeout.empty())
 	{
-		str_timeout = "1m";
-		timeout = 60;
+		str_timeout = "15s";
+		timeout = 15;
 	}
-
+	if (str_cgi_timeout.empty())
+	{
+		str_cgi_timeout = "5";
+		cgi_timeout = 5;
+	}
 	for (std::vector<ServerConfig>::iterator it = servers->begin(); it != servers->end(); it++)
 	{
 		/* Server config */
@@ -54,6 +58,11 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 			it->str_timeout = str_timeout;
 			it->timeout = timeout;
 		}
+		if (it->str_timeout.empty())
+		{
+			it->str_cgi_timeout = str_timeout;
+			it->cgi_timeout = timeout;
+		}
 		/* Location config */
 		for (std::vector<LocationConfig>::iterator jt = it->locations.begin(); jt != it->locations.end() ; jt++)
 		{
@@ -70,6 +79,11 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 			{
 				jt->str_max_body_size = it->str_max_body_size;
 				jt->max_body_size = it->max_body_size;
+			}
+			if (it->str_timeout.empty())
+			{
+				jt->str_cgi_timeout = it->str_timeout;
+				jt->cgi_timeout = it->timeout;
 			}
 			if (jt->error_pages.empty() && !it->error_pages.empty())
 				jt->error_pages = it->error_pages;

@@ -2,9 +2,12 @@
 
 /**
  * @brief outputs error message if msg is not NULL (else, picks from strerror) and return -err_code
- */
+ * @note Takes into account the SHoW_LOGS macro
+ w*/
 int	error_msg(int err_code, const char *func, const char *msg)
 {
+	if (!SHOW_LOGS)
+		return -err_code;
 	std::cerr << "\033[1;31m[Error] \033[0;31m";
 	if (func)
 		std::cerr << func << ": ";
@@ -46,7 +49,19 @@ int	pipePipes(int pipe_in[2], int pipe_out[2])
 		close(pipe_out[1]);
 		return -1;
 	}
-
+	return 0;
+}
+/**
+ * @brief Sets a fd to non blocking
+ * @return When success, returns 0, else, closes fd and returns -1
+ */
+int	setNonBlocking(int fd)
+{
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+	{
+		close(fd);
+		return 1;
+	}
 	return 0;
 }
 
@@ -81,11 +96,8 @@ int	listen_socket(struct addrinfo *addr, int listen_num)
 			status = errno;
 			continue;
 		}
-		if (fcntl(serversock, F_SETFL, O_NONBLOCK) < 0)
-		{
-			close(serversock);
+		if (setNonBlocking(serversock) < 0)
 			return error_msg(errno, "fcntl", NULL);
-		}
 		setsockopt(serversock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 		if (bind(serversock, p->ai_addr, p->ai_addrlen) < 0)
 		{

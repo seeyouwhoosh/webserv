@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/09 16:55:24 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/11 00:47:32 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@ Client::Client()
 	keep_alive = -1;
 	max_requests = -1;
 	n_requests = 0;
+
+	message.setCGIHandler(&cgi);
 }
 
 Client::Client(const Client &other)
@@ -166,10 +168,19 @@ int	Client::generateResponse()
 /**
  * @brief Adds the response to the response queue and clears message to use
  */
-void	Client::setResponse()
+int	Client::setResponse()
 {
 	http_responses.push(message.setResponse());
+	parser.clear();
 	message.clear();
+	if (epoll_addflag_fd(client, EPOLLOUT) < 0)
+	{
+		free_all();
+		return -1;
+	}
+
+	updateActivity();
+	return 0;
 }
 
 /**

@@ -50,8 +50,8 @@ int HTTPmessage::httpGET()
 	int status;
 	std::fstream fs;
 
-	if (cgi.isCGI())
-		status = cgi.execute(*this, locationconf);
+	if (cgi->isCGI())
+		status = cgi->execute(*this);
 	else
 	{
 		if (!locationconf && !serverconf)
@@ -217,12 +217,15 @@ int	HTTPmessage::httpPOST()
 		return setStatusCode(CONTENT_TOO_LARGE);
 
 	int				status;
-	if (rq_startline.iscgi)
+	if (cgi->isCGI())
 	{
-		CGIHandler	cgi;
-		status = cgi.execute();
-		if (status != OK)
-			return -setStatusCode(status);
+		status = cgi->execute(*this);
+		if (status == OK)
+		{
+			int pipe_fd = cgi->getPipeOut();
+			
+		}
+		
 		return 0;
 	}
 

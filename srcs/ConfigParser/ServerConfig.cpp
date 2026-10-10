@@ -160,6 +160,8 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 				return status;
 			else if (directive == "timeout" && (status = parseTimeOut(*start)))
 				return status;
+			else if (directive == "cgi_read_timeout" && (status = parseCGITimeOut(*start)))
+				return status;
 			else if (directive == "error_page" && (status = parseErrorPage(start, error_keys)))
 				return status;
 			else if (directive == "listen")

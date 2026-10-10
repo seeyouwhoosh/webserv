@@ -50,8 +50,9 @@ public:
 
 	/* Connection variables */
 	int								epoll_instance;
+	std::map<int, Client *>			cgi_pipes;
 	std::map<int, Client>			clients;
-	std::map<std::string, Session>	sessions; //bonus session
+	std::map<std::string, Session>	sessions; // Bonus
 	size_t							num_connections;
 	struct epoll_event				*epoll_events;
 

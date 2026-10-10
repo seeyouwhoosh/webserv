@@ -19,11 +19,7 @@ HTTPmessage::HTTPmessage()
 	rs_body = "";
 	rs_content_length = 0;
 
-	rq_startline.file = "";
-	rq_startline.iscgi = false;
 	rq_startline.method = "";
-	rq_startline.path_info = "";
-	rq_startline.query = "";
 	rq_startline.raw_path = "";
 	rq_startline.version = "";
 	rq_body = "";
@@ -55,11 +51,7 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 	rs_body = other.rs_body;
 	rs_content_length = other.rs_content_length;
 
-	rq_startline.file = other.rq_startline.file;
-	rq_startline.iscgi = other.rq_startline.iscgi;
 	rq_startline.method = other.rq_startline.method;
-	rq_startline.path_info = other.rq_startline.path_info;
-	rq_startline.query = other.rq_startline.query;
 	rq_startline.raw_path = other.rq_startline.raw_path;
 	rq_body = other.rq_body;
 	rq_content_length = other.rq_content_length;
@@ -79,16 +71,22 @@ int HTTPmessage::setStatusCode(const int code)
 }
 
 /**
- * @brief Set HTTP response headers
+ * @brief Set HTTP response header
 */
 void HTTPmessage::setHeader(const std::string& name, const std::string& value)
 {
 	rs_headers[name] = value;
 }
 
-void HTTPmessage::getHeader(const std::string& name)
+/**
+ * @brief Get HTTP response headers
+*/
+const std::string HTTPmessage::getHeader(const std::string& key) const
 {
-	return (rs_headers[name]);
+	stringmap::const_iterator	res = rs_headers.find(key);
+	if (res == rs_headers.end())
+		return "";
+	return res->second;
 }
 
 /**
@@ -188,11 +186,7 @@ void	HTTPmessage::clear()
 	rs_content_length = 0;
 	rs_headers.clear();
 
-	rq_startline.file.clear();
-	rq_startline.iscgi = false;
 	rq_startline.method.clear();
-	rq_startline.path_info.clear();
-	rq_startline.query.clear();
 	rq_startline.raw_path.clear();
 	rq_startline.version.clear();
 	rq_body.clear();

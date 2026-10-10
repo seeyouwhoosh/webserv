@@ -20,12 +20,12 @@ INCLUDES	= -I$(INCLUDE_DIR)
 
 # Sources
 SRC_DIR		= srcs
-SOURCES		= main.cpp \
-				HTTPmessage/HTTPmessage.cpp HTTPmessage/http_methods.cpp HTTPmessage/generate_response.cpp HTTPmessage/file_handler.cpp HTTPmessage/cgi_handler.cpp HTTPmessage/cgi_utils.cpp HTTPmessage/autoindex.cpp \
+SOURCES		= test.cpp \
+				HTTPmessage/HTTPmessage.cpp HTTPmessage/http_methods.cpp HTTPmessage/generate_response.cpp HTTPmessage/file_handler.cpp HTTPmessage/autoindex.cpp \
 				WebServer/WebServer.cpp WebServer/epoll.cpp WebServer/client.cpp WebServer/listener.cpp \
 				utils/conversion.cpp utils/files.cpp utils/general.cpp utils/init.cpp utils/checkers.cpp \
 				ConfigParser/ConfigParser.cpp ConfigParser/HTTPContext.cpp ConfigParser/ServerConfig.cpp ConfigParser/LocationConfig.cpp ConfigParser/fill_default.cpp ConfigParser/parse_tools.cpp \
-				Client.cpp \
+				Client.cpp CGIHandler.cpp \
 				RequestParser/RequestParser.cpp RequestParser/body.cpp RequestParser/chunked.cpp RequestParser/headers.cpp RequestParser/request_line.cpp
 # Objects
 OBJ_DIR		= objs

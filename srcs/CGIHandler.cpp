@@ -5,9 +5,12 @@
 
 /* Orthodox Canonical form */
 
-CGIHandler::CGIHandler()
+CGIHandler::CGIHandler(): iscgi(false), pid(-1)
 {
-
+	pipe_in[0] = -1;
+	pipe_in[1] = -1;
+	pipe_out[0] = -1;
+	pipe_out[1] = -1;
 }
 
 CGIHandler::CGIHandler(CGIHandler &other)
@@ -17,16 +20,25 @@ CGIHandler::CGIHandler(CGIHandler &other)
 
 CGIHandler	&CGIHandler::operator=(CGIHandler &other)
 {
-	
+	cgi_env = other.cgi_env;
+	argv = other.argv;
+	envp = other.envp;
+	cgi_path = other.cgi_path;
+	filename = other.filename;
+	path_info = other.path_info;
+	query = other.query;
+	iscgi = other.iscgi;
+	output = other.output;
 	return *this;
 }
 
 CGIHandler::~CGIHandler()
 {
-
+	killScript();
 }
 
-std::string	CGIHandler::matchExtension(const std::string &ext, const LocationConfig *location) const
+std::string	CGIHandler::matchExtension(const std::string &ext,
+										const LocationConfig *location) const
 {
 	if (location)
 	{
@@ -34,8 +46,7 @@ std::string	CGIHandler::matchExtension(const std::string &ext, const LocationCon
 		if (it != location->cgi_handlers.end())
 			return it->second;
 	}
-	else
-		return "";
+	return "";
 }
 
 /**
@@ -95,6 +106,19 @@ void	CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location
 	}
 
 }
+/**
+ * @brief Cleans the given raw_path from request and sets full_path to a string without queries
+ */
+void	CGIHandler::separateQuery(std::string &full_path)
+{
+	size_t		query_pos = full_path.find('?');
+
+	if (query_pos == std::string::npos)
+		return;
+	
+	query = full_path.substr(query_pos + 1);
+	full_path = full_path.erase(query_pos);
+}
 
 bool	CGIHandler::isCGI()
 {
@@ -104,9 +128,15 @@ bool	CGIHandler::isCGI()
 /**
  * @brief Having detected "cgi-bin", searches for the executable path
  * 
- * After the "/cgi-bin/", looks for the next element, if it's a directory, keep searching; else, attach it to the path (for the cgi thingy), the rest of that is attached to path_info
+ * After the "/cgi-bin/", looks for the next element,
+ * if it's a directory, keep searching;
+ * else, attach it to the path (for the cgi thingy),
+ * the rest of that is attached to path_info
  * 
- * @example The full path is "/html/cgi-bin/bin/binary/some/other/words". Then, first we cut to "bin/binary/some/other/words". We get until "binary", because there may be a pseudopath for the cgi to use (see PATH_INFO)
+ * @example The full path is "/html/cgi-bin/bin/binary/some/other/words".
+ * Then, first we cut to "bin/binary/some/other/words". We get until "binary"
+ *  because there may be a pseudopath for the cgi to use (see PATH_INFO)
+ * 
  * @note Updates full_path
  * @note Updates iscgi
  */
@@ -158,7 +188,7 @@ static void	dumpOutput(int pipe, std::string &output)
 		output.append(buffer, bytes_read);
 }
 
-int	CGIHandler::execute(const HTTPmessage& request, const LocationConfig *location)
+int	CGIHandler::execute(HTTPmessage& request)
 {
 	int		pipe_in[2];
 	int		pipe_out[2];
@@ -198,33 +228,53 @@ int	CGIHandler::execute(const HTTPmessage& request, const LocationConfig *locati
 			close(pipe_in[0]);
 			close(pipe_out[1]);
 
+			setNonBlocking(pipe_in[1]);
+			setNonBlocking(pipe_out[0]);
 			if (!request.rq_body.empty())
 				write(pipe_in[1], request.rq_body.c_str(), request.rq_body.size());
 			close(pipe_in[1]);
-			
-			dumpOutput(pipe_out[0], output);
-			close(pipe_out[0]);
-
-			waitpid(pid, &status, 0);
-			if (!WIFEXITED(status))
-			{
-				if ((status = WEXITSTATUS(status)) > 0)
-					return status;
-				return INTERNAL_SERVER_ERROR;
-			}
-
-			parseOutput(request);
-
-			std::string	content_len;
-			if (!(content_len = request.getHeader("Content-Length")).empty())
-			{
-				int	content_length = strtoInt(content_len);
-				request.setBody(output.substr(0, content_length));
-			}
-
+			start_time = std::time(NULL); 
+			is_running = true;
 			return OK;
-		}
-		}
+
+/* 			
+			
+			pid_t result = waitpid(pid, &status, WNOHANG);
+			if (result > 0)
+			{
+				if (WIFEXITED(status))
+				{
+					status = WEXITSTATUS(status);
+					if (status != 0)
+						return status;
+
+					parseOutput(request);
+					std::string	content_len;
+					if (!(content_len = request.getHeader("Content-Length")).empty())
+					{
+						int	content_length = strtoInt(content_len);
+						request.setBody(output.substr(0, content_length));
+					}
+					else
+						request.setBody(output);
+					return OK;
+				}
+				else
+					return INTERNAL_SERVER_ERROR;
+			} 
+			else if (result == 0)
+			{
+				if (elapsed_time > CGI_TIMEOUT_LIMIT)
+				{
+					kill(cgi_pid, SIGKILL);
+					waitpid(cgi_pid, &status, 0);
+					return GATEWAY_TIMEOUT;
+				}
+			}
+			else
+				return INTERNAL_SERVER_ERROR;
+ */		}
+	}
 }
 
 void	CGIHandler::parseOutput(HTTPmessage &request)
@@ -334,4 +384,70 @@ int	CGIHandler::gotoDirectory()
 		return UNPROCESSABLE_CONTENT;
 	else
 		return chdir(dir_path.c_str());
+}
+
+void	CGIHandler::killScript()
+{
+	int status;
+
+	if (isrunning && pid > 0)
+	{
+		kill(pid, SIGKILL);
+		waitpid(cgi_pid, &status, WNOHANG);
+		isrunning = false;
+		pid = -1;
+
+		if (pipe_in[1] != -1)
+		{
+			close(pipe_in[1]);
+			pipe_in[1] = -1;
+		}
+		if (pipe_out[0] != -1)
+		{
+			close(pipe_out[0]);
+			pipe_out[0] = -1;
+		}
+	}
+}
+
+const std::string	&CGIHandler::getQuery() const
+{
+	return query;
+}
+
+int	CGIHandler::getPipeOut() const
+{
+	return pipe_out[0];
+}
+
+bool	CGIHandler::isRunning()
+{
+	return isrunning;
+}
+
+void	CGIHandler::setRunning(bool b)
+{
+	isrunning = b;
+}
+
+void	CGIHandler::clear()
+{
+	cgi_env.clear();
+	argv.clear();
+	envp.clear();
+	cgi_path.clear();
+	filename.clear();
+	path_info.clear();
+	query.clear();
+	iscgi = false;
+	output.clear();
+}
+
+void	CGIHandler::printParameters()
+{
+	std::cout << "Real path: " << cgi_path << std::endl;
+	std::cout << "path_info: " << path_info << std::endl;
+	std::cout << "Query: " << query << std::endl;
+	std::cout << "Filename: " << filename << std::endl;
+	std::cout << "Output: " << output << std::endl;
 }
