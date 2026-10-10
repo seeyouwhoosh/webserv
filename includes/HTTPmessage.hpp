@@ -19,6 +19,7 @@
 
 class ServerConfig;
 class LocationConfig;
+class CGIHandler;
 
 #define ERRPAGE_DIR	"error_pages"
 #ifndef BUFFER_SIZE
@@ -58,10 +59,10 @@ typedef	struct t_rq_startline
 	std::string	method;
 	std::string	raw_path;
 	std::string	file;
-	std::string	path_info;
-	std::string	query;
+	std::string	path_info; //
+	std::string	query; //
 	std::string	version;
-	bool		iscgi;
+	bool		iscgi; //
 }	t_rq_startline;
 
 typedef	struct t_rs_startline
@@ -80,15 +81,16 @@ class HTTPmessage
 {
 private:	
 	/* General variables */
-	ServerConfig				*serverconf;
-	LocationConfig				*locationconf;
-	std::string					full_path;
-	std::string					upload_name;
+	ServerConfig	*serverconf;
+	LocationConfig	*locationconf;
+	CGIHandler		&cgi;
+	std::string		full_path;
+	std::string		upload_name;
 	
-	std::string					cgi_path;
-	std::string					server_port;
-	std::string					client_addr;
-	int							client_fd;
+	std::string		cgi_path; //
+	std::string		server_port; //
+	std::string		client_addr; //
+	int				client_fd; // For the logs
 	
 	/* Response variables */
 	t_rs_startline	rs_startline;
@@ -108,7 +110,7 @@ private:
 	void			autoindexHtmlHead(std::stringstream &page, std::string virtual_path);
 	int				createAutoindex(std::string dir);
 
-	/* CGI */
+	/* CGI */ //
 	void			filefromCGIbin(size_t cgibin_pos);
 	void			indepCGIexecutable(size_t app_pos);
 	void			CGIparse();
@@ -119,13 +121,13 @@ private:
 	void			parseCGIoutput(std::string &cgi_output);
 
 	/* File management */
-	std::string		parsePath();
+	std::string		parsePath(); //
 	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
 	LocationConfig	*getFullPath(std::string &file);
 	int				openErrorFile(int error, std::fstream &fs);
 	int				generateErrorResponse(int error);
-	int				manageActuallyDir();
+	bool			manageActuallyDir();
 
 	/* Other */
 	int				handleSpecialType();

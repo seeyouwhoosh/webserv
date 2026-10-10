@@ -46,6 +46,13 @@ void	HTTPmessage::filefromCGIbin(size_t cgibin_pos)
 	}
 }
 
+/**
+ * @brief Looks for cgi executable based on their extension
+ * 
+ * If it's a file that matches with one of the cgi handlers or the extension is ".cgi", then sets path_info accordingly and updates full_path to path_info (else full_path is the same)
+ * 
+ * @param app_pos index of the 
+ */
 void	HTTPmessage::indepCGIexecutable(size_t app_pos)
 {
 	size_t		app_end = full_path.find('/', app_pos);
@@ -70,7 +77,7 @@ void	HTTPmessage::indepCGIexecutable(size_t app_pos)
 		rq_startline.iscgi = false;
 }
 
-void	HTTPmessage::CGIparse()
+void	HTTPmessage::CGIparse() // no me convence, por si hay paths como "cgi-bin/.test/.bin/test.cgi/.algomás"
 {
 	size_t		app_pos = full_path.find('.');
 	size_t		cgibin_pos = full_path.find("/cgi-bin/");

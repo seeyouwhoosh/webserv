@@ -101,7 +101,9 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &ser
 	return NOT_FOUND;
 }
 
-/* Cleans the given raw_path from request and returns a string without queries and path_info */
+/**
+ * @brief Cleans the given raw_path from request and returns a string without queries and path_info
+ */
 std::string	HTTPmessage::parsePath()
 {
 	std::string	file = rq_startline.raw_path;
@@ -149,11 +151,13 @@ LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 	return locationconf;
 }
 
-/* When the GET path is like "/thing" meaning to grab a file but it's actually a directory*/
-int	HTTPmessage::manageActuallyDir()
+/**
+ * @brief When the GET path is like "/thing" meaning to grab a file but it's actually a directory
+ * @return 0 if it's not a directory, true if it is */
+bool	HTTPmessage::manageActuallyDir()
 {
 	if (full_path.empty() || full_path[full_path.length() - 1] == '/')
-		return 0;
+		return false;
 
 	std::string redirect_url = full_path + "/";
 	
@@ -166,5 +170,5 @@ int	HTTPmessage::manageActuallyDir()
 	rs_content_length = rs_body.length();
 	rs_headers["Content-Type"] = "text/html";
 
-	return 1;
+	return true;
 }
