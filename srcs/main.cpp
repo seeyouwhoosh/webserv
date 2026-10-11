@@ -24,6 +24,20 @@ void	sigint_handler(int sig)
 	g_signal = 0;
 }
 
+void	sigquit_handler(int sig)
+{
+	(void)sig;
+	signal(SIGQUIT, SIG_IGN);
+	g_signal = 0;
+}
+
+void	sigtstp_handler(int sig)
+{
+	(void)sig;
+	signal(SIGTSTP, SIG_IGN);
+	g_signal = 0;
+}
+
 static char	*handle_args(int ac, char **av)
 {
 	if (ac < 2)
@@ -48,6 +62,8 @@ int	main(int ac, char **av)
 	char *file = handle_args(ac, av);
 
 	signal(SIGINT, sigint_handler);
+	signal(SIGQUIT, sigquit_handler);
+	signal(SIGTSTP, sigtstp_handler);
 
 	WebServer	webserv;
 	int			num_events;
