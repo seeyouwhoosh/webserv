@@ -126,7 +126,7 @@ int	WebServer::send_data_client(int client)
 	{
 		if (close_connection(client) < 0)
 			return error_msg(errno, "send", NULL);
-		return 0;
+		return -1;
 	}
 	if (clients[client].responseComplete())
 	{
@@ -141,6 +141,26 @@ int	WebServer::send_data_client(int client)
 	}
 	return 0;
 }
+
+int	WebServer::send_cgi_data(int fd, Client *client)
+{
+	if (client->cgi.input.empty())
+		return 0;
+	ssize_t		sent = 0;
+	sent = write(fd, client->cgi.input.data(),
+				client->cgi.input.size);
+	if (sent < 0)
+		return -1;
+	client->cgi.input.erase(0, sent);
+	if (client->cgi.input.empty())
+	{
+		if (close_connection(fd) < 0)
+			return error_msg(errno, "send", NULL);
+		client->cgi.pipe_in[1] = -1;
+	}
+	return 0;
+}
+
 /**
  * @brief Receives data from client and generates response
  * 
@@ -210,10 +230,15 @@ int	WebServer::handle_client_data(int client)
 			free_all();
 			return error_msg(1, "generateResponse", "couldn't generate response");
 		}
-		else if (response_status > 0)
+		else if (response_status == IS_CGI)
 		{
-			cgi_pipes[response_status] = &clientUnit;
-			epoll_add_fd(response_status);
+			int	pipe_in = clientUnit.cgi.getPipeIn();
+			int	pipe_out = clientUnit.cgi.getPipeOut();
+			epoll_add_fd(pipe_in)
+			epoll_add_fd(pipe_out);
+			epoll_delflag_fd(pipe_out, EPOLLIN);
+			cgi_pipes[pipe_in] = &clientUnit;
+			cgi_pipes[pipe_out] = &clientUnit;
 			return 0;
 		}
 		if (clientUnit.setResponse() < 0)
@@ -261,33 +286,18 @@ int	WebServer::handle_cgi_data(int fd, Client *client)
 			{
 				client->cgi.parseOutput(client->message);
 				client->message.setBody(client->cgi.output);
-			}
-			else
-			{
-				client->message.setStatusCode(INTERNAL_SERVER_ERROR);
-				if (client->generateResponse() < 0)
+				client->setResponse();
+				if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
+				{
+					free_all();
 					return -1;
+				}
 			}
 		}
-		else
-		{
-			client->message.setStatusCode(INTERNAL_SERVER_ERROR);
-			if (client->generateResponse() < 0)
-				return -1;
-		}
 	}
-	else
-	{
-		client->message.setStatusCode(INTERNAL_SERVER_ERROR);
-		if (client->generateResponse() < 0)
-			return -1;
-	}
-
-	client->setResponse();
-	if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
-	{
-		free_all();
+	client->message.setStatusCode(INTERNAL_SERVER_ERROR);
+	if (client->generateResponse() < 0)
 		return -1;
-	}
+
 	return 0;
 }

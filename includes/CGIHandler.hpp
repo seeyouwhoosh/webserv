@@ -45,6 +45,7 @@ private:
 	CGIHandler	&operator=(CGIHandler &other);
 	~CGIHandler();
 	
+	std::string	input;
 	std::string	output;
 	time_t		start_time;
 
@@ -63,6 +64,7 @@ private:
 	void				setServerPort(std::string ServerPort);
 	const std::string	&getQuery() const;
 	int					getPipeOut() const;
+	int					getPipeIn() const;
 	pid_t				getPID() const;
 	void				printParameters();
 };

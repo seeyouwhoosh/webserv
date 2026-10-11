@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/12 00:00:11 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/12 01:43:50 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,8 @@ int	WebServer::close_connection(int fd)
 		return -1;
 	}
 	close(fd);
-	num_connections--;
+	if (num_connections > 0)
+		num_connections--;
 	return 0;
 }
 
@@ -136,8 +137,19 @@ int	WebServer::process_connections(int num_events)
 		}
 		if (epoll_events[i].events & EPOLLOUT)
 		{
-			if (send_data_client(fd) < 0)
-				return -1;
+			int	send_status;
+			if (is_cgi_pipe(fd))
+			{
+				if (send_cgi_data(fd, cgi_pipes[fd]) < 0)
+					return -1;
+			}
+			else if (send_status = send_data_client(fd))
+			{
+				if (send_status < 0)
+					return -1;
+				if (send_status > 0)
+					continue;
+			}
 		}
 		if (epoll_events[i].events & EPOLLIN)
 		{
@@ -146,7 +158,7 @@ int	WebServer::process_connections(int num_events)
 				if (handle_new_connection(fd) < 0)
 					return -1;
 			}
-			else if (is_cgi_pipe(fd))
+			else if (is_cgi_pipe(fd)) //arreglar estp
 			{
 				if (handle_cgi_data(fd, cgi_pipes[fd]) < 0)
 					return -1;

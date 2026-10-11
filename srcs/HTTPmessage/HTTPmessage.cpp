@@ -91,6 +91,7 @@ const std::string HTTPmessage::getHeader(const std::string& key) const
 void HTTPmessage::setBody(const std::string& body)
 {
 	this->rs_body = body;
+	this->rs_content_length = body.size();
 }
 
 /**

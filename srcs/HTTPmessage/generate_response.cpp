@@ -183,7 +183,7 @@ int	HTTPmessage::generateResponse()
 		return -1;
 
 	if (status == IS_CGI)
-		return cgi->getPipeOut();
+		return IS_CGI;
 	rs_headers["Date"] = getDate();
 	return 0;
 }

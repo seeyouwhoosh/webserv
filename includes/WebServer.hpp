@@ -67,6 +67,7 @@ public:
 	void		create_new_client(int clientsock, int listener, void *clientaddr);
 	int			handle_cgi_data(int fd, Client *client);
 	int			handle_client_data(int client);
+	int			send_cgi_data(int fd, Client *client);
 	int			send_data_client(int client);
 	int			close_connection(int fd);
 

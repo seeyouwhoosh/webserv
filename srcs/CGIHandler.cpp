@@ -193,6 +193,11 @@ int	CGIHandler::execute(HTTPmessage& request)
 	if (pipePipes(pipe_in, pipe_out) < 0)
 		return INTERNAL_SERVER_ERROR;
 
+	setNonBlocking(pipe_out[0]);
+	setNonBlocking(pipe_out[1]);
+	setNonBlocking(pipe_in[0]);
+	setNonBlocking(pipe_in[1]);
+
 	fill_env(request);
 
 	pid = fork();
@@ -222,10 +227,7 @@ int	CGIHandler::execute(HTTPmessage& request)
 			close(pipe_in[0]);
 			close(pipe_out[1]);
 
-			setNonBlocking(pipe_out[0]);
-			if (!request.rq_body.empty())
-				write(pipe_in[1], request.rq_body.c_str(), request.rq_body.size());
-			close(pipe_in[1]);
+			input = request.rq_body;
 			start_time = std::time(NULL); 
 			isrunning = true;
 			return OK;
@@ -374,6 +376,11 @@ const std::string	&CGIHandler::getQuery() const
 int	CGIHandler::getPipeOut() const
 {
 	return pipe_out[0];
+}
+
+int	CGIHandler::getPipeIn() const
+{
+	return pipe_in[1];
 }
 
 pid_t	CGIHandler::getPID() const

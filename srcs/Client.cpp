@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/11 23:47:32 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/12 01:33:39 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,7 +182,7 @@ int	Client::setResponse()
  */
 int	Client::responseComplete()
 {
-	return !http_responses.empty();
+	return http_responses.empty();
 }
 
 void	Client::clearParser()
