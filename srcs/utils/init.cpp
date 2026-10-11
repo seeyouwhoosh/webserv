@@ -88,5 +88,6 @@ void	init_responses()
 	responses[UNPROCESSABLE_CONTENT]	= "Unprocessable Content";
 	responses[INTERNAL_SERVER_ERROR]	= "Internal Server Error";
 	responses[NOT_IMPLEMENTED]			= "Not Implemented";
+	responses[GATEWAY_TIMEOUT]			= "Gateway Timeout";
 }
 

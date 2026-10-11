@@ -62,10 +62,10 @@ public:
 	/* Sockets and clients handlers */
 	int			prepare_listeners();
 	int			process_connections(int num_events);
-	bool		is_listener(int fd);
 	int			handle_new_connection(int listener);
 	void		check_timeouts();
 	void		create_new_client(int clientsock, int listener, void *clientaddr);
+	int			handle_cgi_data(int fd, Client *client);
 	int			handle_client_data(int client);
 	int			send_data_client(int client);
 	int			close_connection(int fd);
@@ -81,8 +81,10 @@ public:
 	int			epoll_delflag_fd(int fd, int flag);
 	int			epoll_add_listens();
 	
-	/* Getters and setters*/
+	/* Getters and setters and booleans */
 	std::string	getPort(int listener);
+	bool		is_listener(int fd);
+	bool		is_cgi_pipe(int fd);
 
 	/* Bonus */
 	std::string	createSession();

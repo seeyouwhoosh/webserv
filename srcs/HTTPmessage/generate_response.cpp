@@ -1,15 +1,21 @@
 #include <fstream>
-
 #include "HTTPmessage.hpp"
 #include "ConfigParser.hpp"
+#include "CGIHandler.hpp"
 #include "utils.hpp"
 #include <iostream>
 
-/* Searches for error.html in the location corresponding to the current path.
-If location exists, and error_file is set, attempts to open file.
-Else if error_file in location is not set, or location is not set, it uses global config.
-If everything fails, uses the default given by the webserver.
-If error_file does not exist in any case or it fails somehow, returns -1 */
+/**
+ * @brief Searches for error.html in the location corresponding to the current path.
+ * 
+ * If location exists, and error_file is set, attempts to open file.
+ * 
+ * Else if error_file in location is not set, or location is not set, it uses global config.
+ * 
+ * If everything fails, uses the default given by the webserver.
+ * 
+ * @return If error_file does not exist in any case or it fails somehow, returns -1
+ */
 int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 {
 	std::string	error_str = toString(error);
@@ -54,7 +60,9 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 	return 0;
 }
 
-/* Creates an error file into the default error pages directory established in the header */
+/**
+ * @brief Creates an error file into the default error pages directory established in the header
+ */
 static std::string	generateErrorFile(int error, std::string phrase, std::fstream &fs)
 {
 	std::string	error_str = toString(error);
@@ -84,7 +92,9 @@ static std::string	generateErrorFile(int error, std::string phrase, std::fstream
 	return body;
 }
 
-/* Given a int error, try to open in, if there is no problem, pass it to the response body. Else, generate own error file in the default error pages directory */
+/**
+ * @brief Given a int error, try to open in, if there is no problem, pass it to the response body. Else, generate own error file in the default error pages directory
+ */
 int	HTTPmessage::generateErrorResponse(int error)
 {
 	std::fstream	err_file;
@@ -130,11 +140,16 @@ void	HTTPmessage::setAllowHeader()
 	rs_headers["Allow"] = header.str();
 }
 
-/* If no problems were detected in the parsing, matches the method and redirects to the correspondent method function. *NOTE: METHOD FUNCTIONS (in case of success) FILL THE NECESSARY RESPONSE VARIABLES, EXCEPT FOR Date, WHICH IS GENERATED AT THE TIME OF INSERTION*
-If method function returns -1, error is set and the error generating function is called */
+/**
+ * @brief If no problems were detected in the parsing, matches the method and redirects to the correspondent method function.
+ * @note METHOD FUNCTIONS (in case of success) FILL THE NECESSARY RESPONSE VARIABLES, EXCEPT FOR Date, WHICH IS GENERATED AT THE TIME OF INSERTION
+ * @return If method function returns -1, error is set and the error generating function is called
+ * 
+ * Else if the response is actually a CGI, returns the writing out pipe of the script */
 int	HTTPmessage::generateResponse()
 {
 	int	error = 0;
+	int	status = 0;
 
 	if (SHOW_LOGS)
 		printQHeaders();
@@ -145,15 +160,15 @@ int	HTTPmessage::generateResponse()
 		switch (e_method)
 		{
 		case GET:
-			if (httpGET() < 0)
+			if ((status = httpGET()) < 0)
 				error = rs_startline.status_code;
 			break;
 		case POST:
-			if (httpPOST() < 0)
+			if ((status = httpPOST()) < 0)
 				error = rs_startline.status_code;
 			break;
 		case DELETE:
-			if (httpDELETE() < 0)
+			if ((status = httpDELETE()) < 0)
 				error = rs_startline.status_code;
 			break;
 		default:
@@ -167,6 +182,8 @@ int	HTTPmessage::generateResponse()
 	if (error && generateErrorResponse(error) < 0)
 		return -1;
 
+	if (status == IS_CGI)
+		return cgi->getPipeOut();
 	rs_headers["Date"] = getDate();
 	return 0;
 }

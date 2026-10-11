@@ -15,6 +15,7 @@ HTTPContext::HTTPContext(const HTTPContext &other)
 HTTPContext	&HTTPContext::operator=(const HTTPContext &other)
 {
 	root = other.root;
+	alias = other.alias;
 	indexes = other.indexes;
 	autoindex = other.autoindex;
 	str_max_body_size = other.str_max_body_size;
@@ -50,9 +51,9 @@ int	HTTPContext::parseRoot(std::string &value)
 
 int	HTTPContext::parseAlias(std::string &value)
 {
-	if (flags & ALIAS)
-		return ALIAS_ROOT;
 	if (flags & ROOT)
+		return ALIAS_ROOT;
+	if (flags & ALIAS)
 	{
 		error_par = "alias";
 		return MULTIPLE_VALUES;

@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/10 21:56:08 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/12 00:00:11 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,7 +148,7 @@ int	WebServer::process_connections(int num_events)
 			}
 			else if (is_cgi_pipe(fd))
 			{
-				if (handle_cgi_data(fd, *cgi_pipes[fd]) < 0)
+				if (handle_cgi_data(fd, cgi_pipes[fd]) < 0)
 					return -1;
 			}
 			else if (handle_client_data(fd) < 0)

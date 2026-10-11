@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/11 00:47:32 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/11 23:47:32 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,13 +140,11 @@ void Client::setSocket(int sock)
  * 
  * Sets server on client, sets sever, port, address and fd in messages
 */
-void Client::initHTTPmessage(std::string &port, std::string address,
-								ServerConfig *server)
+void Client::initHTTPmessage(ServerConfig *server)
 {
 	this->server = server;
+	message.setCGIHandler(&cgi);
 	message.setClientfd(fd);
-	message.setServerPort(port);
-	message.setClientAddress(address);
 	message.setServerConf(server);
 }
 
@@ -171,14 +169,10 @@ int	Client::generateResponse()
 int	Client::setResponse()
 {
 	http_responses.push(message.setResponse());
+
 	parser.clear();
 	message.clear();
-	if (epoll_addflag_fd(client, EPOLLOUT) < 0)
-	{
-		free_all();
-		return -1;
-	}
-
+	cgi.clear();
 	updateActivity();
 	return 0;
 }

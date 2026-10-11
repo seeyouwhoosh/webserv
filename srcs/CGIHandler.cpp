@@ -5,7 +5,7 @@
 
 /* Orthodox Canonical form */
 
-CGIHandler::CGIHandler(): iscgi(false), pid(-1)
+CGIHandler::CGIHandler(): pid(-1), isrunning(false), iscgi(false)
 {
 	pipe_in[0] = -1;
 	pipe_in[1] = -1;
@@ -88,14 +88,19 @@ void	CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location
 			if (stat(current_path.c_str(), &st) == 0)
 			{
 				size_t		pos_ext = segment.find_last_of('.');
-				std::string	ext_str = segment.substr(pos_ext);
-				if ((st.st_mode & S_IFMT)== S_IFREG && (!(cgi_path = matchExtension(ext_str, location)).empty() || ext_str == ".cgi"))
+				if (pos_ext != std::string::npos)
 				{
-					iscgi = true;
-					found = true;
-					full_path = current_path;
-					cgi_path = current_path;
-					filename = segment;
+					std::string ext_str = segment.substr(pos_ext);
+					if ((st.st_mode & S_IFMT) == S_IFREG && 
+						(!(cgi_path = matchExtension(ext_str, location)).empty() ||
+						ext_str == ".cgi"))
+					{
+						iscgi = true;
+						found = true;
+						full_path = current_path;
+						cgi_path = current_path;
+						filename = segment;
+					}
 				}
 				else if ((st.st_mode & S_IFMT)== S_IFDIR)
 					current_path += "/";
@@ -104,8 +109,8 @@ void	CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location
 				break;
 		}
 	}
-
 }
+
 /**
  * @brief Cleans the given raw_path from request and sets full_path to a string without queries
  */
@@ -150,6 +155,7 @@ void	CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path)
 
 	while (std::getline(ss, segment, '/'))
 	{
+
 		if (segment.empty())
 			break;
 
@@ -158,11 +164,10 @@ void	CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path)
 		else
 		{
 			current_path += segment;
-
 			struct stat	st;
 			if (stat(current_path.c_str(), &st) == 0)
 			{
-				if ((st.st_mode & S_IFMT)== S_IFREG)
+				if ((st.st_mode & S_IFMT) == S_IFREG)
 				{
 					iscgi = true;
 					found = true;
@@ -170,7 +175,7 @@ void	CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path)
 					cgi_path = current_path;
 					filename = segment;
 				}
-				else if ((st.st_mode & S_IFMT)== S_IFDIR)
+				else if ((st.st_mode & S_IFMT) == S_IFDIR)
 					current_path += "/";
 			}
 			else
@@ -179,19 +184,8 @@ void	CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path)
 	}
 }
 
-static void	dumpOutput(int pipe, std::string &output)
-{
-	char		buffer[BUFFER_SIZE];
-	ssize_t		bytes_read;
-
-	while ((bytes_read = read(pipe, buffer, sizeof(buffer))) > 0)
-		output.append(buffer, bytes_read);
-}
-
 int	CGIHandler::execute(HTTPmessage& request)
 {
-	int		pipe_in[2];
-	int		pipe_out[2];
 	int		status;
 
 	if ((status = checkFileStatus(F_OK | X_OK, cgi_path)) != OK)
@@ -201,7 +195,7 @@ int	CGIHandler::execute(HTTPmessage& request)
 
 	fill_env(request);
 
-	pid_t	pid = fork();
+	pid = fork();
 	switch (pid)
 	{
 		case -1:
@@ -228,52 +222,14 @@ int	CGIHandler::execute(HTTPmessage& request)
 			close(pipe_in[0]);
 			close(pipe_out[1]);
 
-			setNonBlocking(pipe_in[1]);
 			setNonBlocking(pipe_out[0]);
 			if (!request.rq_body.empty())
 				write(pipe_in[1], request.rq_body.c_str(), request.rq_body.size());
 			close(pipe_in[1]);
 			start_time = std::time(NULL); 
-			is_running = true;
+			isrunning = true;
 			return OK;
-
-/* 			
-			
-			pid_t result = waitpid(pid, &status, WNOHANG);
-			if (result > 0)
-			{
-				if (WIFEXITED(status))
-				{
-					status = WEXITSTATUS(status);
-					if (status != 0)
-						return status;
-
-					parseOutput(request);
-					std::string	content_len;
-					if (!(content_len = request.getHeader("Content-Length")).empty())
-					{
-						int	content_length = strtoInt(content_len);
-						request.setBody(output.substr(0, content_length));
-					}
-					else
-						request.setBody(output);
-					return OK;
-				}
-				else
-					return INTERNAL_SERVER_ERROR;
-			} 
-			else if (result == 0)
-			{
-				if (elapsed_time > CGI_TIMEOUT_LIMIT)
-				{
-					kill(cgi_pid, SIGKILL);
-					waitpid(cgi_pid, &status, 0);
-					return GATEWAY_TIMEOUT;
-				}
-			}
-			else
-				return INTERNAL_SERVER_ERROR;
- */		}
+		}
 	}
 }
 
@@ -393,7 +349,7 @@ void	CGIHandler::killScript()
 	if (isrunning && pid > 0)
 	{
 		kill(pid, SIGKILL);
-		waitpid(cgi_pid, &status, WNOHANG);
+		waitpid(pid, &status, WNOHANG);
 		isrunning = false;
 		pid = -1;
 
@@ -420,6 +376,11 @@ int	CGIHandler::getPipeOut() const
 	return pipe_out[0];
 }
 
+pid_t	CGIHandler::getPID() const
+{
+	return pid;
+}
+
 bool	CGIHandler::isRunning()
 {
 	return isrunning;
@@ -428,6 +389,22 @@ bool	CGIHandler::isRunning()
 void	CGIHandler::setRunning(bool b)
 {
 	isrunning = b;
+}
+
+/**
+ * @brief Set client address
+*/
+void	CGIHandler::setClientAddress(std::string client_address)
+{
+	client_addr = client_address;
+}
+
+/**
+ * @brief Set server port
+*/
+void	CGIHandler::setServerPort(std::string ServerPort)
+{
+	server_port = ServerPort;
 }
 
 void	CGIHandler::clear()
@@ -439,8 +416,15 @@ void	CGIHandler::clear()
 	filename.clear();
 	path_info.clear();
 	query.clear();
+	pid = -1;
+	pipe_in[0] = -1;
+	pipe_in[1] = -1;
+	pipe_out[0] = -1;
+	pipe_out[1] = -1;
+	isrunning = false;
 	iscgi = false;
 	output.clear();
+	start_time = -1;
 }
 
 void	CGIHandler::printParameters()

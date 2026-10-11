@@ -1,7 +1,7 @@
 #include "HTTPmessage.hpp"
 #include "ConfigParser.hpp"
+#include "CGIHandler.hpp"
 #include "utils.hpp"
-#include <iostream>//borrar
 
 /* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
 int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf)
@@ -108,13 +108,14 @@ LocationConfig *HTTPmessage::getFullPath(std::string &full_path)
 		return NULL;
 
 	cgi->separateQuery(full_path);
+	request_uri = full_path;
 	int location_pos = getLocationIndex(serverconf->locations, full_path);
 
 	if (location_pos < 0)
 	{
 		std::string root = serverconf->root;
 		refactorFile(root, full_path);
-		->parseFiletoCGI(full_path, locationconf);
+		cgi->parseFiletoCGI(full_path, locationconf);
 		return NULL;
 	}
 
@@ -142,7 +143,7 @@ bool	HTTPmessage::manageActuallyDir()
 	if (full_path.empty() || full_path[full_path.length() - 1] == '/')
 		return false;
 
-	std::string redirect_url = full_path + "/";
+	std::string redirect_url = request_uri + "/";
 	
 	if (!cgi->getQuery().empty())
 		redirect_url += "?" + cgi->getQuery();

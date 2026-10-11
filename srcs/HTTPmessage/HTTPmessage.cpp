@@ -6,9 +6,7 @@ HTTPmessage::HTTPmessage()
 {
 	serverconf = NULL;
 	locationconf = NULL;
-	server_port = "";
 	client_fd = 0;
-	client_addr = "";
 	rs_startline.version = "HTTP/1.1";
 
 	rs_startline.reason_phrase = "";
@@ -39,8 +37,6 @@ HTTPmessage	&HTTPmessage::operator=(const HTTPmessage &other)
 		return *this;
 	rs_startline.version = other.rs_startline.version;
 	serverconf = other.serverconf;
-	server_port = other.server_port;
-	client_addr = other.client_addr;
 	client_fd = client_fd;
 
 	rs_startline.reason_phrase = other.rs_startline.reason_phrase;
@@ -106,35 +102,11 @@ void	HTTPmessage::setServerConf(ServerConfig *serverconf)
 }
 
 /**
- * @brief Set HTTP server port
-*/
-void	HTTPmessage::setServerPort(std::string ServerPort)
-{
-	server_port = ServerPort;
-}
-
-/**
  * @brief Set client fd
 */
 void	HTTPmessage::setClientfd(int fd)
 {
 	client_fd = fd;
-}
-
-/**
- * @brief Set client address
-*/
-void	HTTPmessage::setClientAddress(std::string client_address)
-{
-	client_addr = client_address;
-}
-
-/**
- * @brief Get client address
-*/
-std::string	HTTPmessage::getClientAddress() const
-{
-	return client_addr;
 }
 
 /**
@@ -168,6 +140,11 @@ void	HTTPmessage::printQHeaders()
 				rq_startline.version << "\n" << rq_header << std::endl;
 }
 
+void	HTTPmessage::setCGIHandler(CGIHandler *cgi)
+{
+	this->cgi = cgi;
+}
+
 /**
  * @brief Shows the response produced
  */
@@ -175,6 +152,7 @@ void	HTTPmessage::printAHeaders()
 {
 	std::cout << "----------------- RESPONSE ----------------\n" << rs_header;
 }
+
 void	HTTPmessage::clear()
 {
 	rs_startline.reason_phrase.clear();
@@ -192,4 +170,5 @@ void	HTTPmessage::clear()
 	rq_body.clear();
 	rq_content_length = 0;
 	rq_headers.clear();
+	rq_header.clear();
 }

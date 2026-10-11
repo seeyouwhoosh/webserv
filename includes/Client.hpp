@@ -10,7 +10,6 @@
 class Client
 {
 private:
-	int						fd;
 	ServerConfig			*server;
 	RequestParser			parser;
 	std::queue<std::string>	http_responses;
@@ -28,6 +27,7 @@ public:
 	Client	&operator=(const Client &other);
 	~Client();
 
+	int						fd;
 	CGIHandler				cgi;
 	HTTPmessage				message;
 
@@ -45,7 +45,7 @@ public:
 	/* HTTPmessage functions */
 	ServerConfig	*getServer();
 	void			setSocket(int sock);
-	void			initHTTPmessage(std::string &port, std::string address, ServerConfig *server);
+	void			initHTTPmessage(ServerConfig *server);
 	int				setStatusCode(int code);
 	int				generateResponse();
 	int				setResponse();

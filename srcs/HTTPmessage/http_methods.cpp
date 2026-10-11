@@ -1,5 +1,6 @@
 #include "HTTPmessage.hpp"
 #include "ConfigParser.hpp"
+#include "CGIHandler.hpp"
 #include "utils.hpp"
 
 /**
@@ -11,8 +12,7 @@ int HTTPmessage::httpGET()
 	struct stat st;
 	LocationConfig *locationconf = getFullPath(full_path);
 
-	if (rq_content_length > locationconf->max_body_size)
-		return setStatusCode(CONTENT_TOO_LARGE);
+	/* return directive */
 	if (locationconf && (locationconf->return_status.first != 0 || !locationconf->return_status.second.empty()))
 	{
 		if (locationconf->return_status.first == 0 && !locationconf->return_status.second.empty())
@@ -39,6 +39,7 @@ int HTTPmessage::httpGET()
 		return 0;
 	}
 
+	/* when user forgets to write a '/' */
 	if (stat(full_path.c_str(), &st) == 0 &&
 		(st.st_mode & S_IFMT) == S_IFDIR &&
 		manageActuallyDir())
@@ -51,7 +52,11 @@ int HTTPmessage::httpGET()
 	std::fstream fs;
 
 	if (cgi->isCGI())
+	{
 		status = cgi->execute(*this);
+		if (cgi->getPipeOut() > 0)
+			return IS_CGI;
+	}
 	else
 	{
 		if (!locationconf && !serverconf)
@@ -220,13 +225,8 @@ int	HTTPmessage::httpPOST()
 	if (cgi->isCGI())
 	{
 		status = cgi->execute(*this);
-		if (status == OK)
-		{
-			int pipe_fd = cgi->getPipeOut();
-			
-		}
-		
-		return 0;
+		if (cgi->getPipeOut() > 0)
+			return IS_CGI;
 	}
 
 	if ((status = handleSpecialType()) != 1)

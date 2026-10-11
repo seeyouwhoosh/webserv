@@ -19,6 +19,7 @@
 
 class ServerConfig;
 class LocationConfig;
+class CGIHandler;
 
 #define ERRPAGE_DIR	"error_pages"
 #ifndef BUFFER_SIZE
@@ -27,6 +28,7 @@ class LocationConfig;
 
 enum	StatusCodes
 {
+	IS_CGI					= 1,
 	OK						= 200,
 	CREATED					= 201,
 	NO_CONTENT				= 204,
@@ -40,7 +42,8 @@ enum	StatusCodes
 	UNSUPPORTED_MEDIA_TYPE	= 415,
 	UNPROCESSABLE_CONTENT	= 422,
 	INTERNAL_SERVER_ERROR	= 500,
-	NOT_IMPLEMENTED			= 501
+	NOT_IMPLEMENTED			= 501,
+	GATEWAY_TIMEOUT			= 504
 };
 
 enum	RequestMethod
@@ -80,11 +83,10 @@ private:
 	ServerConfig	*serverconf;
 	LocationConfig	*locationconf;
 	std::string		full_path;
+	std::string		request_uri;
 	std::string		upload_name;
 	
-	std::string		cgi_path; //
-	std::string		server_port; //
-	std::string		client_addr; //
+	std::string		client_addr;
 	int				client_fd; // For the logs
 	
 	/* Response variables */
@@ -142,14 +144,12 @@ public:
 	/* Getters and setters */
 	int					setStatusCode(const int code);
 	void				setHeader(const std::string& name, const std::string& value);
-	std::string			getClientAddress() const;
 	const std::string	getHeader(const std::string& key) const;
 	void				setBody(const std::string& body);
 	void				setServerConf(ServerConfig *serverconf);
 	ServerConfig		*getServerConf() const;
-	void				setServerPort(std::string serverPort);
-	void				setClientAddress(std::string client_address);
 	void				setClientfd(int fd);
+	void				setCGIHandler(CGIHandler *cgi);
 
 	/* Main user functions */
 	int					generateResponse();

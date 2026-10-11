@@ -32,7 +32,6 @@ private:
 	bool						isrunning;
 	bool						iscgi;
 
-
 	void			fill_env(const HTTPmessage &request);
 	void			fill_argv();
 	void			fill_envp();
@@ -47,7 +46,7 @@ private:
 	~CGIHandler();
 	
 	std::string	output;
-	std::string	start_time;
+	time_t		start_time;
 
 	void				parseFiletoCGI(std::string &full_path, LocationConfig *location);
 	void				separateQuery(std::string &full_path);
@@ -56,9 +55,14 @@ private:
 	void				killScript();
 	void				clear();
 
+	/* Getters, setters and booleans */
 	bool				isCGI();
 	bool				isRunning();
 	void				setRunning(bool b);
+	void				setClientAddress(std::string client_address);
+	void				setServerPort(std::string ServerPort);
 	const std::string	&getQuery() const;
+	int					getPipeOut() const;
+	pid_t				getPID() const;
 	void				printParameters();
 };
