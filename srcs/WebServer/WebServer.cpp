@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/12 01:43:50 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/12 15:54:55 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,19 @@ int	WebServer::close_connection(int fd)
 	return 0;
 }
 
+int WebServer::close_pipe(int fd)
+{
+	if (cgi_pipes.find(fd) != cgi_pipes.end())
+	{
+		epoll_del_fd(fd);
+		close(fd);
+		cgi_pipes.erase(fd);
+	}
+	if (num_connections > 0)
+		num_connections--;
+	return 0;
+}
+
 void	WebServer::free_all_addrinfos()
 {
 	for (std::map<int, t_listener>::iterator it = listeners.begin(); 
@@ -120,51 +133,63 @@ int WebServer::parse_config(char *file)
  */
 int	WebServer::process_connections(int num_events)
 {
+	int	send_status;
 	for (int i = 0; i < num_events ; i++)
 	{
 		int fd = epoll_events[i].data.fd;
-		if (epoll_events[i].events & EPOLLERR)
+		if (is_cgi_pipe(fd))
 		{
-			if (close_connection(fd) < 0)
-				return -1;
-			continue;
-		}
-		if (epoll_events[i].events & EPOLLHUP)
-		{
-			if (close_connection(fd) < 0)
-				return -1;
-			continue;
-		}
-		if (epoll_events[i].events & EPOLLOUT)
-		{
-			int	send_status;
-			if (is_cgi_pipe(fd))
+			if (epoll_events[i].events & EPOLLOUT)
 			{
-				if (send_cgi_data(fd, cgi_pipes[fd]) < 0)
-					return -1;
+				if ((send_status = send_cgi_data(fd, cgi_pipes[fd])) < 0)
+				{
+					if (send_status < 0)
+						return -1;
+					if (send_status > 0)
+						continue;
+				}
 			}
-			else if (send_status = send_data_client(fd))
+			if (epoll_events[i].events & EPOLLIN)
 			{
-				if (send_status < 0)
-					return -1;
-				if (send_status > 0)
-					continue;
-			}
-		}
-		if (epoll_events[i].events & EPOLLIN)
-		{
-			if (is_listener(epoll_events[i].data.fd))
-			{
-				if (handle_new_connection(fd) < 0)
-					return -1;
-			}
-			else if (is_cgi_pipe(fd)) //arreglar estp
-			{
+				std::cout << "DETECTED CGI PIPE IN EPOLL: " << "PIPE: " << fd << std::endl;
 				if (handle_cgi_data(fd, cgi_pipes[fd]) < 0)
 					return -1;
 			}
-			else if (handle_client_data(fd) < 0)
-				return -1;
+			else if (epoll_events[i].events & (EPOLLERR | EPOLLHUP))
+			{
+				if (close_pipe(fd) < 0)
+					return -1;
+				continue;
+			}
+		}
+		else
+		{
+			if (epoll_events[i].events & (EPOLLERR | EPOLLHUP))
+			{
+				if (close_connection(fd) < 0)
+					return -1;
+				continue;
+			}
+			if (epoll_events[i].events & EPOLLOUT)
+			{
+				if ((send_status = send_data_client(fd)))
+				{
+					if (send_status < 0)
+						return -1;
+					if (send_status > 0)
+						continue;
+				}
+			}
+			if (epoll_events[i].events & EPOLLIN)
+			{
+				if (is_listener(epoll_events[i].data.fd))
+				{
+					if (handle_new_connection(fd) < 0)
+						return -1;
+				}
+				else if (handle_client_data(fd) < 0)
+					return -1;
+			}
 		}
 	}
 	check_timeouts();

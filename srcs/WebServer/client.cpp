@@ -22,24 +22,28 @@
  */
 void WebServer::check_timeouts()
 {
-	time_t  now = std::time(NULL);
-	std::map<int, Client>::iterator it = clients.begin();
-
+	time_t								now = std::time(NULL);
+	std::map<int, Client>::iterator		it = clients.begin();
+	
 	while (it != clients.end())
 	{
 		int		client_fd = it->first;
 		Client	&client = it->second;
 		bool	deleted = false;
-	
+		
+		
+		std::cout << "CHECKING TIMEOUTS: " << "NOW: " << now << " TIMEOUT: " << client.getServer()->timeout << " CGI_TIMEOUT: " << client.getServer()->cgi_timeout << std::endl;
+		if (client.cgi.isRunning())
+			std::cout << "CHECKING CGI TIMEOUTS: " << "NOW: " << static_cast<size_t>(now - client.cgi.start_time) << std::endl;
 		if (client.cgi.isRunning() && static_cast<size_t>(now - client.cgi.start_time) > client.getServer()->cgi_timeout)
 		{
 			client.cgi.killScript();
-			client.setStatusCode(GATEWAY_TIMEOUT);
 			
-			if (client.generateResponse() >= 0) {
+			if (client.generateErrorResponse(GATEWAY_TIMEOUT) >= 0) {
 				client.setResponse();
 			}
 		}
+		std::cout << "CHECKING NORMAL TIMEOUTS: " << "NOW: " << static_cast<size_t>(now - client.getLastActivity()) << std::endl;
 		if (static_cast<size_t>(now - client.getLastActivity()) > client.getServer()->timeout)
 		{
 			if (SHOW_LOGS)
@@ -56,6 +60,7 @@ void WebServer::check_timeouts()
 		if (!deleted)
 			++it;
 	}
+	std::cout << "I GOT OUT OF THE LOOP" << std::endl;
 }
 
 /**
@@ -121,7 +126,7 @@ int	WebServer::handle_new_connection(int listener)
 int	WebServer::send_data_client(int client)
 {
 	int	sent_size = clients[client].sendResponse();
-
+	clients[client].setLastActivity(std::time(NULL));
 	if (sent_size < 0)
 	{
 		if (close_connection(client) < 0)
@@ -145,19 +150,19 @@ int	WebServer::send_data_client(int client)
 int	WebServer::send_cgi_data(int fd, Client *client)
 {
 	if (client->cgi.input.empty())
+	{
+		close_pipe(fd);
 		return 0;
-	ssize_t		sent = 0;
-	sent = write(fd, client->cgi.input.data(),
-				client->cgi.input.size);
+	}
+	ssize_t		sent = write(fd, client->cgi.input.data(),
+								client->cgi.input.size());
 	if (sent < 0)
 		return -1;
+
+	std::cout << "INPUT to SEND: " << client->cgi.input << std::endl;
 	client->cgi.input.erase(0, sent);
 	if (client->cgi.input.empty())
-	{
-		if (close_connection(fd) < 0)
-			return error_msg(errno, "send", NULL);
-		client->cgi.pipe_in[1] = -1;
-	}
+		close_pipe(fd);
 	return 0;
 }
 
@@ -232,13 +237,26 @@ int	WebServer::handle_client_data(int client)
 		}
 		else if (response_status == IS_CGI)
 		{
-			int	pipe_in = clientUnit.cgi.getPipeIn();
-			int	pipe_out = clientUnit.cgi.getPipeOut();
-			epoll_add_fd(pipe_in)
+			int pipe_in = clientUnit.cgi.getPipeIn();
+			int pipe_out = clientUnit.cgi.getPipeOut();
+
 			epoll_add_fd(pipe_out);
-			epoll_delflag_fd(pipe_out, EPOLLIN);
-			cgi_pipes[pipe_in] = &clientUnit;
+			epoll_addflag_fd(pipe_out, EPOLLIN);
 			cgi_pipes[pipe_out] = &clientUnit;
+
+			if (!clientUnit.cgi.input.empty())
+			{
+				epoll_add_fd(pipe_in);
+				epoll_addflag_fd(pipe_in, EPOLLOUT);
+				cgi_pipes[pipe_in] = &clientUnit;
+			}
+			else
+			{
+				close(pipe_in);
+				clientUnit.cgi.setPipeIn(-1);
+			}
+			
+			std::cout << "ADDING CGI PIPES TO EPOLL - OUT: " << pipe_out << std::endl;
 			return 0;
 		}
 		if (clientUnit.setResponse() < 0)
@@ -266,13 +284,7 @@ int	WebServer::handle_cgi_data(int fd, Client *client)
 		return 0;
 	}
 
-	if (epoll_delflag_fd(fd, EPOLLIN) < 0)
-	{
-		free_all();
-		return -1;
-	}
-	close_connection(fd);
-	cgi_pipes.erase(fd);
+	close_pipe(fd);
 	client->cgi.setRunning(false);
 	if (bytes_read == 0)
 	{
@@ -287,16 +299,10 @@ int	WebServer::handle_cgi_data(int fd, Client *client)
 				client->cgi.parseOutput(client->message);
 				client->message.setBody(client->cgi.output);
 				client->setResponse();
-				if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
-				{
-					free_all();
-					return -1;
-				}
 			}
 		}
 	}
-	client->message.setStatusCode(INTERNAL_SERVER_ERROR);
-	if (client->generateResponse() < 0)
+	if (client->generateErrorResponse(INTERNAL_SERVER_ERROR) < 0)
 		return -1;
 
 	return 0;

@@ -44,7 +44,7 @@ static char	*handle_args(int ac, char **av)
 	{
 		if (SHOW_LOGS)
 		{
-			std::cout << "Wrong arguments encountered, using default file"
+			std::cout << "Wrong arguments encountered, using default file "
 					<< "\"config_files/default.conf\"\n";
 			std::cout << "\033[1mUsage\33[0m: ./webserv [config file]\n";
 		}

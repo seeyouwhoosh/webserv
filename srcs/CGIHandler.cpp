@@ -210,8 +210,13 @@ int	CGIHandler::execute(HTTPmessage& request)
 		}
 		case 0:
 		{
+			std::cout << "ENTERED CHILD PROCESS: " << pid << std::endl;
+
 			if ((status = gotoDirectory()) != 0)
+			{
+				std::cout << "EXIT DIRECTORY HA FALLADO\n";
 				exit(status);
+			}
 			fill_argv();
 			fill_envp();
 		
@@ -226,6 +231,8 @@ int	CGIHandler::execute(HTTPmessage& request)
 		{
 			close(pipe_in[0]);
 			close(pipe_out[1]);
+
+			std::cout << "ANSWERING FROM PARENT PROCESS: " << pid << std::endl;
 
 			input = request.rq_body;
 			start_time = std::time(NULL); 
@@ -376,6 +383,11 @@ const std::string	&CGIHandler::getQuery() const
 int	CGIHandler::getPipeOut() const
 {
 	return pipe_out[0];
+}
+
+void	CGIHandler::setPipeIn(int fd)
+{
+	pipe_in[1] = fd;
 }
 
 int	CGIHandler::getPipeIn() const

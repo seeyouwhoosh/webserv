@@ -70,6 +70,7 @@ public:
 	int			send_cgi_data(int fd, Client *client);
 	int			send_data_client(int client);
 	int			close_connection(int fd);
+	int			close_pipe(int fd);
 
 	void		free_all();
 	void		free_all_addrinfos();

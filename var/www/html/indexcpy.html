@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webserv 42 - Test Panel</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --danger: #f43f5e;
+            --danger-hover: #e11d48;
+            --success: #22c55e;
+            --border: #334155;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .badge {
+            display: inline-block;
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 650px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        .card h2 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            color: var(--text-main);
+        }
+        p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+        input[type="text"], input[type="file"], select {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-main);
+            box-sizing: border-box;
+            font-size: 0.9rem;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .btn {
+            background-color: var(--accent);
+            color: #0f172a;
+            padding: 9px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+        .btn:hover { background-color: var(--accent-hover); }
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .btn-success {
+            background-color: var(--success);
+            color: #0f172a;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .console {
+            background-color: #020617;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--success);
+            margin-top: 10px;
+            max-height: 100px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <header>
+        <h1>Webserv 42</h1>
+        <p>A 42 project by <i>xwu</i> and <i>uelizegi</i></p>
+        <span class="badge">Test Panel</span>
+    </header>
+
+    <div class="grid">
+
+        <!-- 1. GET & AUTOINDEX -->
+        <div class="card">
+            <h2>1. Navigation & Listings</h2>
+            <p>Test static GET requests and the Autoindex module for directory listings.</p>
+            <div class="form-group">
+                <a href="/images/picture.jpeg" target="_blank" class="btn" style="margin-bottom: 10px;">View Static Image (GET)</a>
+                <a href="/autoindex_test/" class="btn btn-success">Test Autoindex (Directories)</a>
+            </div>
+        </div>
+
+        <!-- 2. DELETE METHOD -->
+        <div class="card">
+            <h2>2. DELETE Method</h2>
+            <p>Send a DELETE request to remove a file from the upload directory.</p>
+            <div class="form-group">
+                <label for="delete-file">File path to delete:</label>
+                <input type="text" id="delete-file" value="/todelete/delete.txt" placeholder="/uploads/file.txt">
+            </div>
+            <button class="btn btn-danger" onclick="sendDelete()">Delete File</button>
+            <div id="delete-console" class="console"></div>
+        </div>
+
+        <!-- 3. FILE UPLOAD (POST multipart) -->
+        <div class="card">
+            <h2>3. File Upload (POST)</h2>
+            <p>Upload a file to the server using <code>upload_store</code>.</p>
+            <form id="upload-form" onsubmit="handleUpload(event)">
+                <div class="form-group">
+                    <label for="file-input">Select a file:</label>
+                    <input type="file" name="file" id="file-input" required>
+                </div>
+                <button type="submit" class="btn">Upload File</button>
+            </form>
+            <div id="upload-console" class="console"></div>
+        </div>
+
+        <!-- 4. CLASSIC FORM (POST) -->
+        <div class="card">
+            <h2>4. Classic Form (POST)</h2>
+            <p>Send data via <code>application/x-www-form-urlencoded</code>.</p>
+            <form action="/form_submit" method="POST">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" name="username" id="username" value="user42" required>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Comment:</label>
+                    <input type="text" name="comment" id="comment" value="Hello world" required>
+                </div>
+                <button type="submit" class="btn">Submit Form</button>
+            </form>
+        </div>
+
+<!-- 5. CGI SCRIPTS -->
+<div class="card full-width">
+    <h2>5. CGI Execution</h2>
+    <p>Run backend scripts (Python, PHP, Bash, C/C++) with dynamic query parameters or body content.</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+        <!-- Selector de Script -->
+        <div class="form-group">
+            <label for="cgi-script">Select CGI Script:</label>
+            <select id="cgi-script">
+                <option value="/cgi.py">Python (/cgi-bin/cgi.py)</option>
+                <option value="/cgi.php">PHP (/cgi-bin/cgi.php)</option>
+                <option value="/cgi.sh">Bash (/cgi-bin/cgi.sh)</option>
+                <option value="/cgi_env.cgi">Binary (/cgi-bin/cgi_env.cgi)</option>
+            </select>
+        </div>
+
+        <!-- Selector de Método -->
+        <div class="form-group">
+            <label for="cgi-method" onchange="updateCgiLabel()">HTTP Method:</label>
+            <select id="cgi-method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Parámetros unificados -->
+    <div class="form-group">
+        <label id="cgi-input-label" for="cgi-data">Query / Body Data:</label>
+        <input type="text" id="cgi-data" value="name=Evaluator&action=test" placeholder="key1=value1&key2=value2">
+    </div>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="runCGI()">Run in Console</button>
+        <button class="btn" onclick="openCGIInNewTab()">Open in New Tab</button>
+    </div>
+
+    <!-- Consola de Resultados -->
+    <div id="cgi-console" class="console" style="display: none;"></div>
+</div>
+
+<script>
+// Actualiza la etiqueta para dar claridad al usuario según el método
+document.getElementById('cgi-method').addEventListener('change', function() {
+    const label = document.getElementById('cgi-input-label');
+    label.textContent = this.value === 'GET' ? 'Query Parameters (URL):' : 'Request Body (POST):';
+});
+
+async function runCGI() {
+    const scriptPath = document.getElementById('cgi-script').value;
+    const method = document.getElementById('cgi-method').value;
+    const rawData = document.getElementById('cgi-data').value.trim();
+    const consoleBox = document.getElementById('cgi-console');
+
+    consoleBox.style.display = 'block';
+    consoleBox.style.color = 'inherit';
+
+    let requestUrl = scriptPath;
+    const options = { method: method };
+
+    if (method === 'GET') {
+        if (rawData) {
+            requestUrl += (scriptPath.includes('?') ? '&' : '?') + rawData;
+        }
+        consoleBox.textContent = `Executing GET ${requestUrl}...`;
+    } else {
+        consoleBox.textContent = `Executing POST ${requestUrl} with body: "${rawData}"...`;
+        options.headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        };
+        options.body = rawData;
+    }
+
+    try {
+        const response = await fetch(requestUrl, options);
+        const resultText = await response.text();
+
+        if (response.ok) {
+            consoleBox.textContent = `Status: ${response.status} (${response.statusText})\n\n--- Output ---\n${resultText}`;
+            consoleBox.style.color = 'var(--success)';
+        } else {
+            consoleBox.textContent = `Error: ${response.status} (${response.statusText})\n\n--- Output ---\n${resultText}`;
+            consoleBox.style.color = 'var(--danger)';
+        }
+    } catch (error) {
+        consoleBox.textContent = `Network/CGI error: ${error.message}`;
+        consoleBox.style.color = 'var(--danger)';
+    }
+}
+
+function openCGIInNewTab() {
+    const scriptPath = document.getElementById('cgi-script').value;
+    const method = document.getElementById('cgi-method').value;
+    const rawData = document.getElementById('cgi-data').value.trim();
+
+    if (method === 'GET') {
+        let url = scriptPath;
+        if (rawData) {
+            url += (scriptPath.includes('?') ? '&' : '?') + rawData;
+        }
+        window.open(url, '_blank');
+    } else {
+        // Para POST creamos un formulario invisible para abrir en pestana nueva
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = scriptPath;
+        form.target = '_blank';
+
+        // Parse de pares clave=valor para inputs del formulario
+        if (rawData) {
+            const pairs = rawData.split('&');
+            pairs.forEach(pair => {
+                const [key, value] = pair.split('=');
+                if (key) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = decodeURIComponent(key);
+                    input.value = value ? decodeURIComponent(value) : '';
+                    form.appendChild(input);
+                }
+            });
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+}
+
+    async function sendDelete() {
+        const path = document.getElementById('delete-file').value;
+        const consoleBox = document.getElementById('delete-console');
+        consoleBox.style.display = 'block';
+        consoleBox.textContent = `Sending DELETE to ${path}...`;
+
+        try {
+            const response = await fetch(path, { method: 'DELETE' });
+            if (response.ok) {
+                consoleBox.textContent = `Success: File deleted successfully (Code: ${response.status})`;
+                consoleBox.style.color = 'var(--success)';
+            } else {
+                consoleBox.textContent = `Error: Server responded with code ${response.status} (${response.statusText})`;
+                consoleBox.style.color = 'var(--danger)';
+            }
+        } catch (error) {
+            consoleBox.textContent = `Network error: ${error.message}`;
+            consoleBox.style.color = 'var(--danger)';
+        }
+    }
+
+    async function handleUpload(event) {
+        event.preventDefault(); // Evita la recarga tradicional del formulario
+
+        const fileInput = document.getElementById('file-input');
+        const consoleBox = document.getElementById('upload-console');
+        const file = fileInput.files[0];
+
+        consoleBox.style.display = 'block';
+
+        if (!file) {
+            consoleBox.textContent = "Error: Please select a file to upload.";
+            consoleBox.style.color = 'var(--danger)';
+            return;
+        }
+
+        consoleBox.textContent = `Uploading ${file.name}...`;
+        consoleBox.style.color = 'inherit'; // Restablecer color normal mientras sube
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch('/uploads/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok || response.status === 201) {
+                consoleBox.textContent = `Success: File uploaded successfully (Code: ${response.status})`;
+                consoleBox.style.color = 'var(--success)';
+
+                // Redirección opcional tras éxito (descomentar si la necesitas)
+                setTimeout(() => { window.location.href = '/upload_success.html'; }, 1000);
+            } else {
+                consoleBox.textContent = `Error: Server responded with code ${response.status} (${response.statusText})`;
+                consoleBox.style.color = 'var(--danger)';
+            }
+        } catch (error) {
+            consoleBox.textContent = `Network error: ${error.message}`;
+            consoleBox.style.color = 'var(--danger)';
+        }
+    }
+</script>
+
+</body>
+</html>

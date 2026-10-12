@@ -99,6 +99,8 @@ int	HTTPmessage::generateErrorResponse(int error)
 {
 	std::fstream	err_file;
 
+	if (rs_startline.status_code != error)
+		setStatusCode(error);
 	if (!openErrorFile(error, err_file) && rs_content_length > 0)
 	{
 		rs_body.resize(rs_content_length);
@@ -183,8 +185,10 @@ int	HTTPmessage::generateResponse()
 		return -1;
 
 	if (status == IS_CGI)
+	{
+		std::cout << "RESPONSE DETECTED AS CGI, EXITING: " << status << std::endl;
 		return IS_CGI;
-	rs_headers["Date"] = getDate();
+	}
 	return 0;
 }
 
@@ -198,6 +202,7 @@ std::string	HTTPmessage::setResponse()
 
 	responseStream << rs_startline.version << " " << rs_startline.status_code << " " << rs_startline.reason_phrase << "\r\n";
 
+	rs_headers["Date"] = getDate();
 	for (stringmap::iterator it = rs_headers.begin(); it != rs_headers.end(); it++)
 		responseStream << it->first << ": " << it->second << "\r\n";
 

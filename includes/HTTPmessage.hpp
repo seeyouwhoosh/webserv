@@ -115,7 +115,6 @@ private:
 	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
 	LocationConfig	*getFullPath(std::string &file);
 	int				openErrorFile(int error, std::fstream &fs);
-	int				generateErrorResponse(int error);
 	bool			manageActuallyDir();
 
 	/* Other */
@@ -152,6 +151,7 @@ public:
 	void				setCGIHandler(CGIHandler *cgi);
 
 	/* Main user functions */
+	int					generateErrorResponse(int error);
 	int					generateResponse();
 	std::string			setResponse();
 	void				clear();

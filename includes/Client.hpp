@@ -48,6 +48,7 @@ public:
 	void			initHTTPmessage(ServerConfig *server);
 	int				setStatusCode(int code);
 	int				generateResponse();
+	int				generateErrorResponse(int error);
 	int				setResponse();
 	int				responseComplete();
 	void			clearResponse();

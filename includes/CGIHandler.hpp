@@ -27,8 +27,8 @@ private:
 	std::string					path_info;
 	std::string					query;
 	pid_t						pid;
-	int							pipe_in[2];
-	int							pipe_out[2];
+	int							pipe_in[2]; // Writing to CGI
+	int							pipe_out[2]; // Reading from CGI
 	bool						isrunning;
 	bool						iscgi;
 
@@ -64,6 +64,7 @@ private:
 	void				setServerPort(std::string ServerPort);
 	const std::string	&getQuery() const;
 	int					getPipeOut() const;
+	void				setPipeIn(int fd);
 	int					getPipeIn() const;
 	pid_t				getPID() const;
 	void				printParameters();
