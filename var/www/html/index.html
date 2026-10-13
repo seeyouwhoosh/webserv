@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Enviar POST Crudo al CGI</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
+        .box { background: #1e293b; padding: 20px; border-radius: 8px; max-width: 600px; margin: auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #38bdf8; font-weight: bold; }
+        textarea { width: 100%; padding: 8px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 4px; box-sizing: border-box; height: 100px; font-family: monospace; }
+        button { background: #0284c7; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0369a1; }
+        pre { background: #090d16; padding: 10px; border-radius: 4px; color: #22c55e; overflow-x: auto; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Prueba de POST (Cuerpo Crudo) para CGI</h2>
+
+        <div class="form-group">
+            <label for="post-data">Cuerpo exacto que irá al Body (STDIN):</label>
+            <textarea id="post-data">Este es un texto libre o JSON de prueba enviado en el body.</textarea>
+        </div>
+        
+        <button onclick="enviarPostCrudo()">Enviar POST al CGI</button>
+
+        <pre id="resultado" style="display:none;"></pre>
+    </div>
+
+<script>
+async function enviarPostCrudo() {
+    const rawData = document.getElementById('post-data').value;
+    const resultadoBox = document.getElementById('resultado');
+    
+    resultadoBox.style.display = 'block';
+    resultadoBox.textContent = 'Enviando petición POST...';
+
+    try {
+        const response = await fetch('/cgi-bin/cgi.py', {
+            method: 'POST',
+            headers: {
+                // Usamos text/plain para que el navegador no intente interpretarlo 
+                // como un formulario y mande tus caracteres exactos en el body.
+                'Content-Type': 'text/plain' 
+            },
+            body: rawData
+        });
+
+        const text = await response.text();
+        if (response.ok) {
+            resultadoBox.textContent = `Status: ${response.status}\n\n--- Respuesta del CGI ---\n${text}`;
+        } else {
+            resultadoBox.textContent = `Error HTTP: ${response.status}\n\n${text}`;
+        }
+    } catch (error) {
+        resultadoBox.textContent = `Error de red: ${error.message}`;
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2 @@
+break WebServer::is_cgi_pipe
+break WebServer::close_pipe
