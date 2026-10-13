@@ -106,7 +106,7 @@ void CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location
 		if (pos_ext == std::string::npos)
 			break;
 
-		std::string ext_str = segment.substr(pos_ext);
+		std::string ext_str = segment.substr(pos_ext + 1);
 		std::string interpreter = matchExtension(ext_str, location);
 
 		if (interpreter.empty() && ext_str != ".cgi")

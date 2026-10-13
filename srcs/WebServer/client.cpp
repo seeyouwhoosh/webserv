@@ -281,6 +281,7 @@ int WebServer::handle_cgi_data(int fd, Client *client)//change
 	// Todavia hay datos que leer del CGI.
 	if (bytes_read > 0)
 	{
+		buffer[bytes_read] = '\0';
 		client->cgi.output.append(buffer, bytes_read);
 		return 0;
 	}

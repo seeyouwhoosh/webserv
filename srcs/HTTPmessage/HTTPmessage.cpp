@@ -146,6 +146,12 @@ void	HTTPmessage::setCGIHandler(CGIHandler *cgi)
 	this->cgi = cgi;
 }
 
+void	HTTPmessage::setServerPort(std::string port)
+{
+	server_port = port;
+}
+
+
 /**
  * @brief Shows the response produced
  */

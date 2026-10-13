@@ -87,6 +87,7 @@ private:
 	std::string		upload_name;
 	
 	std::string		client_addr;
+	std::string		server_port;
 	int				client_fd; // For the logs
 	
 	/* Response variables */
@@ -147,6 +148,7 @@ public:
 	void				setBody(const std::string& body);
 	void				setServerConf(ServerConfig *serverconf);
 	ServerConfig		*getServerConf() const;
+	void				setServerPort(std::string port);
 	void				setClientfd(int fd);
 	void				setCGIHandler(CGIHandler *cgi);
 
