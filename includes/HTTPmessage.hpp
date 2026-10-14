@@ -112,8 +112,7 @@ private:
 	int				createAutoindex(std::string dir);
 
 	/* File management */
-	int				openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf);
-	int				openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf);
+	int				openFile(std::string &file, std::fstream &fs, LocationConfig *locationconf);
 	LocationConfig	*getFullPath(std::string &file);
 	int				openErrorFile(int error, std::fstream &fs);
 	bool			manageActuallyDir();

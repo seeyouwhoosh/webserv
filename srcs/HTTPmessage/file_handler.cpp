@@ -3,8 +3,10 @@
 #include "CGIHandler.hpp"
 #include "utils.hpp"
 
-/* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
-int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &locationconf)
+/**
+ * @brief If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one
+ */
+int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig *locationconf)
 {
 	struct stat							st;
 	struct stat							index_st;
@@ -25,7 +27,8 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &l
 	}
 	else if ((st.st_mode & S_IFMT) == S_IFDIR)
 	{
-		for (it = locationconf.indexes.begin(); it != locationconf.indexes.end(); it++)
+		HTTPContext	*config = !locationconf ? static_cast<HTTPContext *>(serverconf) : static_cast<HTTPContext *>(locationconf);
+		for (it = config->indexes.begin(); it != config->indexes.end(); it++)
 		{
 			if (it->empty())
 				continue;
@@ -45,56 +48,7 @@ int	HTTPmessage::openFile(std::string &file, std::fstream &fs, LocationConfig &l
 				return OK;
 			}
 		}
-		if (locationconf.autoindex == AUTOINDEX_ON)
-			return createAutoindex(file);
-		return FORBIDDEN;
-	}
-	return NOT_FOUND;
-}
-
-/* If it's a file, see if it's accesible and open it. If it's a directory, see if autoindex is on and search in the indexes list to search for the first available one */
-int	HTTPmessage::openFile(std::string &file, std::fstream &fs, ServerConfig &serverconf)
-{
-	struct stat							st;
-	struct stat							index_st;
-	std::vector<std::string>::iterator	it;
-
-	if (stat(file.c_str(), &st) < 0)
-		return NOT_FOUND;
-
-	if ((st.st_mode & S_IFMT) == S_IFREG)
-	{
-		if (access(file.c_str(), F_OK | R_OK) < 0)
-			return FORBIDDEN;
-		fs.open(file.c_str(), std::ios::in | std::ios::binary);
-		if (!fs.is_open())
-			return INTERNAL_SERVER_ERROR;
-		rs_content_length = st.st_size;
-		return OK;
-	}
-	else if ((st.st_mode & S_IFMT) == S_IFDIR)
-	{
-		for (it = serverconf.indexes.begin(); it != serverconf.indexes.end(); it++)
-		{
-			if (it->empty())
-				continue;
-			std::string	tmp = *it;
-			refactorFile(file, tmp);
-
-			if (stat(tmp.c_str(), &index_st) == 0 && (index_st.st_mode & S_IFMT) == S_IFREG)
-			{
-				if (access(tmp.c_str(), R_OK) < 0)
-					return FORBIDDEN;
-				fs.open(tmp.c_str(), std::ios::in | std::ios::binary);
-				if (!fs.is_open())
-					return INTERNAL_SERVER_ERROR;
-				rs_content_length = index_st.st_size;
-
-				file = tmp;
-				return OK;
-			}
-		}
-		if (serverconf.autoindex == AUTOINDEX_ON)
+		if (config->autoindex == AUTOINDEX_ON)
 			return createAutoindex(file);
 		return FORBIDDEN;
 	}

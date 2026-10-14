@@ -61,10 +61,7 @@ int HTTPmessage::httpGET()
 	{
 		if (!locationconf && !serverconf)
 			return -setStatusCode(INTERNAL_SERVER_ERROR);
-		if (!locationconf)
-			status = openFile(full_path, fs, *serverconf);
-		else
-			status = openFile(full_path, fs, *locationconf);
+		status = openFile(full_path, fs, locationconf);
 	}
 
 	if (status != OK)
