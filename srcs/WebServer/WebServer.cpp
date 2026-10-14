@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: unax <unax@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/13 02:22:37 by unax             ###   ########.fr       */
+/*   Updated: 2026/10/15 01:06:33 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,7 +131,7 @@ int WebServer::parse_config(char *file)
  * @return 0 on success, -1 otherwise
  * @note Closes connections automatically.
  */
-int	WebServer::process_connections(int num_events)//change
+int	WebServer::process_connections(int num_events) //change
 {
 	int	send_status;
 	for (int i = 0; i < num_events ; i++)
@@ -142,12 +142,8 @@ int	WebServer::process_connections(int num_events)//change
 			if (epoll_events[i].events & EPOLLOUT)
 			{
 				if ((send_status = send_cgi_data(fd, cgi_pipes[fd])) < 0)
-				{
-					if (send_status < 0)
-						return -1;
-					if (send_status > 0)
-						continue;
-				}
+					
+					return -1;
 			}
 			if (epoll_events[i].events & (EPOLLIN | EPOLLHUP))
 			{
@@ -155,7 +151,7 @@ int	WebServer::process_connections(int num_events)//change
 				if (handle_cgi_data(fd, cgi_pipes[fd]) < 0)
 					return -1;
 			}
-			else if (epoll_events[i].events & EPOLLERR)
+			if (epoll_events[i].events & EPOLLERR)
 			{
 				if (close_pipe(fd) < 0)
 					return -1;
@@ -172,13 +168,8 @@ int	WebServer::process_connections(int num_events)//change
 			}
 			if (epoll_events[i].events & EPOLLOUT)
 			{
-				if ((send_status = send_data_client(fd)))
-				{
-					if (send_status < 0)
+				if ((send_status = send_data_client(fd)) < 0)
 						return -1;
-					if (send_status > 0)
-						continue;
-				}
 			}
 			if (epoll_events[i].events & EPOLLIN)
 			{

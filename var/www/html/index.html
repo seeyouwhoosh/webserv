@@ -78,6 +78,10 @@
         .form-group {
             margin-bottom: 12px;
         }
+        .disabled-group {
+            opacity: 0.4;
+            pointer-events: none;
+        }
         label {
             display: block;
             font-size: 0.85rem;
@@ -141,6 +145,7 @@
             overflow-y: auto;
             white-space: pre-wrap;
             display: none;
+            min-height: 500px
         }
     </style>
 </head>
@@ -209,7 +214,7 @@
         </div>
 
         <!-- 5. CGI SCRIPTS -->
-         <div class="card full-width">
+            <div class="card full-width">
             <h2>5. Advanced CGI Execution</h2>
             <p>Run backend scripts (Python, PHP, Bash, Binaries) with custom query parameters and request body support.</p>
             
@@ -257,6 +262,24 @@
         </div>
 
 <script>
+function toggleBodyState() {
+        const method = document.getElementById('cgi-method').value;
+        const bodyGroup = document.getElementById('cgi-body-group');
+        const bodyTextarea = document.getElementById('cgi-body');
+
+        if (method === 'GET') {
+            bodyGroup.classList.add('disabled-group');
+            bodyTextarea.disabled = true;
+        } else {
+            bodyGroup.classList.remove('disabled-group');
+            bodyTextarea.disabled = false;
+        }
+    }
+
+    document.getElementById('cgi-method').addEventListener('change', toggleBodyState);
+
+    document.addEventListener('DOMContentLoaded', toggleBodyState);
+
     async function runCGI() {
         const scriptPath = document.getElementById('cgi-script').value;
         const method = document.getElementById('cgi-method').value;
@@ -269,7 +292,6 @@
 
         let requestUrl = scriptPath;
         
-        // Si hay parámetros query, se añaden a la URL (tanto para GET como para POST si se desea)
         if (queryData) {
             requestUrl += (scriptPath.includes('?') ? '&' : '?') + queryData;
         }
@@ -278,7 +300,6 @@
 
         if (method === 'POST') {
             options.body = bodyData;
-            // Opcional: si mandas texto plano o JSON puedes ajustar el header aquí
             options.headers = { 'Content-Type': 'text/plain' };
             consoleBox.textContent = `Executing POST ${requestUrl}\nBody: "${bodyData}"...`;
         } else {
@@ -302,14 +323,45 @@
         }
     }
 
-    function openCGIInNewTab() {
+function openCGIInNewTab() {
         const scriptPath = document.getElementById('cgi-script').value;
+        const method = document.getElementById('cgi-method').value;
         const queryData = document.getElementById('cgi-query').value.trim();
+        const bodyData = document.getElementById('cgi-body').value;
+
         let requestUrl = scriptPath;
         if (queryData) {
             requestUrl += (scriptPath.includes('?') ? '&' : '?') + queryData;
         }
-        window.open(requestUrl, '_blank');
+
+        // Si es GET, podemos usar window.open directamente de toda la vida
+        if (method === 'GET') {
+            window.open(requestUrl, '_blank');
+            return;
+        }
+
+        // Si es POST, creamos un formulario oculto dinámicamente para forzar el POST a otra pestaña
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = requestUrl;
+        form.target = '_blank'; // Abre en una pestaña nueva
+
+        // Si necesitas enviar el body como un campo oculto (o si tu servidor lo lee del stdin por CGI clásico)
+        // Nota: En CGI tradicional, el servidor lee el stdin independientemente de cómo se llame el campo,
+        // pero podemos pasar el body entero en un campo o dejar que el servidor lo capture del flujo de entrada.
+        const hiddenField = document.createElement('input');
+        hiddenField.type = 'hidden';
+        hiddenField.name = 'raw_body'; // O el nombre que espere tu backend
+        hiddenField.value = bodyData;
+        form.appendChild(hiddenField);
+
+        // O si prefieres mandar el texto plano directamente como payload o texto de entrada:
+        // Como los formularios HTML mandan pares clave-valor, para enviar texto plano crudo 
+        // a veces es mejor un enfoque con fetch + blob, pero esto abrirá la respuesta cruda directamente.
+        
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
     }
 
     async function sendDelete() {

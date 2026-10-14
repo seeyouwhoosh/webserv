@@ -128,9 +128,9 @@ bool	all_digits(std::string s)
 
 int matchDirective(std::string &s)
 {
-	const char	*d[] = {"root", "alias", "autoindex", "max_body_size", "limit_except", "upload_store", "return", "timeout"};
+	const char	*d[] = {"root", "alias", "autoindex", "max_body_size", "limit_except", "upload_store", "return", "timeout", "cgi_timeout"};
 
-	for (size_t i = 0; i < 8; i++)
+	for (size_t i = 0; i < 9; i++)
 	{
 		if (s == d[i])
 			return 1 << i;
