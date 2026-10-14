@@ -151,16 +151,15 @@ int	WebServer::process_connections(int num_events)//change
 			}
 			if (epoll_events[i].events & (EPOLLIN | EPOLLHUP))
 			{
-    			std::cout << "DETECTED CGI PIPE IN EPOLL: PIPE: " << fd << std::endl;
 
-   				if (handle_cgi_data(fd, cgi_pipes[fd]) < 0)
-        			return -1;
+				if (handle_cgi_data(fd, cgi_pipes[fd]) < 0)
+					return -1;
 			}
 			else if (epoll_events[i].events & EPOLLERR)
 			{
-    			if (close_pipe(fd) < 0)
-        			return -1;
-    			continue;
+				if (close_pipe(fd) < 0)
+					return -1;
+				continue;
 			}
 		}
 		else

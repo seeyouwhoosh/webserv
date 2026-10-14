@@ -226,10 +226,7 @@ int	HTTPmessage::httpPOST()
 	{
 		status = cgi->execute(*this);
 		if (status == OK && cgi->getPipeIn() > 0 && cgi->getPipeOut() > 0)
-		{
-			std::cout << "EVERYTHING OK AS CGI: " << status << std::endl;
 			return IS_CGI;
-		}
 	}
 
 	if ((status = handleSpecialType()) != 1)

@@ -32,9 +32,6 @@ void WebServer::check_timeouts()
 		bool	deleted = false;
 		
 		
-		std::cout << "CHECKING TIMEOUTS: " << "NOW: " << now << " TIMEOUT: " << client.getServer()->timeout << " CGI_TIMEOUT: " << client.getServer()->cgi_timeout << std::endl;
-		if (client.cgi.isRunning())
-			std::cout << "CHECKING CGI TIMEOUTS: " << "NOW: " << static_cast<size_t>(now - client.cgi.start_time) << std::endl;
 		if (client.cgi.isRunning() && static_cast<size_t>(now - client.cgi.start_time) > client.getServer()->cgi_timeout)
 		{
 			client.cgi.killScript();
@@ -43,7 +40,6 @@ void WebServer::check_timeouts()
 				client.setResponse();
 			}
 		}
-		std::cout << "CHECKING NORMAL TIMEOUTS: " << "NOW: " << static_cast<size_t>(now - client.getLastActivity()) << std::endl;
 		if (static_cast<size_t>(now - client.getLastActivity()) > client.getServer()->timeout)
 		{
 			if (SHOW_LOGS)
@@ -60,7 +56,6 @@ void WebServer::check_timeouts()
 		if (!deleted)
 			++it;
 	}
-	std::cout << "I GOT OUT OF THE LOOP" << std::endl;
 }
 
 /**
@@ -159,7 +154,6 @@ int	WebServer::send_cgi_data(int fd, Client *client)
 	if (sent < 0)
 		return -1;
 
-	std::cout << "INPUT to SEND: " << client->cgi.input << std::endl;
 	client->cgi.input.erase(0, sent);
 	if (client->cgi.input.empty())
 		close_pipe(fd);
@@ -256,7 +250,6 @@ int	WebServer::handle_client_data(int client)
 				clientUnit.cgi.setPipeIn(-1);
 			}
 			
-			std::cout << "ADDING CGI PIPES TO EPOLL - OUT: " << pipe_out << std::endl;
 			return 0;
 		}
 		if (clientUnit.setResponse() < 0)

@@ -29,6 +29,7 @@ CGIHandler	&CGIHandler::operator=(CGIHandler &other)//change
 	path_info = other.path_info;
 	query = other.query;
 	iscgi = other.iscgi;
+	input = other.input;
 	output = other.output;
 	return *this;
 }
@@ -257,13 +258,8 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 		}
 		case 0:
 		{
-			std::cout << "ENTERED CHILD PROCESS: " << pid << std::endl;
-
 			if ((status = gotoDirectory()) != 0)
-			{
-				std::cout << "EXIT DIRECTORY HA FALLADO\n";
 				exit(status);
-			}
 			fill_argv();
 			fill_envp();
 		
@@ -278,8 +274,6 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 		{
 			close(pipe_in[0]);
 			close(pipe_out[1]);
-
-			std::cout << "ANSWERING FROM PARENT PROCESS: " << pid << std::endl;
 
 			input = request.rq_body;
 			start_time = std::time(NULL); 

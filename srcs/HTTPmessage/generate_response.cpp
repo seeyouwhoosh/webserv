@@ -185,10 +185,7 @@ int	HTTPmessage::generateResponse()
 		return -1;
 
 	if (status == IS_CGI)
-	{
-		std::cout << "RESPONSE DETECTED AS CGI, EXITING: " << status << std::endl;
 		return IS_CGI;
-	}
 	return 0;
 }
 

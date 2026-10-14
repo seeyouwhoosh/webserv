@@ -36,7 +36,7 @@ private:
 	void			fill_env(const HTTPmessage &request);
 	void			fill_argv();
 	void			fill_envp();
-	void parseCGIbinFile(size_t cgibin_pos, std::string &full_path, LocationConfig *location);
+	void			parseCGIbinFile(size_t cgibin_pos, std::string &full_path, LocationConfig *location);
 	std::string		matchExtension(const std::string &ext, const LocationConfig *location) const;
 	int				gotoDirectory();
 	
