@@ -73,4 +73,5 @@ public:
 	void	fillDefaults(std::vector<ServerConfig> *servers);
 
 	void	setTokens(std::vector<std::string> &tokens);
+	void	clear();
 };

@@ -152,8 +152,6 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 			}
 			else if (directive == "root" && (status = parseRoot(*start)))
 				return status;
-			else if (directive == "alias" && (status = parseAlias(*start)))
-				return status;
 			else if (directive == "autoindex" && (status = parseAutoindex(*start)))
 				return status;
 			else if (directive == "client_max_body_size" && (status = parseMaxbody(*start)))
@@ -194,16 +192,7 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 
 void	ServerConfig::clear()
 {
-	error_par.clear();
-	flags = NONE;
-	cgi_file.clear();
-	root.clear();
-	indexes.clear();
-	autoindex = AUTOINDEX_UNSET;
-	str_max_body_size.clear();
-	max_body_size = 0;
-	error_pages.clear();
-	cgi_handlers.clear();
+	HTTPContext::clear();
 
 	server_name.clear();
 	listens.clear();

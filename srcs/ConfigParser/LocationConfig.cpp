@@ -69,16 +69,7 @@ int	LocationConfig::parseReturnstatus(std::string &value)
 
 void	LocationConfig::clear()
 {
-	error_par.clear();
-	flags = NONE;
-	cgi_file.clear();
-	root.clear();
-	indexes.clear();
-	autoindex = AUTOINDEX_UNSET;
-	str_max_body_size.clear();
-	max_body_size = 0;
-	error_pages.clear();
-	cgi_handlers.clear();
+	HTTPContext::clear();
 
 	name.clear();
 	allowed_methods.clear();

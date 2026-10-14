@@ -373,3 +373,22 @@ int	HTTPContext::fillDirectives(std::vector<ServerConfig> *servers)
 	}
 	return 0;
 }
+
+void	HTTPContext::clear()
+{
+	flags = NONE;
+	cgi_file.clear();
+	error_par.clear();
+	root.clear();
+	alias.clear();
+	indexes.clear();
+	autoindex = AUTOINDEX_UNSET;
+	str_max_body_size.clear();
+	max_body_size = 0;
+	str_timeout.clear();
+	timeout = 0;
+	str_cgi_timeout.clear();
+	cgi_timeout = 0;
+	error_pages.clear();
+	cgi_handlers.clear();
+}
