@@ -45,25 +45,23 @@ if ($query_string) {
 my $post_data = "Ninguno";
 if ($method eq 'POST' && $content_length > 0) {
     binmode(STDIN);
-    my $post_body;
-    read(STDIN, $post_body, $content_length);
+    my $post_body = "";
+    my $bytes_read = read(STDIN, $post_body, $content_length);
     
-    if ($content_type =~ /application\/json/) {
-        eval {
-            $post_data = decode_json($post_body);
-        };
-        if ($@) {
-            $post_data = "Error decodificando JSON: $@ (Raw: $post_body)";
-        }
+    if (!defined $bytes_read || $bytes_read == 0) {
+        $post_data = "Error: STDIN no devolvió datos (CONTENT_LENGTH=$content_length)";
     } else {
-        my %parsed_post;
-        foreach my $pair (split('&', $post_body)) {
-            my ($key, $value) = split('=', $pair, 2);
-            $key = $q->escapeHTML($q->unescape($key // ''));
-            $value = $q->escapeHTML($q->unescape($value // ''));
-            $parsed_post{$key} = $value;
+        # Intentar decodificar como JSON
+        my $decoded = eval { decode_json($post_body) };
+        if ($@) {
+            # Si no es JSON válido, guardamos el texto crudo para depurar
+            $post_data = {
+                raw_body => $post_body,
+                parse_error => $@
+            };
+        } else {
+            $post_data = $decoded;
         }
-        $post_data = keys %parsed_post ? \%parsed_post : $post_body;
     }
 } elsif ($method eq 'POST') {
     $post_data = "Cuerpo vacío (CONTENT_LENGTH es 0)";
@@ -78,6 +76,10 @@ foreach my $env_key (keys %ENV) {
 }
 
 my $json = JSON->new->allow_nonref->utf8->pretty;
+
+my $get_json  = %get_data ? $json->encode(\%get_data) : '"Ninguno"';
+my $post_json = $json->encode($post_data);
+my $head_json = $json->encode(\%http_headers);
 
 # 6. Generar HTML
 print <<HTML;
@@ -102,10 +104,10 @@ print <<HTML;
         <p><strong>Script ejecutado (SCRIPT_NAME):</strong> $script_name</p>
         
         <h3>Parámetros GET recibidos:</h3>
-        <pre>\%([% keys %get_data ? $json->encode(\%get_data) : '"Ninguno"' %])</pre>
+        <pre>$get_json</pre>
         
         <h3>Datos del Cuerpo (POST / STDIN):</h3>
-        <pre>[$json->encode($post_data)]</pre>
+        <pre>$post_json</pre>
         
         <h3>Variables de Entorno Principales (fill_env):</h3>
         <ul>
@@ -124,7 +126,7 @@ print <<HTML;
         </ul>
 
         <h3>Cabeceras HTTP extra (HTTP_*):</h3>
-        <pre>[$json->encode(\%http_headers)]</pre>
+        <pre>$head_json</pre>
     </div>
 </body>
 </html>

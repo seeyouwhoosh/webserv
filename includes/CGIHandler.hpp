@@ -48,7 +48,7 @@ private:
 	
 	std::string	input;
 	std::string	output;
-	time_t		start_time;
+	time_t		last_activity;
 
 	void				parseFiletoCGI(std::string &full_path, LocationConfig *location);
 	void				separateQuery(std::string &full_path);

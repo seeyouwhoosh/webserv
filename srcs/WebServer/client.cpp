@@ -32,7 +32,7 @@ void WebServer::check_timeouts()
 		bool	deleted = false;
 		
 		
-		if (client.cgi.isRunning() && static_cast<size_t>(now - client.cgi.start_time) > client.getServer()->cgi_timeout)
+		if (client.cgi.isRunning() && static_cast<size_t>(now - client.cgi.last_activity) > client.getServer()->cgi_timeout)
 		{
 			client.cgi.killScript();
 			
@@ -144,19 +144,42 @@ int	WebServer::send_data_client(int client)
 
 int	WebServer::send_cgi_data(int fd, Client *client)
 {
-	if (client->cgi.input.empty())
+	CGIHandler	*cgi = &client->cgi;
+	if (cgi->input.empty())
 	{
 		close_pipe(fd);
 		return 0;
 	}
-	ssize_t		sent = write(fd, client->cgi.input.data(),
-								client->cgi.input.size());
-	if (sent < 0)
-		return -1;
 
-	client->cgi.input.erase(0, sent);
-	if (client->cgi.input.empty())
+	ssize_t		sent;
+	if (cgi->input.size() >= BUFFER_SIZE)
+		sent = write(fd, cgi->input.data(), BUFFER_SIZE);
+	else
+		sent = write(fd, cgi->input.data(), cgi->input.size());
+
+	if (sent < 0)
+	{
 		close_pipe(fd);
+		cgi_pipes.erase(fd);
+		cgi_pipes.erase(cgi->getPipeOut());
+		close_pipe(cgi->getPipeOut());
+		client->generateErrorResponse(INTERNAL_SERVER_ERROR);
+		if (client->setResponse() < 0)
+			return -1;
+		if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
+			return -1;
+		return -1;
+	}
+	else if (sent == 0 || static_cast<size_t>(sent) == cgi->input.size())
+	{
+		close_pipe(fd);
+		cgi_pipes.erase(fd);
+	}
+	else
+	{
+		cgi->last_activity = std::time(NULL);
+		cgi->input.erase(0, sent);
+	}
 	return 0;
 }
 
@@ -278,14 +301,10 @@ int WebServer::handle_cgi_data(int fd, Client *client)//change
 		client->cgi.output.append(buffer, bytes_read);
 		return 0;
 	}
-
-	// Se ha producido un error al leer el pipe.
-	if (bytes_read < 0)
+	else if (bytes_read < 0) // Se ha producido un error al leer el pipe.
 	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
-			return 0;
-
 		close_pipe(fd);
+		cgi_pipes.erase(fd);
 		client->cgi.setRunning(false);
 
 		if (client->generateErrorResponse(INTERNAL_SERVER_ERROR) < 0)
@@ -299,40 +318,30 @@ int WebServer::handle_cgi_data(int fd, Client *client)//change
 
 		return 0;
 	}
-
-	// EOF: el CGI ha terminado de escribir su salida.
-	close_pipe(fd);
-	client->cgi.setRunning(false);
-
-	int status;
-	pid_t result = waitpid(client->cgi.getPID(), &status, 0);
-
-	// Comprobamos que el proceso CGI ha terminado correctamente.
-	if (result > 0 && WIFEXITED(status) && WEXITSTATUS(status) == 0)
+	else // EOF: el CGI ha terminado de escribir su salida.
 	{
-		client->cgi.parseOutput(client->message);
-		client->message.setBody(client->cgi.output);
+		cgi_pipes.erase(fd);
+		close_pipe(fd);
+		client->cgi.setRunning(false);
 
-		// Construimos la respuesta HTTP completa.
-		if (client->setResponse() < 0)
-			return -1;
+		int status;
+		pid_t result = waitpid(client->cgi.getPID(), &status, 0);
 
-		// IMPORTANTE: permitimos que epoll envíe la respuesta al cliente.
-		if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
-			return -1;
+		// Comprobamos que el proceso CGI ha terminado correctamente.
+		if (result > 0 && WIFEXITED(status) && WEXITSTATUS(status) == 0)
+		{
+			client->cgi.parseOutput(client->message);
+			client->message.setBody(client->cgi.output);
 
-		return 0;
+			// Construimos la respuesta HTTP completa.
+			if (client->setResponse() < 0)
+				return -1;
+
+			// IMPORTANTE: permitimos que epoll envíe la respuesta al cliente.
+			if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
+				return -1;
+			return 0;
+		}
 	}
-
-	// El proceso CGI ha terminado con error.
-	if (client->generateErrorResponse(INTERNAL_SERVER_ERROR) < 0)
-		return -1;
-
-	if (client->setResponse() < 0)
-		return -1;
-
-	if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
-		return -1;
-
 	return 0;
 }

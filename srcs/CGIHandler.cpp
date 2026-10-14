@@ -276,7 +276,7 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 			close(pipe_out[1]);
 
 			input = request.rq_body;
-			start_time = std::time(NULL); 
+			last_activity = std::time(NULL); 
 			isrunning = true;
 			return OK;
 		}
@@ -513,7 +513,7 @@ void	CGIHandler::clear()
 	isrunning = false;
 	iscgi = false;
 	output.clear();
-	start_time = -1;
+	last_activity = -1;
 }
 
 void	CGIHandler::printParameters()

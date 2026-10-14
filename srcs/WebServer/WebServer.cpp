@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/15 01:06:33 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/15 01:20:44 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,7 +142,6 @@ int	WebServer::process_connections(int num_events) //change
 			if (epoll_events[i].events & EPOLLOUT)
 			{
 				if ((send_status = send_cgi_data(fd, cgi_pipes[fd])) < 0)
-					
 					return -1;
 			}
 			if (epoll_events[i].events & (EPOLLIN | EPOLLHUP))
