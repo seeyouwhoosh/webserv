@@ -74,6 +74,8 @@ long		strtoInt(std::string s);
 
 void		urlDecode(std::string &s);
 
+std::string	parseRawBody(std::string &body);
+
 /* INITs */
 
 void		init_responses();

@@ -247,6 +247,9 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 	fill_env(request);
 	input = request.rq_body;
 
+	std::cerr << "Request body size: "
+          << request.rq_body << std::endl;
+
 	pid = fork();
 	switch (pid)
 	{

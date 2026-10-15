@@ -55,6 +55,24 @@ void	urlDecode(std::string &s)
 	s = result;
 }
 
+std::string	parseRawBody(std::string &body)
+{
+	std::string::size_type pos = body.find('=');
+
+	if (pos == std::string::npos)
+		return "";
+
+	std::string key = body.substr(0, pos);
+	std::string value = body.substr(pos + 1);
+	urlDecode(value);
+	urlDecode(key);
+
+	if (key != "raw_body")
+		return "";
+
+	return value;
+}
+
 /**
  * @brief Convert IPv4 and IPv6 addresses from binary to text form
  * */
