@@ -1,10 +1,14 @@
 #!/bin/sh
 
 # 1. Leer el cuerpo de la petición si es POST y CONTENT_LENGTH > 0
-POST_BODY=""
-if [ "$REQUEST_METHOD" = "POST" ] && [ -n "$CONTENT_LENGTH" ] && [ "$CONTENT_LENGTH" -gt 0 ]; then
-    POST_BODY=$(dd bs=1 count="$CONTENT_LENGTH" 2>/dev/null)
-fi
+POST_BODY=$(dd bs=1 count="$CONTENT_LENGTH" 2>/dev/null)
+
+export POST_BODY
+DECODED_BODY=$(python3 -c '
+import os
+from urllib.parse import parse_qs
+print(parse_qs(os.environ["POST_BODY"]).get("raw_body", [""])[0])
+')
 
 # 2. Cabeceras HTTP obligatorias
 printf "Content-Type: text/html; charset=utf-8\r\n\r\n"
@@ -35,7 +39,7 @@ cat <<EOF
         <pre>${QUERY_STRING:-Ninguno}</pre>
         
         <h3>Datos del Cuerpo (POST / STDIN):</h3>
-        <pre>${POST_BODY:-Ninguno}</pre>
+        <pre>${DECODED_BODY:-Ninguno}</pre>
         
         <h3>Variables de Entorno Principales (fill_env):</h3>
         <ul>

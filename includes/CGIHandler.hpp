@@ -23,7 +23,7 @@ private:
 	std::vector<char *>			argv;
 	std::vector<char *>			envp;
 	std::string					cgi_path;
-	std::string 				script_path;//change
+	std::string 				script_path; //change
 	std::string					filename;
 	std::string					path_info;
 	std::string					query;

@@ -72,6 +72,7 @@ int			hexToAscii(std::string s);
 
 long		strtoInt(std::string s);
 
+void		urlDecode(std::string &s);
 
 /* INITs */
 

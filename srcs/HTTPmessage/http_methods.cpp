@@ -101,6 +101,7 @@ void	HTTPmessage::processURLencoded()
 	std::string	pair;
 	while (std::getline(ss, pair, '&'))
 	{
+		urlDecode(pair);
 		size_t	separator = pair.find('=');
 
 		if (separator == std::string::npos)
@@ -216,7 +217,7 @@ int	HTTPmessage::httpPOST()
 	LocationConfig	*locationconf = getFullPath(full_path);
 	
 	if (rq_content_length > locationconf->max_body_size)
-		return setStatusCode(CONTENT_TOO_LARGE);
+		return -setStatusCode(CONTENT_TOO_LARGE);
 
 	int				status;
 	if (cgi->isCGI())
@@ -224,10 +225,12 @@ int	HTTPmessage::httpPOST()
 		status = cgi->execute(*this);
 		if (status == OK && cgi->getPipeIn() > 0 && cgi->getPipeOut() > 0)
 			return IS_CGI;
+		else
+			return -setStatusCode(status);
 	}
 
 	if ((status = handleSpecialType()) != 1)
-		return status;
+		return -setStatusCode(status);
 
 	if ((locationconf && locationconf->upload_store.empty()))
 		return -setStatusCode(NOT_FOUND);

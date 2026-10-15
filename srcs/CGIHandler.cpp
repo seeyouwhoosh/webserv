@@ -107,7 +107,7 @@ void CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location
 		if (pos_ext == std::string::npos)
 			break;
 
-		std::string ext_str = segment.substr(pos_ext + 1);
+		std::string ext_str = segment.substr(pos_ext);
 		std::string interpreter = matchExtension(ext_str, location);
 
 		if (interpreter.empty() && ext_str != ".cgi")
@@ -242,11 +242,10 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 		return INTERNAL_SERVER_ERROR;
 
 	setNonBlocking(pipe_out[0]);
-	setNonBlocking(pipe_out[1]);
-	setNonBlocking(pipe_in[0]);
 	setNonBlocking(pipe_in[1]);
 
 	fill_env(request);
+	input = request.rq_body;
 
 	pid = fork();
 	switch (pid)
@@ -265,6 +264,7 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 		
 			dup2(pipe_in[0], STDIN_FILENO);
 			dup2(pipe_out[1], STDOUT_FILENO);
+			dup2(pipe_out[1], STDERR_FILENO);
 			closePipes(pipe_in, pipe_out);
 		
 			execve(argv[0], argv.data(), envp.data());
@@ -275,7 +275,6 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 			close(pipe_in[0]);
 			close(pipe_out[1]);
 
-			input = request.rq_body;
 			last_activity = std::time(NULL); 
 			isrunning = true;
 			return OK;

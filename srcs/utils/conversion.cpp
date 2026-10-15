@@ -28,6 +28,33 @@ int	hexToAscii(std::string s)
 	return result;
 }
 
+void	urlDecode(std::string &s)
+{
+	std::string result;
+
+	for (std::string::size_type i = 0; i < s.size(); ++i)
+	{
+		if (s[i] == '%' && i + 2 < s.size())
+		{
+			int value = hexToAscii(s.substr(i + 1, 2));
+
+			if (value >= 0)
+			{
+				result += static_cast<char>(value);
+				i += 2;
+			}
+			else
+				result += s[i];
+		}
+		else if (s[i] == '+')
+			result += ' ';
+		else
+			result += s[i];
+	}
+
+	s = result;
+}
+
 /**
  * @brief Convert IPv4 and IPv6 addresses from binary to text form
  * */

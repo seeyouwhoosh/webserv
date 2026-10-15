@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/15 01:20:44 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/15 17:48:58 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,13 +74,16 @@ int	WebServer::close_connection(int fd)
 	return 0;
 }
 
+/**
+ * @brief Looks if fd is a pipe and deletes in from epoll, closes it and deletes it from cgi_pipes
+ */
 int WebServer::close_pipe(int fd)
 {
 	if (cgi_pipes.find(fd) != cgi_pipes.end())
 	{
+		cgi_pipes.erase(fd);
 		epoll_del_fd(fd);
 		close(fd);
-		cgi_pipes.erase(fd);
 	}
 	if (num_connections > 0)
 		num_connections--;
