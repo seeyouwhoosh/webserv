@@ -1,5 +1,18 @@
-#include "ConfigParser.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   LocationConfig.cpp                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/30 13:35:00 by xwu               #+#    #+#             */
+/*   Updated: 2026/10/17 01:52:18 by xwu              ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "LocationConfig.hpp"
 #include "utils.hpp"
+#include "ConfigParser.hpp"
 
 /* ORTHODOX CANONICAL FORM */
 

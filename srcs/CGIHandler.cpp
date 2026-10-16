@@ -545,12 +545,3 @@ void	CGIHandler::clear()
 	output.clear();
 	last_activity = -1;
 }
-
-void	CGIHandler::printParameters()
-{
-	std::cout << "Real path: " << cgi_path << std::endl;
-	std::cout << "path_info: " << path_info << std::endl;
-	std::cout << "Query: " << query << std::endl;
-	std::cout << "Filename: " << filename << std::endl;
-	std::cout << "Output: " << output << std::endl;
-}

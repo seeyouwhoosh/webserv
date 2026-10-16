@@ -69,5 +69,4 @@ private:
 	void				setPipeIn(int fd);
 	int					getPipeIn() const;
 	pid_t				getPID() const;
-	void				printParameters();
 };

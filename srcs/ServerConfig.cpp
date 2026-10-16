@@ -1,5 +1,18 @@
-#include "ConfigParser.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Config.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/30 13:35:00 by xwu               #+#    #+#             */
+/*   Updated: 2026/07/30 13:35:00 by xwu              ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "ServerConfig.hpp"
 #include "utils.hpp"
+#include "ConfigParser.hpp"
 
 /* ORTHODOX CANONICAL FORM */
 

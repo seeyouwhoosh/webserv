@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/16 02:09:10 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/17 01:03:12 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,7 @@ void	Client::setLastActivity(time_t time)
 {
 	last_activity = time;
 }
+
 /**
  * @brief Checks if the client should close the connection
  * If keep_alive is 0, close; if keep_alive < 0, don't close; 
@@ -81,7 +82,7 @@ bool	Client::askkeepAlive()
 		return false;
 
 	time_t		now = time(NULL);
-	if ((now - last_activity) > keep_alive)
+	if (std::difftime(now, last_activity) > keep_alive)
 		return true;
 	if (max_requests > 0 && n_requests <= max_requests)
 		return true;

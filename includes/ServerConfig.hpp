@@ -2,6 +2,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <netdb.h> /* struct addrinfo */
 
 #include "HTTPContext.hpp"
 #include "LocationConfig.hpp"

@@ -68,8 +68,8 @@ int	main(int ac, char **av)
 	WebServer	webserv;
 	int			num_events;
 
-	if (webserv.parse_config(file) < 0 ||
-		webserv.prepare_listeners() < 0 ||
+	if (webserv.parseConfig(file) < 0 ||
+		webserv.prepareListeners() < 0 ||
 		webserv.epoll_start_instance() < 0)
 		return 1;
 
@@ -78,22 +78,19 @@ int	main(int ac, char **av)
 
 	while (g_signal)
 	{
-		num_events = epoll_wait(webserv.epoll_instance,
-								webserv.epoll_events,
-								MAX_CONNECTIONS, -1);
+		num_events = webserv.epoll_wait(MAX_CONNECTIONS, 1000);
 		if (num_events < 0)
 		{
 			if (!g_signal)
 				break;
-			webserv.free_all();
+			webserv.clear();
 			return error_msg(errno, "epoll_wait", NULL);
 		}
-		if (num_events == 0)
-			continue;
-		if (webserv.process_connections(num_events) < 0)
+		if (webserv.processConnections(num_events) < 0)
 			break;
+		webserv.checkTimeouts();
 	}
 
-	webserv.free_all();
+	webserv.clear();
 	return 0;
 }

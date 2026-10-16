@@ -35,7 +35,37 @@ typedef struct s_listener
 class WebServer
 {
 private:
-	std::map<int, t_listener>	listeners;
+	/* Epoll */
+	int								epoll_instance;
+	struct epoll_event				*epoll_events;
+	std::map<int, uint32_t>			fd_events;
+
+	/* Configuration classes */
+	ConfigParser					globalconf;
+	std::vector<ServerConfig>		servers;
+
+	/* Connection variables */
+	std::map<int, Client *>			cgi_pipes;
+	std::map<int, Client>			clients;
+	std::map<int, t_listener>		listeners;
+	std::map<std::string, Session>	sessions; // Bonus
+
+	/* Epoll handlers */
+	int			epoll_add_fd(int fd);
+	int			epoll_del_fd(int fd);
+	int			epoll_addflag_fd(int fd, int flag);
+	int			epoll_delflag_fd(int fd, int flag);
+
+	/* Sockets and clients handlers */
+	int			sendCgiData(int fd, Client *client);
+	int			handleCgiData(int fd, Client *client);
+	int			handleNewConnection(int listener);
+	int			sendClientData(int client);
+	int			handleClientData(int client);
+
+	/* Bonus */
+	std::string	createSession();
+	bool		hasSession(const std::string &sessionId) const;
 
 public:
 	/* Orthodox Canonical Form */
@@ -44,51 +74,24 @@ public:
 	WebServer &operator=(const WebServer &other);
 	~WebServer();
 
-	/* Configuration classes */
-	ConfigParser				globalconf;
-	std::vector<ServerConfig>	servers;
-
-	/* Connection variables */
-	int								epoll_instance;
-	std::map<int, Client *>			cgi_pipes;
-	std::map<int, Client>			clients;
-	std::map<std::string, Session>	sessions; // Bonus
-	size_t							num_connections;
-	struct epoll_event				*epoll_events;
-
 	/* Parser */
-	int			parse_config(char *file);
+	int	parseConfig(char *file);
 
 	/* Sockets and clients handlers */
-	int			prepare_listeners();
-	int			process_connections(int num_events);
-	int			handle_new_connection(int listener);
-	void		check_timeouts();
-	void		create_new_client(int clientsock, int listener, void *clientaddr);
-	int			handle_cgi_data(int fd, Client *client);
-	int			handle_client_data(int client);
-	int			send_cgi_data(int fd, Client *client);
-	int			send_data_client(int client);
-	int			close_connection(int fd);
-	int			close_pipe(int fd);
+	int		prepareListeners();
+	int		processConnections(int num_events);
+	void	checkTimeouts();
 
-	void		free_all();
-	void		free_all_addrinfos();
+	/* Closing functions */
+	int		closeConnection(int fd);
+	int		closePipe(int fd);
+	void	clear();
 
 	/* Epoll handlers */
-	int			epoll_start_instance();
-	int			epoll_add_fd(int fd);
-	int			epoll_del_fd(int fd);
-	int			epoll_addflag_fd(int fd, int flag);
-	int			epoll_delflag_fd(int fd, int flag);
-	int			epoll_add_listens();
+	int		epoll_wait(int maxevents, int timeout);
+	int		epoll_start_instance();
 	
 	/* Getters and setters and booleans */
-	std::string	getPort(int listener);
-	bool		is_listener(int fd);
-	bool		is_cgi_pipe(int fd);
-
-	/* Bonus */
-	std::string	createSession();
-	bool		hasSession(const std::string &sessionId) const;
+	bool	isListener(int fd);
+	bool	isCgiPipe(int fd);
 };
