@@ -1,17 +1,27 @@
 #!/bin/sh
 
 # 1. Leer el cuerpo de la petición si es POST y CONTENT_LENGTH > 0
-POST_BODY=$(dd bs=1 count="$CONTENT_LENGTH" 2>/dev/null)
+#!/bin/sh
+
+POST_BODY=""
+if [ "$REQUEST_METHOD" = "POST" ] && [ -n "$CONTENT_LENGTH" ] && [ "$CONTENT_LENGTH" -gt 0 ]; then
+    POST_BODY=$(dd bs=1 count="$CONTENT_LENGTH" 2>/dev/null)
+fi
 
 export POST_BODY
+
 DECODED_BODY=$(python3 -c '
 import os
+import json
 from urllib.parse import parse_qs
-print(parse_qs(os.environ["POST_BODY"]).get("raw_body", [""])[0])
-')
 
-# 2. Cabeceras HTTP obligatorias
-printf "Content-Type: text/html; charset=utf-8\r\n\r\n"
+body = os.environ.get("POST_BODY", "")
+
+if body.startswith("raw_body="):
+    body = parse_qs(body).get("raw_body", [""])[0]
+
+print(body)
+')
 
 # 3. Generar HTML
 cat <<EOF

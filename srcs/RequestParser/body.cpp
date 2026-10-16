@@ -32,11 +32,14 @@ ParseResult RequestParser::parseBody(HTTPmessage& request)
 		request.rq_content_length = _contentLength;
 		_state = COMPLETE;
 
+		/*
 		if (!parsedBody.empty())
 		{
 			request.rq_body = parsedBody;
 			request.rq_content_length = parsedBody.size();
 		}
+		*/
+
 		return PARSE_COMPLETE;
 	}
 

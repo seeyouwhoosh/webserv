@@ -1,2 +1,3 @@
-break WebServer::is_cgi_pipe
-break WebServer::close_pipe
+WebServer::check_timeouts
+CGIHandler::parseOutput
+WebServer::handle_cgi_data

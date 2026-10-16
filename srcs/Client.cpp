@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/12 12:53:17 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/16 02:09:10 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,7 +174,8 @@ int	Client::generateErrorResponse(int error)
  */
 int	Client::setResponse()
 {
-	http_responses.push(message.setResponse());
+	std::string	msg = message.setResponse();
+	http_responses.push(msg);
 
 	updateActivity();
 	parser.clear();

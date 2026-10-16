@@ -80,12 +80,50 @@ my $post_data = 'Ninguno';
 
 if ($method eq 'POST') {
     if ($post_error ne '') {
-        $post_data = "Error: $post_error";
+        $post_data = { error => $post_error };
     }
     elsif ($content_length == 0) {
         $post_data = 'Cuerpo vacío (CONTENT_LENGTH es 0)';
     }
+    elsif ($content_type =~ m{application/json}i) {
+        # El body ya es JSON: parsearlo directamente.
+        my $decoded = eval { decode_json($post_body) };
+
+        if ($@) {
+            $post_data = {
+                error    => 'JSON inválido',
+                raw_body => $post_body
+            };
+        }
+        else {
+            $post_data = $decoded;
+        }
+    }
+    elsif ($content_type =~ m{application/x-www-form-urlencoded}i) {
+        # El body es un formulario: parsear sus parámetros.
+        my %form_data;
+
+        foreach my $pair (split /&/, $post_body) {
+            my ($key, $value) = split /=/, $pair, 2;
+
+            $key   = $q->unescape(defined $key   ? $key   : '');
+            $value = $q->unescape(defined $value ? $value : '');
+
+            $form_data{$key} = $value;
+        }
+
+        # Si el formulario contiene raw_body con JSON, parsear ese JSON también.
+        if (exists $form_data{raw_body}) {
+            my $decoded = eval { decode_json($form_data{raw_body}) };
+
+            $post_data = $@ ? $form_data{raw_body} : $decoded;
+        }
+        else {
+            $post_data = \%form_data;
+        }
+    }
     else {
+        # Otros tipos: conservar el body original.
         $post_data = $post_body;
     }
 }
@@ -104,9 +142,10 @@ my $json = JSON->new->allow_nonref->utf8->pretty;
 
 my $get_json  = %get_data ? $json->encode(\%get_data) : '"Ninguno"';
 my $head_json = $json->encode(\%http_headers);
-use HTML::Entities;
-
-my $post_json = encode_entities($post_data, '<>&');
+my $post_json = $json->encode($post_data);
+$post_json =~ s/&/&amp;/g;
+$post_json =~ s/</&lt;/g;
+$post_json =~ s/>/&gt;/g;
 # 8. Escapar valores interpolados en HTML
 sub escape_html {
     my ($s) = @_;

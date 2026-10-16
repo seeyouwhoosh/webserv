@@ -29,9 +29,8 @@ void WebServer::check_timeouts()
 	{
 		int		client_fd = it->first;
 		Client	&client = it->second;
-		bool	deleted = false;
 		
-		
+		it++;
 		if (client.cgi.isRunning() && static_cast<size_t>(now - client.cgi.last_activity) > client.getServer()->cgi_timeout)
 		{
 			client.cgi.killScript();
@@ -46,14 +45,9 @@ void WebServer::check_timeouts()
 			
 			if (client.cgi.isRunning())
 				client.cgi.killScript();
-				
+
 			close_connection(client_fd);
-			clients.erase(it++);
-			deleted = true;
 		}
-		
-		if (!deleted)
-			++it;
 	}
 }
 
@@ -120,13 +114,14 @@ int	WebServer::handle_new_connection(int listener)
 int	WebServer::send_data_client(int client)
 {
 	int	sent_size = clients[client].sendResponse();
-	clients[client].setLastActivity(std::time(NULL));
 	if (sent_size < 0)
 	{
 		if (close_connection(client) < 0)
 			return error_msg(errno, "send", NULL);
 		return -1;
 	}
+	clients[client].setLastActivity(std::time(NULL));
+
 	if (clients[client].responseComplete())
 	{
 		epoll_delflag_fd(client, EPOLLOUT);
@@ -167,7 +162,6 @@ int	WebServer::handle_client_data(int client)
 	int read_size = recv(client, buff, BUFFER_SIZE - 1, 0);
 	if (!read_size)
 	{
-		clients.erase(client);
 		if (close_connection(client) < 0)
 			return -1;
 		if (SHOW_LOGS)
@@ -222,6 +216,7 @@ int	WebServer::handle_client_data(int client)
 			if (!clientUnit.cgi.input.empty())
 			{
 				epoll_add_fd(pipe_in);
+				epoll_delflag_fd(pipe_out, EPOLLIN);
 				epoll_addflag_fd(pipe_in, EPOLLOUT);
 				cgi_pipes[pipe_in] = &clientUnit;
 			}

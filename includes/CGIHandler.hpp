@@ -54,6 +54,7 @@ private:
 	void				separateQuery(std::string &full_path);
 	int					execute(HTTPmessage& request);
 	void				parseOutput(HTTPmessage &request);
+	size_t				findHeaderEnd(const std::string &output);
 	void				killScript();
 	void				clear();
 

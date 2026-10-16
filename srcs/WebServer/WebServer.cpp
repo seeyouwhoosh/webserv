@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/15 17:48:58 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/16 01:18:03 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,7 @@ int	WebServer::close_connection(int fd)
 		return -1;
 	}
 	close(fd);
+	clients.erase(fd);
 	if (num_connections > 0)
 		num_connections--;
 	return 0;
@@ -155,6 +156,7 @@ int	WebServer::process_connections(int num_events) //change
 			}
 			if (epoll_events[i].events & EPOLLERR)
 			{
+				cgi_pipes[fd]->cgi.setRunning(false);
 				if (close_pipe(fd) < 0)
 					return -1;
 				continue;

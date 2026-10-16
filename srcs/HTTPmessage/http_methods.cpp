@@ -230,7 +230,7 @@ int	HTTPmessage::httpPOST()
 	}
 
 	if ((status = handleSpecialType()) != 1)
-		return -setStatusCode(status);
+		return status;
 
 	if ((locationconf && locationconf->upload_store.empty()))
 		return -setStatusCode(NOT_FOUND);

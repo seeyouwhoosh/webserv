@@ -1,8 +1,8 @@
 <?php
-// 1. Cabeceras HTTP obligatorias
+// 1. Cabeceras CGI
 header("Content-Type: text/html; charset=utf-8");
 
-// 2. Obtener variables de entorno
+// 2. Variables de entorno
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $query_string = $_SERVER['QUERY_STRING'] ?? '';
 $content_length = $_SERVER['CONTENT_LENGTH'] ?? '0';
@@ -19,87 +19,244 @@ $path_translated = $_SERVER['PATH_TRANSLATED'] ?? 'N/A';
 $script_name = $_SERVER['SCRIPT_NAME'] ?? 'N/A';
 $remote_addr = $_SERVER['REMOTE_ADDR'] ?? 'N/A';
 
+// Función para escapar valores HTML
+function h($value) {
+    if (!is_string($value)) {
+        $value = (string)$value;
+    }
+
+    return htmlspecialchars(
+        $value,
+        ENT_QUOTES | ENT_SUBSTITUTE,
+        'UTF-8'
+    );
+}
+
 // 3. Procesar GET
 $get_data = [];
-if (!empty($query_string)) {
+
+if ($query_string !== '') {
     parse_str($query_string, $get_data);
 }
 
-// 4. Procesar POST / Cuerpo recibido por stdin
-$post_data = "Ninguno";
-if ($method === 'POST') {
-    $length = intval($content_length);
+// 4. Leer y parsear el body desde STDIN
+$post_data = 'Ninguno';
+$raw_body = '';
+$body_bytes_received = 0;
+$json_error = null;
+
+if ($method === 'POST' || $method === 'PUT' || $method === 'PATCH') {
+    $length = (int)$content_length;
+
     if ($length > 0) {
-        $post_body = file_get_contents('php://stdin');
-        if (strpos($content_type, 'application/json') !== false) {
-            $post_data = json_decode($post_body, true) ?? $post_body;
+        // Leer exactamente CONTENT_LENGTH bytes.
+        while ($body_bytes_received < $length) {
+            $chunk = fread(STDIN, min(8192, $length - $body_bytes_received));
+
+            if ($chunk === false || $chunk === '') {
+                break;
+            }
+
+            $raw_body .= $chunk;
+            $body_bytes_received += strlen($chunk);
+        }
+
+        if ($body_bytes_received < $length) {
+            $post_data = [
+                'error' => 'Body incompleto',
+                'expected_bytes' => $length,
+                'received_bytes' => $body_bytes_received,
+                'raw_body' => $raw_body
+            ];
+        } elseif (stripos($content_type, 'application/json') !== false) {
+            // JSON enviado directamente.
+            $decoded = json_decode($raw_body, true);
+
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $post_data = $decoded;
+            } else {
+                $json_error = function_exists('json_last_error_msg')
+                    ? json_last_error_msg()
+                    : 'JSON inválido';
+
+                $post_data = [
+                    'raw_body' => $raw_body,
+                    'json_error' => $json_error
+                ];
+            }
+        } elseif (
+            stripos($content_type, 'application/x-www-form-urlencoded') !== false
+        ) {
+            // Formulario URL-encoded.
+            parse_str($raw_body, $parsed_post);
+            $post_data = $parsed_post;
+
+            // Si el formulario contiene un campo raw_body con JSON,
+            // intenta decodificar ese campo.
+            if (isset($parsed_post['raw_body'])) {
+                $decoded = json_decode($parsed_post['raw_body'], true);
+
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $post_data['raw_body_decoded'] = $decoded;
+                }
+            }
+        } elseif (stripos($content_type, 'multipart/form-data') !== false) {
+            // multipart requiere parsear las partes MIME.
+            // PHP CGI puede exponer los campos en $_POST.
+            $post_data = [
+                'raw_body_bytes' => $body_bytes_received,
+                'multipart_fields' => $_POST,
+                'multipart_files' => array_keys($_FILES),
+                'note' => 'Consulta $_POST y $_FILES para los campos y archivos'
+            ];
         } else {
-            parse_str($post_body, $parsed_post);
-            $post_data = !empty($parsed_post) ? $parsed_post : $post_body;
+            // Tipo desconocido: conservar el contenido sin transformarlo.
+            $post_data = [
+                'raw_body' => $raw_body,
+                'content_type' => $content_type
+            ];
         }
     } else {
-        $post_data = "Cuerpo vacío (CONTENT_LENGTH es 0)";
+        $post_data = 'Cuerpo vacío (CONTENT_LENGTH es 0)';
     }
 }
 
-// 5. Filtrar cabeceras HTTP extra (HTTP_*)
+// 5. Cabeceras HTTP extra
 $http_headers = [];
+
 foreach ($_SERVER as $key => $value) {
     if (strpos($key, 'HTTP_') === 0) {
         $http_headers[$key] = $value;
     }
+}
+
+// Representación JSON segura para mostrar en HTML.
+function json_for_html($value) {
+    $json = json_encode(
+        $value,
+        JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    );
+
+    return $json !== false ? h($json) : 'No se pudo generar JSON';
 }
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CGI PHP - Webserv Env Test</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
-        .box { background: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; max-width: 900px; margin: auto; }
-        h1 { color: #38bdf8; }
-        h3 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 5px; margin-top: 25px; }
-        pre { background: #0f172a; padding: 10px; border-radius: 4px; color: #22c55e; overflow-x: auto; }
-        ul { line-height: 1.6; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 20px;
+        }
+
+        .box {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #38bdf8;
+        }
+
+        h3 {
+            color: #38bdf8;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+
+        pre {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 4px;
+            color: #22c55e;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        ul {
+            line-height: 1.6;
+        }
+
+        .ok {
+            color: #22c55e;
+        }
+
+        .error {
+            color: #f87171;
+        }
+
+        textarea {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #334155;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 4px;
+            background: #0284c7;
+            color: white;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h1>¡Prueba de Entorno CGI (PHP) Exitosa!</h1>
-        <p><strong>Método HTTP:</strong> <?php echo htmlspecialchars($method); ?></p>
-        <p><strong>Script ejecutado (SCRIPT_NAME):</strong> <?php echo htmlspecialchars($script_name); ?></p>
-        
-        <h3>Parámetros GET recibidos:</h3>
-        <pre><?php echo htmlspecialchars(json_encode($get_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) ?: "Ninguno"); ?></pre>
-        
-        <h3>Datos del Cuerpo (POST / STDIN):</h3>
-        <pre><?php 
-            if (is_array($post_data)) {
-                echo htmlspecialchars(json_encode($post_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            } else {
-                echo htmlspecialchars($post_data);
-            }
-        ?></pre>
-        
-        <h3>Variables de Entorno Principales (fill_env):</h3>
-        <ul>
-            <li><strong>SERVER_SOFTWARE:</strong> <?php echo htmlspecialchars($server_software); ?></li>
-            <li><strong>GATEWAY_INTERFACE:</strong> <?php echo htmlspecialchars($gateway_interface); ?></li>
-            <li><strong>SERVER_PROTOCOL:</strong> <?php echo htmlspecialchars($server_protocol); ?></li>
-            <li><strong>SERVER_PORT:</strong> <?php echo htmlspecialchars($server_port); ?></li>
-            <li><strong>SERVER_NAME:</strong> <?php echo htmlspecialchars($server_name); ?></li>
-            <li><strong>REQUEST_METHOD:</strong> <?php echo htmlspecialchars($method); ?></li>
-            <li><strong>QUERY_STRING:</strong> <?php echo htmlspecialchars($query_string ?: "N/A"); ?></li>
-            <li><strong>CONTENT_LENGTH:</strong> <?php echo htmlspecialchars($content_length); ?></li>
-            <li><strong>CONTENT_TYPE:</strong> <?php echo htmlspecialchars($content_type); ?></li>
-            <li><strong>PATH_INFO:</strong> <?php echo htmlspecialchars($path_info); ?></li>
-            <li><strong>PATH_TRANSLATED:</strong> <?php echo htmlspecialchars($path_translated); ?></li>
-            <li><strong>REMOTE_ADDR / HOST:</strong> <?php echo htmlspecialchars($remote_addr); ?></li>
-        </ul>
+<div class="box">
+    <h1>¡Prueba de Entorno CGI (PHP)!</h1>
 
-        <h3>Cabeceras HTTP extra (HTTP_*):</h3>
-        <pre><?php echo htmlspecialchars(json_encode($http_headers, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) ?: "Ninguna cabecera extra"); ?></pre>
-    </div>
+    <p><strong>Método HTTP:</strong> <?= h($method) ?></p>
+    <p><strong>Script ejecutado (SCRIPT_NAME):</strong> <?= h($script_name) ?></p>
+
+    <h3>Parámetros GET recibidos:</h3>
+    <pre><?= json_for_html($get_data ?: 'Ninguno') ?></pre>
+
+    <h3>Datos del cuerpo (POST / STDIN):</h3>
+
+    <pre><?= is_array($post_data)
+        ? json_for_html($post_data)
+        : h($post_data) ?></pre>
+
+    <h3>Variables de entorno principales (fill_env):</h3>
+    <ul>
+        <li><strong>SERVER_SOFTWARE:</strong> <?= h($server_software) ?></li>
+        <li><strong>GATEWAY_INTERFACE:</strong> <?= h($gateway_interface) ?></li>
+        <li><strong>SERVER_PROTOCOL:</strong> <?= h($server_protocol) ?></li>
+        <li><strong>SERVER_PORT:</strong> <?= h($server_port) ?></li>
+        <li><strong>SERVER_NAME:</strong> <?= h($server_name) ?></li>
+        <li><strong>REQUEST_METHOD:</strong> <?= h($method) ?></li>
+        <li><strong>QUERY_STRING:</strong> <?= h($query_string !== '' ? $query_string : 'N/A') ?></li>
+        <li><strong>CONTENT_LENGTH:</strong> <?= h($content_length) ?></li>
+        <li><strong>CONTENT_TYPE:</strong> <?= h($content_type) ?></li>
+        <li><strong>PATH_INFO:</strong> <?= h($path_info) ?></li>
+        <li><strong>PATH_TRANSLATED:</strong> <?= h($path_translated) ?></li>
+        <li><strong>REMOTE_ADDR / HOST:</strong> <?= h($remote_addr) ?></li>
+    </ul>
+
+    <h3>Cabeceras HTTP extra (HTTP_*):</h3>
+    <pre><?= json_for_html($http_headers ?: 'Ninguna cabecera extra') ?></pre>
+
+    <h3>Probar un POST JSON:</h3>
+    <form method="POST" enctype="application/x-www-form-urlencoded">
+        <textarea name="raw_body" rows="4">{"action":"execute","payload":"sample_data"}</textarea>
+        <button type="submit">Enviar formulario</button>
+    </form>
+</div>
 </body>
 </html>

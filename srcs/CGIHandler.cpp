@@ -247,9 +247,6 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 	fill_env(request);
 	input = request.rq_body;
 
-	std::cerr << "Request body size: "
-          << request.rq_body << std::endl;
-
 	pid = fork();
 	switch (pid)
 	{
@@ -285,9 +282,39 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 	}
 }
 
+size_t CGIHandler::findHeaderEnd(const std::string &output)
+{
+	size_t pos = 0;
+
+	while (pos < output.size())
+	{
+		size_t end = output.find('\n', pos);
+		if (end == std::string::npos)
+			return std::string::npos;
+
+		size_t line_end = end;
+		if (line_end > pos && output[line_end - 1] == '\r')
+			--line_end;
+
+		if (line_end == pos)
+			return end + 1;
+
+		size_t colon = output.find(':', pos);
+		if (colon == std::string::npos || colon >= line_end)
+			return std::string::npos;
+
+		if (colon == pos)
+			return std::string::npos;
+
+		pos = end + 1;
+	}
+
+	return std::string::npos;
+}
+
 void	CGIHandler::parseOutput(HTTPmessage &request)
 {
-	size_t	end_of_header = output.find("\r\n\r\n");
+	size_t	end_of_header = findHeaderEnd(output);
 	if (end_of_header == output.npos)
 		return;
 
@@ -319,6 +346,7 @@ void	CGIHandler::parseOutput(HTTPmessage &request)
 			value.clear();
 		request.setHeader(key, value);
 	}
+
 }
 
 
