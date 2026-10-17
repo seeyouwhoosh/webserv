@@ -447,6 +447,9 @@ int	HTTPmessage::httpPOST()
 	struct stat	st;
 	std::string	upload_store = locationconf->upload_store;
 
+	if (full_path.find(upload_store) == std::string::npos)
+		return -setStatusCode(METHOD_NOT_ALLOWED);
+
 	if (stat(upload_store.c_str(), &st) < 0 || access(upload_store.c_str(), X_OK | W_OK) < 0)
 		return -setStatusCode(FORBIDDEN);
 
@@ -822,61 +825,109 @@ void	HTTPmessage::processURLencoded()
 
 int HTTPmessage::parseMultipartToBody(const std::string& contentHeader)
 {
-	size_t	bPos = contentHeader.find("boundary=");
+	size_t bPos = contentHeader.find("boundary=");
 	if (bPos == std::string::npos)
-		return false;
+		return 0;
 
-	std::string	boundary = "--" + contentHeader.substr(bPos + 9);
-	if (boundary.length() > 2 && boundary[2] == '"')
+	bPos += 9;
+	size_t bEnd = contentHeader.find(';', bPos);
+
+	std::string boundary = contentHeader.substr(
+		bPos, bEnd == std::string::npos ? std::string::npos : bEnd - bPos
+	);
+
+	size_t first = boundary.find_first_not_of(" \t");
+	if (first == std::string::npos)
+		return -1;
+
+	size_t last = boundary.find_last_not_of(" \t");
+	boundary = boundary.substr(first, last - first + 1);
+
+	if (boundary.size() >= 2 &&
+		boundary[0] == '"' &&
+		boundary[boundary.size() - 1] == '"')
 	{
-		boundary.erase(2, 1);
-		if (!boundary.empty() && boundary[boundary.length() - 1] == '"')
-			boundary.erase(boundary.length() - 1, 1);
+		boundary = boundary.substr(1, boundary.size() - 2);
 	}
 
-	std::string	body_copy = "";
-	size_t		pos = 0;
+	if (boundary.empty())
+		return -1;
+
+	boundary.insert(0, "--");
+
+	std::string body_copy;
+	size_t pos = 0;
 
 	while ((pos = rq_body.find(boundary, pos)) != std::string::npos)
 	{
-		if (rq_body.substr(pos, boundary.length() + 2) == boundary + "--")
+		size_t after_boundary = pos + boundary.size();
+
+		if (rq_body.compare(after_boundary, 2, "--") == 0)
 			break;
 
-		pos += boundary.length();
+		if (rq_body.compare(after_boundary, 2, "\r\n") != 0)
+		{
+			pos = after_boundary;
+			continue;
+		}
 
-		size_t	header_end = rq_body.find("\r\n\r\n", pos);
-		size_t	sep_len = 4;
+		pos = after_boundary + 2;
+
+		size_t header_end = rq_body.find("\r\n\r\n", pos);
+		size_t sep_len = 4;
+
 		if (header_end == std::string::npos)
 		{
 			header_end = rq_body.find("\n\n", pos);
 			sep_len = 2;
+
 			if (header_end == std::string::npos)
-				break;
-		}
-		std::string	headers = rq_body.substr(pos, header_end - pos + sep_len);
-
-		size_t	filename_pos;
-		if ((filename_pos = headers.find("filename=")) != std::string::npos)
-		{
-			if (headers[filename_pos + 9] != '\"')
 				return -1;
-			size_t		filename_end = headers.find("\"", filename_pos + 10);
-			upload_name = headers.substr(filename_pos + 10, filename_end - filename_pos - 10);
 		}
 
-		size_t	content_start = header_end + sep_len;
+		size_t filename_pos;
+		if ((filename_pos = rq_body.find("filename=", pos))
+				!= std::string::npos &&
+			filename_pos < header_end)
+		{
+			filename_pos += 9;
 
-		size_t	content_end = rq_body.find(boundary, content_start);
+			if (filename_pos >= header_end)
+				return -1;
+
+			if (rq_body[filename_pos] != '"')
+				return -1;
+
+			size_t filename_end = rq_body.find('"', filename_pos + 1);
+
+			if (filename_end == std::string::npos ||
+				filename_end >= header_end)
+				return -1;
+
+			upload_name.assign(
+				rq_body, filename_pos + 1,
+				filename_end - filename_pos - 1
+			);
+		}
+
+		size_t content_start = header_end + sep_len;
+		size_t content_end = rq_body.find(boundary, content_start);
+
 		if (content_end == std::string::npos)
-			break;
+			return -1;
 
 		size_t bodypart_end = content_end;
-		if (bodypart_end >= content_start + 2 && rq_body.substr(bodypart_end - 2, 2) == "\r\n")
-			bodypart_end -= 2;
-		else if (bodypart_end >= content_start + 1 && rq_body[bodypart_end - 1] == '\n')
-			bodypart_end -= 1;
 
-		body_copy.append(rq_body, content_start, bodypart_end - content_start);
+		if (bodypart_end >= 2 &&
+			rq_body.compare(bodypart_end - 2, 2, "\r\n") == 0)
+			bodypart_end -= 2;
+		else if (bodypart_end >= 1 &&
+				 rq_body[bodypart_end - 1] == '\n')
+			--bodypart_end;
+
+		body_copy.append(
+			rq_body, content_start, bodypart_end - content_start
+		);
 
 		pos = content_end;
 	}
@@ -884,14 +935,16 @@ int HTTPmessage::parseMultipartToBody(const std::string& contentHeader)
 	if (body_copy.empty())
 		return -1;
 
-	rq_body = body_copy;
+	rq_body.swap(body_copy);
 	rq_content_length = rq_body.size();
 
 	return 1;
 }
 
 /**
- * @brief handlers Multipart and x-www-form-urlencoded
+ * @brief Handles Multipart and x-www-form-urlencoded
+ * @return Returns 0 if all is done, and just return. Returns -1 if there
+ * was an error. Returns 1 if there is still need to process things
  */
 int	HTTPmessage::handleSpecialType()
 {
@@ -900,7 +953,10 @@ int	HTTPmessage::handleSpecialType()
 	if (it != rq_headers.end())
 	{
 		if (it->second.find("multipart/form-data") != std::string::npos)
-			return parseMultipartToBody(it->second);
+		{
+			if (parseMultipartToBody(it->second) < 0)
+				return setStatusCode(BAD_REQUEST);
+		}
 		if (it->second.find("application/x-www-form-urlencoded") != std::string::npos)
 		{
 			processURLencoded();

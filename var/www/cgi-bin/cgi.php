@@ -75,8 +75,8 @@ if ($method === 'POST' || $method === 'PUT' || $method === 'PATCH') {
             if (json_last_error() === JSON_ERROR_NONE) {
                 $post_data = $decoded;
             } else {
-                $json_error = function_exists('json_last_error_msg')
-                    ? json_last_error_msg()
+                $json_error = function_exists('json_last_sendError')
+                    ? json_last_sendError()
                     : 'Invalid JSON';
 
                 $post_data = [
