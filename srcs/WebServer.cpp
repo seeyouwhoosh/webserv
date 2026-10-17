@@ -403,7 +403,7 @@ int WebServer::handleCgiData(int fd, Client *client)
 		closePipe(fd);
 	
 		int status;
-		pid_t result = waitpid(client->cgi.getPID(), &status, WNOHANG);
+		pid_t result = waitpid(client->cgi.getPID(), &status, 0);
 
 		if (result != 0)
 			client->cgi.setRunning(false);

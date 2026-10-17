@@ -60,7 +60,7 @@ std::string	CGIHandler::matchExtension(const std::string &ext,
  * 
  * If cgi-bin is detected, send it to the parseCGIbinFile function
  */
-void CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location)//change
+void	CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location)//change
 {
 	size_t cgibin_pos = full_path.find("/cgi-bin/");
 
