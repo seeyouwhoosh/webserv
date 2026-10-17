@@ -268,7 +268,7 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 			closePipes(pipe_in, pipe_out);
 		
 			execve(argv[0], argv.data(), envp.data());
-			exit(1);
+			exit(INTERNAL_SERVER_ERROR);
 		}
 		default:
 		{
@@ -293,7 +293,7 @@ size_t CGIHandler::findHeaderEnd(const std::string &output)
 			return std::string::npos;
 
 		size_t line_end = end;
-		if (line_end > pos && output[line_end - 1] == '\r')
+		if (line_end > pos && (output[line_end - 1] == '\r' || output[line_end - 1] == '\n'))
 			--line_end;
 
 		if (line_end == pos)

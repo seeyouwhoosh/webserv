@@ -403,7 +403,7 @@ int WebServer::handleCgiData(int fd, Client *client)
 		closePipe(fd);
 	
 		int status;
-		pid_t result = waitpid(client->cgi.getPID(), &status, 0);
+		pid_t result = waitpid(client->cgi.getPID(), &status, WNOHANG);
 
 		if (result != 0)
 			client->cgi.setRunning(false);
@@ -418,7 +418,7 @@ int WebServer::handleCgiData(int fd, Client *client)
 			if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
 				return -1;
 		}
-		else if (result < 0)
+		else if (result < 0 || WEXITSTATUS(status) != 0)
 		{
 			if (client->generateErrorResponse(INTERNAL_SERVER_ERROR) < 0 || client->setResponse() < 0 || epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
 				return -1;

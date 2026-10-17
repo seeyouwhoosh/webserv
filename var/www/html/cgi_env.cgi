@@ -1,17 +1,103 @@
 #!/usr/bin/perl -wT
 use strict;
 use warnings;
-use CGI;
-use JSON;
 
 # Limpiar el entorno por seguridad debido a -T (Taint Mode)
 delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};
 $ENV{PATH} = '/usr/local/bin:/bin:/usr/bin';
 
-# 1. Recoger variables de entorno CGI
+# --------------------------------------------------
+# Funciones auxiliares
+# --------------------------------------------------
+
+sub url_decode {
+    my ($value) = @_;
+    $value = '' unless defined $value;
+
+    $value =~ tr/+/ /;
+    $value =~ s/%([0-9a-fA-F]{2})/chr(hex($1))/eg;
+
+    return $value;
+}
+
+sub escape_html {
+    my ($value) = @_;
+    $value = '' unless defined $value;
+
+    $value =~ s/&/&amp;/g;
+    $value =~ s/</&lt;/g;
+    $value =~ s/>/&gt;/g;
+    $value =~ s/"/&quot;/g;
+    $value =~ s/'/&#39;/g;
+
+    return $value;
+}
+
+# Codificación JSON básica, sin módulos externos.
+sub json_quote {
+    my ($value) = @_;
+    $value = '' unless defined $value;
+
+    $value =~ s/\\/\\\\/g;
+    $value =~ s/"/\\"/g;
+    $value =~ s/\x08/\\b/g;
+    $value =~ s/\n/\\n/g;
+    $value =~ s/\r/\\r/g;
+    $value =~ s/\t/\\t/g;
+    $value =~ s/\f/\\f/g;
+
+    return '"' . $value . '"';
+}
+
+sub json_value {
+    my ($value) = @_;
+
+    return 'null' unless defined $value;
+
+    if (ref($value) eq 'HASH') {
+        my @pairs;
+
+        foreach my $key (sort keys %{$value}) {
+            push @pairs,
+                json_quote($key) . ': ' . json_value($value->{$key});
+        }
+
+        return '{' . join(', ', @pairs) . '}';
+    }
+
+    if (ref($value) eq 'ARRAY') {
+        return '[' . join(', ', map { json_value($_) } @{$value}) . ']';
+    }
+
+    return json_quote($value);
+}
+
+sub parse_urlencoded {
+    my ($input) = @_;
+    my %result;
+
+    foreach my $pair (split /&/, $input) {
+        next if $pair eq '';
+
+        my ($key, $value) = split /=/, $pair, 2;
+
+        $key   = url_decode($key);
+        $value = url_decode($value);
+
+        # Conserva el último valor si una clave aparece varias veces.
+        $result{$key} = $value;
+    }
+
+    return %result;
+}
+
+# --------------------------------------------------
+# 1. Variables de entorno CGI
+# --------------------------------------------------
+
 my $method            = $ENV{REQUEST_METHOD} || 'GET';
 my $query_string      = $ENV{QUERY_STRING} || '';
-my $content_length    = $ENV{CONTENT_LENGTH} || 0;
+my $content_length    = $ENV{CONTENT_LENGTH} || '0';
 my $content_type      = $ENV{CONTENT_TYPE} || 'No especificado';
 
 my $server_software   = $ENV{SERVER_SOFTWARE} || 'N/A';
@@ -25,8 +111,11 @@ my $path_translated   = $ENV{PATH_TRANSLATED} || 'N/A';
 my $script_name       = $ENV{SCRIPT_NAME} || 'N/A';
 my $remote_addr       = $ENV{REMOTE_ADDR} || 'N/A';
 
-# 2. Leer el body ANTES de crear CGI->new
-my $post_body = '';
+# --------------------------------------------------
+# 2. Leer el body desde STDIN
+# --------------------------------------------------
+
+my $post_body  = '';
 my $post_error = '';
 
 if ($method eq 'POST') {
@@ -57,25 +146,16 @@ if ($method eq 'POST') {
     }
 }
 
-# 3. Crear CGI después de leer STDIN.
-# CGI.pm puede procesar parámetros del formulario por su cuenta.
-my $q = CGI->new;
+# --------------------------------------------------
+# 3. Procesar GET
+# --------------------------------------------------
 
-# 4. Procesar parámetros GET
-my %get_data;
+my %get_data = parse_urlencoded($query_string);
 
-if ($query_string ne '') {
-    foreach my $pair (split /&/, $query_string) {
-        my ($key, $value) = split /=/, $pair, 2;
+# --------------------------------------------------
+# 4. Procesar POST
+# --------------------------------------------------
 
-        $key   = $q->unescape(defined $key   ? $key   : '');
-        $value = $q->unescape(defined $value ? $value : '');
-
-        $get_data{$key} = $value;
-    }
-}
-
-# 5. Procesar el body POST
 my $post_data = 'Ninguno';
 
 if ($method eq 'POST') {
@@ -86,49 +166,29 @@ if ($method eq 'POST') {
         $post_data = 'Cuerpo vacío (CONTENT_LENGTH es 0)';
     }
     elsif ($content_type =~ m{application/json}i) {
-        # El body ya es JSON: parsearlo directamente.
-        my $decoded = eval { decode_json($post_body) };
-
-        if ($@) {
-            $post_data = {
-                error    => 'JSON inválido',
-                raw_body => $post_body
-            };
-        }
-        else {
-            $post_data = $decoded;
-        }
+        # No se analiza JSON: se muestra el contenido recibido.
+        $post_data = $post_body;
     }
     elsif ($content_type =~ m{application/x-www-form-urlencoded}i) {
-        # El body es un formulario: parsear sus parámetros.
-        my %form_data;
+        my %form_data = parse_urlencoded($post_body);
 
-        foreach my $pair (split /&/, $post_body) {
-            my ($key, $value) = split /=/, $pair, 2;
-
-            $key   = $q->unescape(defined $key   ? $key   : '');
-            $value = $q->unescape(defined $value ? $value : '');
-
-            $form_data{$key} = $value;
-        }
-
-        # Si el formulario contiene raw_body con JSON, parsear ese JSON también.
         if (exists $form_data{raw_body}) {
-            my $decoded = eval { decode_json($form_data{raw_body}) };
-
-            $post_data = $@ ? $form_data{raw_body} : $decoded;
+            # Decodifica raw_body, pero no necesita analizar su JSON.
+            $post_data = $form_data{raw_body};
         }
         else {
             $post_data = \%form_data;
         }
     }
     else {
-        # Otros tipos: conservar el body original.
         $post_data = $post_body;
     }
 }
 
-# 6. Filtrar cabeceras HTTP extra (HTTP_*)
+# --------------------------------------------------
+# 5. Cabeceras HTTP extra
+# --------------------------------------------------
+
 my %http_headers;
 
 foreach my $env_key (keys %ENV) {
@@ -137,26 +197,20 @@ foreach my $env_key (keys %ENV) {
     }
 }
 
-# 7. Generar JSON
-my $json = JSON->new->allow_nonref->utf8->pretty;
+# --------------------------------------------------
+# 6. Convertir a JSON sin JSON.pm
+# --------------------------------------------------
 
-my $get_json  = %get_data ? $json->encode(\%get_data) : '"Ninguno"';
-my $head_json = $json->encode(\%http_headers);
-my $post_json = $json->encode($post_data);
-$post_json =~ s/&/&amp;/g;
-$post_json =~ s/</&lt;/g;
-$post_json =~ s/>/&gt;/g;
-# 8. Escapar valores interpolados en HTML
-sub escape_html {
-    my ($s) = @_;
-    $s = '' unless defined $s;
-    $s =~ s/&/&amp;/g;
-    $s =~ s/</&lt;/g;
-    $s =~ s/>/&gt;/g;
-    $s =~ s/"/&quot;/g;
-    $s =~ s/'/&#39;/g;
-    return $s;
-}
+my $get_json = %get_data
+    ? json_value(\%get_data)
+    : json_quote('Ninguno');
+
+my $post_json = json_value($post_data);
+my $head_json = json_value(\%http_headers);
+
+# --------------------------------------------------
+# 7. Escapar los valores para HTML
+# --------------------------------------------------
 
 my @html_values = (
     $method, $script_name, $server_software, $gateway_interface,
@@ -178,8 +232,11 @@ $get_json  = escape_html($get_json);
 $post_json = escape_html($post_json);
 $head_json = escape_html($head_json);
 
-# 9. Generar HTML
-print $q->header(-type => 'text/html', -charset => 'utf-8');
+# --------------------------------------------------
+# 8. Generar respuesta CGI
+# --------------------------------------------------
+
+print "Content-Type: text/html; charset=utf-8\r\n\r\n";
 
 print <<HTML;
 <!DOCTYPE html>
@@ -188,27 +245,56 @@ print <<HTML;
     <meta charset="UTF-8">
     <title>CGI Perl - Webserv Env Test</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
-        .box { background: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; max-width: 900px; margin: auto; }
-        h1 { color: #38bdf8; }
-        h3 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 5px; margin-top: 25px; }
-        pre { background: #0f172a; padding: 10px; border-radius: 4px; color: #22c55e; overflow-x: auto; }
-        ul { line-height: 1.6; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 20px;
+        }
+        .box {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            max-width: 900px;
+            margin: auto;
+        }
+        h1, h3 {
+            color: #38bdf8;
+        }
+        h3 {
+            border-bottom: 1px solid #334155;
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+        pre {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 4px;
+            color: #22c55e;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        ul {
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
     <div class="box">
         <h1>¡Prueba de Entorno CGI (Perl -T)!</h1>
+
         <p><strong>Método HTTP:</strong> $method</p>
         <p><strong>Script ejecutado (SCRIPT_NAME):</strong> $script_name</p>
 
         <h3>Parámetros GET recibidos:</h3>
         <pre>$get_json</pre>
 
-        <h3>Datos del Cuerpo (POST / STDIN):</h3>
+        <h3>Datos del cuerpo (POST / STDIN):</h3>
         <pre>$post_json</pre>
 
-        <h3>Variables de Entorno Principales (fill_env):h3>
+        <h3>Variables de entorno principales (fill_env):</h3>
         <ul>
             <li><strong>SERVER_SOFTWARE:</strong> $server_software</li>
             <li><strong>GATEWAY_INTERFACE:</strong> $gateway_interface</li>
