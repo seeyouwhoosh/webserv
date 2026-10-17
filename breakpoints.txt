@@ -1,3 +1,0 @@
-WebServer::check_timeouts
-CGIHandler::parseOutput
-WebServer::handle_cgi_data
