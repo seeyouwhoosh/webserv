@@ -1,9 +1,9 @@
+```sh
 #!/bin/sh
 
-# 1. Leer el cuerpo de la petición si es POST y CONTENT_LENGTH > 0
-#!/bin/sh
-
+# 1. Read the request body if the method is POST and CONTENT_LENGTH > 0
 POST_BODY=""
+
 if [ "$REQUEST_METHOD" = "POST" ] && [ -n "$CONTENT_LENGTH" ] && [ "$CONTENT_LENGTH" -gt 0 ]; then
     POST_BODY=$(dd bs=1 count="$CONTENT_LENGTH" 2>/dev/null)
 fi
@@ -23,13 +23,13 @@ if body.startswith("raw_body="):
 print(body)
 ')
 
-# 3. Generar HTML
+# 3. Generate HTML
 cat <<EOF
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CGI Shell - Webserv Env Test</title>
+    <title>CGI Shell - Webserv Environment Test</title>
     <style>
         body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
         .box { background: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; max-width: 900px; margin: auto; }
@@ -41,17 +41,17 @@ cat <<EOF
 </head>
 <body>
     <div class="box">
-        <h1>¡Prueba de Entorno CGI (Shell Script) Exitosa!</h1>
-        <p><strong>Método HTTP:</strong> ${REQUEST_METHOD:-GET}</p>
-        <p><strong>Script ejecutado (SCRIPT_NAME):</strong> ${SCRIPT_NAME:-N/A}</p>
-        
-        <h3>Parámetros GET recibidos (QUERY_STRING):</h3>
-        <pre>${QUERY_STRING:-Ninguno}</pre>
-        
-        <h3>Datos del Cuerpo (POST / STDIN):</h3>
-        <pre>${DECODED_BODY:-Ninguno}</pre>
-        
-        <h3>Variables de Entorno Principales (fill_env):</h3>
+        <h1>CGI Environment Test (Shell Script)</h1>
+        <p><strong>HTTP Method:</strong> ${REQUEST_METHOD:-GET}</p>
+        <p><strong>Executed Script (SCRIPT_NAME):</strong> ${SCRIPT_NAME:-N/A}</p>
+
+        <h3>Received GET Parameters (QUERY_STRING):</h3>
+        <pre>${QUERY_STRING:-None}</pre>
+
+        <h3>Request Body Data (POST / STDIN):</h3>
+        <pre>${DECODED_BODY:-None}</pre>
+
+        <h3>Main Environment Variables (fill_env):</h3>
         <ul>
             <li><strong>SERVER_SOFTWARE:</strong> ${SERVER_SOFTWARE:-N/A}</li>
             <li><strong>GATEWAY_INTERFACE:</strong> ${GATEWAY_INTERFACE:-N/A}</li>
@@ -67,9 +67,10 @@ cat <<EOF
             <li><strong>REMOTE_ADDR / HOST:</strong> ${REMOTE_ADDR:-N/A}</li>
         </ul>
 
-        <h3>Todas las Variables de Entorno del Proceso:</h3>
+        <h3>All Process Environment Variables:</h3>
         <pre>$(env)</pre>
     </div>
 </body>
 </html>
 EOF
+```

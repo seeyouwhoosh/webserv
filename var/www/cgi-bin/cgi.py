@@ -5,67 +5,82 @@ import urllib.parse
 import json
 
 def main():
-    # 1. Cabeceras HTTP obligatorias
+    # 1. Required HTTP headers
     print("Content-Type: text/html; charset=utf-8\r")
     print("\r")
 
-    # 2. Recoger todas las variables que rellenaste en fill_env
+    # 2. Retrieve all variables populated by fill_env
     method = os.environ.get("REQUEST_METHOD", "GET")
     query_string = os.environ.get("QUERY_STRING", "")
     content_length = os.environ.get("CONTENT_LENGTH", "0")
-    content_type = os.environ.get("CONTENT_TYPE", "No especificado")
-    
-    # Variables estándar del CGI que mapeaste
+    content_type = os.environ.get("CONTENT_TYPE", "Not specified")
+
+    # Standard CGI variables that you mapped
     server_software = os.environ.get("SERVER_SOFTWARE", "N/A")
     gateway_interface = os.environ.get("GATEWAY_INTERFACE", "N/A")
     server_protocol = os.environ.get("SERVER_PROTOCOL", "N/A")
     server_port = os.environ.get("SERVER_PORT", "N/A")
     server_name = os.environ.get("SERVER_NAME", "N/A")
-    
+
     path_info = os.environ.get("PATH_INFO", "N/A")
     path_translated = os.environ.get("PATH_TRANSLATED", "N/A")
     script_name = os.environ.get("SCRIPT_NAME", "N/A")
-    
+
     remote_addr = os.environ.get("REMOTE_ADDR", "N/A")
 
-    # 3. Procesar GET
+    # 3. Process GET parameters
     get_data = {}
     if query_string:
         parsed_get = urllib.parse.parse_qs(query_string)
-        get_data = {k: v[0] if len(v) == 1 else v for k, v in parsed_get.items()}
+        get_data = {
+            k: v[0] if len(v) == 1 else v
+            for k, v in parsed_get.items()
+        }
 
-    # 4. Procesar POST / Cuerpo recibido por stdin
-    post_data = "Ninguno"
+    # 4. Process POST / request body received through stdin
+    post_data = "None"
     if method == "POST":
         try:
             length = int(content_length) if content_length else 0
             if length > 0:
                 post_body = sys.stdin.read(length)
+
                 if "application/json" in content_type:
                     post_data = json.loads(post_body)
                 else:
-                    # Intenta parsear como form-urlencoded, si falla muestra el texto plano recibido
+                    # Try parsing as form-urlencoded; if that fails,
+                    # display the raw text received.
                     try:
                         parsed_post = urllib.parse.parse_qs(post_body)
-                        post_data = {k: v[0] if len(v) == 1 else v for k, v in parsed_post.items()}
+                        post_data = {
+                            k: v[0] if len(v) == 1 else v
+                            for k, v in parsed_post.items()
+                        }
+
                         if not post_data:
-                            post_data = post_body # Si no tenía formato clave=valor, muestra el string crudo
+                            # If it was not in key=value format,
+                            # display the raw string.
+                            post_data = post_body
                     except Exception:
                         post_data = post_body
             else:
-                post_data = "Cuerpo vacío (CONTENT_LENGTH es 0)"
+                post_data = "Empty body (CONTENT_LENGTH is 0)"
+
         except Exception as e:
-            post_data = f"Error leyendo POST: {str(e)}"
+            post_data = f"Error reading POST body: {str(e)}"
 
-    # 5. Filtrar cabeceras HTTP extra (las que empiezan por HTTP_)
-    http_headers = {k: v for k, v in os.environ.items() if k.startswith("HTTP_")}
+    # 5. Filter additional HTTP headers (those starting with HTTP_)
+    http_headers = {
+        k: v for k, v in os.environ.items()
+        if k.startswith("HTTP_")
+    }
 
-    # 6. Generar HTML con el diseño
+    # 6. Generate HTML with the page layout
     print(f"""<!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CGI Python - Webserv Env Test</title>
+    <title>CGI Python - Webserv Environment Test</title>
     <style>
         body {{ font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }}
         .box {{ background: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; max-width: 900px; margin: auto; }}
@@ -77,17 +92,17 @@ def main():
 </head>
 <body>
     <div class="box">
-        <h1>¡Prueba de Entorno CGI Exitosa!</h1>
-        <p><strong>Método HTTP:</strong> {method}</p>
-        <p><strong>Script ejecutado (SCRIPT_NAME):</strong> {script_name}</p>
-        
-        <h3>Parámetros GET recibidos:</h3>
-        <pre>{json.dumps(get_data, indent=4, ensure_ascii=False) if get_data else "Ninguno"}</pre>
-        
-        <h3>Datos del Cuerpo (POST / STDIN):</h3>
+        <h1>CGI Environment Test (Python)!</h1>
+        <p><strong>HTTP Method:</strong> {method}</p>
+        <p><strong>Executed Script (SCRIPT_NAME):</strong> {script_name}</p>
+
+        <h3>Received GET Parameters:</h3>
+        <pre>{json.dumps(get_data, indent=4, ensure_ascii=False) if get_data else "None"}</pre>
+
+        <h3>Request Body Data (POST / STDIN):</h3>
         <pre>{json.dumps(post_data, indent=4, ensure_ascii=False) if isinstance(post_data, (dict, list)) else post_data}</pre>
-        
-        <h3>Variables de Entorno Principales (fill_env):</h3>
+
+        <h3>Main Environment Variables (fill_env):</h3>
         <ul>
             <li><strong>SERVER_SOFTWARE:</strong> {server_software}</li>
             <li><strong>GATEWAY_INTERFACE:</strong> {gateway_interface}</li>

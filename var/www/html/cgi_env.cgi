@@ -2,12 +2,12 @@
 use strict;
 use warnings;
 
-# Limpiar el entorno por seguridad debido a -T (Taint Mode)
+# Clear the environment for security because of -T (Taint Mode)
 delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};
 $ENV{PATH} = '/usr/local/bin:/bin:/usr/bin';
 
 # --------------------------------------------------
-# Funciones auxiliares
+# Helper functions
 # --------------------------------------------------
 
 sub url_decode {
@@ -33,7 +33,7 @@ sub escape_html {
     return $value;
 }
 
-# Codificación JSON básica, sin módulos externos.
+# Basic JSON encoding without external modules.
 sub json_quote {
     my ($value) = @_;
     $value = '' unless defined $value;
@@ -84,7 +84,7 @@ sub parse_urlencoded {
         $key   = url_decode($key);
         $value = url_decode($value);
 
-        # Conserva el último valor si una clave aparece varias veces.
+        # Keep the last value if a key appears multiple times.
         $result{$key} = $value;
     }
 
@@ -92,13 +92,13 @@ sub parse_urlencoded {
 }
 
 # --------------------------------------------------
-# 1. Variables de entorno CGI
+# 1. CGI environment variables
 # --------------------------------------------------
 
 my $method            = $ENV{REQUEST_METHOD} || 'GET';
 my $query_string      = $ENV{QUERY_STRING} || '';
 my $content_length    = $ENV{CONTENT_LENGTH} || '0';
-my $content_type      = $ENV{CONTENT_TYPE} || 'No especificado';
+my $content_type      = $ENV{CONTENT_TYPE} || 'Not specified';
 
 my $server_software   = $ENV{SERVER_SOFTWARE} || 'N/A';
 my $gateway_interface = $ENV{GATEWAY_INTERFACE} || 'N/A';
@@ -112,7 +112,7 @@ my $script_name       = $ENV{SCRIPT_NAME} || 'N/A';
 my $remote_addr       = $ENV{REMOTE_ADDR} || 'N/A';
 
 # --------------------------------------------------
-# 2. Leer el body desde STDIN
+# 2. Read the request body from STDIN
 # --------------------------------------------------
 
 my $post_body  = '';
@@ -120,7 +120,7 @@ my $post_error = '';
 
 if ($method eq 'POST') {
     if ($content_length !~ /^\d+$/) {
-        $post_error = 'CONTENT_LENGTH inválido';
+        $post_error = 'Invalid CONTENT_LENGTH';
     }
     elsif ($content_length > 0) {
         binmode(STDIN);
@@ -131,13 +131,13 @@ if ($method eq 'POST') {
             my $bytes_read = read(STDIN, $chunk, $remaining);
 
             if (!defined $bytes_read) {
-                $post_error = "Error leyendo STDIN: $!";
+                $post_error = "Error reading STDIN: $!";
                 last;
             }
 
             if ($bytes_read == 0) {
-                $post_error = 'EOF inesperado: se recibieron '
-                    . length($post_body) . " de $content_length bytes";
+                $post_error = 'Unexpected EOF: received '
+                    . length($post_body) . " of $content_length bytes";
                 last;
             }
 
@@ -147,33 +147,33 @@ if ($method eq 'POST') {
 }
 
 # --------------------------------------------------
-# 3. Procesar GET
+# 3. Process GET parameters
 # --------------------------------------------------
 
 my %get_data = parse_urlencoded($query_string);
 
 # --------------------------------------------------
-# 4. Procesar POST
+# 4. Process POST data
 # --------------------------------------------------
 
-my $post_data = 'Ninguno';
+my $post_data = 'None';
 
 if ($method eq 'POST') {
     if ($post_error ne '') {
         $post_data = { error => $post_error };
     }
     elsif ($content_length == 0) {
-        $post_data = 'Cuerpo vacío (CONTENT_LENGTH es 0)';
+        $post_data = 'Empty body (CONTENT_LENGTH is 0)';
     }
     elsif ($content_type =~ m{application/json}i) {
-        # No se analiza JSON: se muestra el contenido recibido.
+        # JSON is not parsed; the received content is displayed as-is.
         $post_data = $post_body;
     }
     elsif ($content_type =~ m{application/x-www-form-urlencoded}i) {
         my %form_data = parse_urlencoded($post_body);
 
         if (exists $form_data{raw_body}) {
-            # Decodifica raw_body, pero no necesita analizar su JSON.
+            # Decode raw_body without parsing its JSON content.
             $post_data = $form_data{raw_body};
         }
         else {
@@ -186,7 +186,7 @@ if ($method eq 'POST') {
 }
 
 # --------------------------------------------------
-# 5. Cabeceras HTTP extra
+# 5. Additional HTTP headers
 # --------------------------------------------------
 
 my %http_headers;
@@ -198,18 +198,18 @@ foreach my $env_key (keys %ENV) {
 }
 
 # --------------------------------------------------
-# 6. Convertir a JSON sin JSON.pm
+# 6. Convert data to JSON without JSON.pm
 # --------------------------------------------------
 
 my $get_json = %get_data
     ? json_value(\%get_data)
-    : json_quote('Ninguno');
+    : json_quote('None');
 
 my $post_json = json_value($post_data);
 my $head_json = json_value(\%http_headers);
 
 # --------------------------------------------------
-# 7. Escapar los valores para HTML
+# 7. Escape values for HTML
 # --------------------------------------------------
 
 my @html_values = (
@@ -233,17 +233,17 @@ $post_json = escape_html($post_json);
 $head_json = escape_html($head_json);
 
 # --------------------------------------------------
-# 8. Generar respuesta CGI
+# 8. Generate the CGI response
 # --------------------------------------------------
 
 print "Content-Type: text/html; charset=utf-8\r\n\r\n";
 
 print <<HTML;
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CGI Perl - Webserv Env Test</title>
+    <title>CGI Perl - Webserv Environment Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -283,18 +283,18 @@ print <<HTML;
 </head>
 <body>
     <div class="box">
-        <h1>¡Prueba de Entorno CGI (Perl -T)!</h1>
+        <h1>CGI Environment Test (Perl -T)</h1>
 
-        <p><strong>Método HTTP:</strong> $method</p>
-        <p><strong>Script ejecutado (SCRIPT_NAME):</strong> $script_name</p>
+        <p><strong>HTTP Method:</strong> $method</p>
+        <p><strong>Executed Script (SCRIPT_NAME):</strong> $script_name</p>
 
-        <h3>Parámetros GET recibidos:</h3>
+        <h3>Received GET Parameters:</h3>
         <pre>$get_json</pre>
 
-        <h3>Datos del cuerpo (POST / STDIN):</h3>
+        <h3>Request Body Data (POST / STDIN):</h3>
         <pre>$post_json</pre>
 
-        <h3>Variables de entorno principales (fill_env):</h3>
+        <h3>Main Environment Variables (fill_env):</h3>
         <ul>
             <li><strong>SERVER_SOFTWARE:</strong> $server_software</li>
             <li><strong>GATEWAY_INTERFACE:</strong> $gateway_interface</li>
@@ -310,7 +310,7 @@ print <<HTML;
             <li><strong>REMOTE_ADDR / HOST:</strong> $remote_addr</li>
         </ul>
 
-        <h3>Cabeceras HTTP extra (HTTP_*):</h3>
+        <h3>Additional HTTP Headers (HTTP_*):</h3>
         <pre>$head_json</pre>
     </div>
 </body>

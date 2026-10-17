@@ -293,7 +293,7 @@ size_t CGIHandler::findHeaderEnd(const std::string &output)
 			return std::string::npos;
 
 		size_t line_end = end;
-		if (line_end > pos && (output[line_end - 1] == '\r' || output[line_end - 1] == '\n'))
+		if (line_end > pos && output[line_end - 1] == '\r')
 			--line_end;
 
 		if (line_end == pos)
@@ -312,22 +312,22 @@ size_t CGIHandler::findHeaderEnd(const std::string &output)
 	return std::string::npos;
 }
 
-void	CGIHandler::parseOutput(HTTPmessage &request)
+void CGIHandler::parseOutput(HTTPmessage &request)
 {
 	size_t	end_of_header = findHeaderEnd(output);
-	if (end_of_header == output.npos)
+	if (end_of_header == std::string::npos)
 		return;
 
-	std::string			header_part = output.substr(0, end_of_header + 4);
-	output.erase(0, end_of_header + 4);
+	std::string			header_part = output.substr(0, end_of_header);
+	output.erase(0, end_of_header);
 
 	std::stringstream	ss(header_part);
 	std::string			line;
 
 	while (std::getline(ss, line))
 	{
-		if (!line.empty() && line[line.length() - 1] == '\r')
-			line.erase(line.length() - 1, 1);
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line.erase(line.size() - 1);
 
 		if (line.empty())
 			continue;
@@ -339,14 +339,13 @@ void	CGIHandler::parseOutput(HTTPmessage &request)
 		std::string key = line.substr(0, colon_pos);
 		std::string value = line.substr(colon_pos + 1);
 
-		size_t first_non_space = value.find_first_not_of(" \t");
-		if (first_non_space != std::string::npos)
-			value = value.substr(first_non_space);
-		else
-			value.clear();
+		size_t first = value.find_first_not_of(" \t");
+		value = (first == std::string::npos)
+			? ""
+			: value.substr(first);
+
 		request.setHeader(key, value);
 	}
-
 }
 
 
