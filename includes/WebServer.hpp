@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   WebServer.cpp                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
+/*   Updated: 2026/10/17 01:14:31 by xwu              ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #pragma once
 #include <netdb.h> /* getaddrinfo, freeaddrinfo */
 #include <sys/epoll.h> /* epoll_create, epoll_ctl, epoll_wait */
@@ -13,12 +25,10 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <algorithm>
 
 #include "ConfigParser.hpp"
 #include "Client.hpp"
 #include "utils.hpp"
-#include "Session.hpp"
 
 #define MAX_CONNECTIONS	1024
 
@@ -32,23 +42,30 @@ typedef struct s_listener
 	t_listen		*listen;
 }					t_listener;
 
+typedef struct s_session
+{
+	std::string	id;
+	std::time_t	last_activity;
+	int			visits;
+}				t_session;
+
 class WebServer
 {
 private:
 	/* Epoll */
-	int								epoll_instance;
-	struct epoll_event				*epoll_events;
-	std::map<int, uint32_t>			fd_events;
+	int									epoll_instance;
+	struct epoll_event					*epoll_events;
+	std::map<int, uint32_t>				fd_events;
 
 	/* Configuration classes */
-	ConfigParser					globalconf;
-	std::vector<ServerConfig>		servers;
+	ConfigParser						globalconf;
+	std::vector<ServerConfig>			servers;
 
 	/* Connection variables */
-	std::map<int, Client *>			cgi_pipes;
-	std::map<int, Client>			clients;
-	std::map<int, t_listener>		listeners;
-	std::map<std::string, Session>	sessions; // Bonus
+	std::map<int, Client *>				cgi_pipes;
+	std::map<int, Client>				clients;
+	std::map<int, t_listener>			listeners;
+	std::map<std::string, t_session>	sessions; // Bonus
 
 	/* Epoll handlers */
 	int			epoll_add_fd(int fd);
@@ -64,6 +81,7 @@ private:
 	int			handleClientData(int client);
 
 	/* Bonus */
+	void		handleSession(Client &client);
 	std::string	createSession();
 	bool		hasSession(const std::string &sessionId) const;
 
