@@ -6,14 +6,15 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/17 01:03:12 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/17 18:03:31 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 #include "utils.hpp"
 
-/* Orthodox canonical form */
+/* ----------------------- Orthodox Canonical Form ----------------------- */
+
 Client::Client()
 {
 	last_activity = std::time(NULL);
@@ -53,7 +54,7 @@ Client	&Client::operator=(const Client &other)
 
 Client::~Client() {}
 
-/* Keep Alive */
+/* ----------------------------- Keep Alive ----------------------------- */
 
 time_t	Client::getLastActivity()
 {
@@ -114,13 +115,12 @@ void	Client::updateActivity()
 			size_t eq_pos = s.find('=');
 			if (eq_pos != std::string::npos)
 			{
-				std::string key = s.substr(0, eq_pos);
 				std::string val = s.substr(eq_pos + 1);
 
-			if (s.find("timeout") != s.npos)
-				keep_alive = strtoInt(s.substr(s.find("=") + 1));
-			if (s.find("max") != s.npos)
-				max_requests = strtoInt(s.substr(s.find("=") + 1));
+				if (s.compare(0, eq_pos, "timeout") == 0)
+					keep_alive = strtoInt(val);
+				else if (s.compare(0, eq_pos, "max") == 0)
+					max_requests = strtoInt(val);
 			}
 		}
 	}
@@ -129,7 +129,7 @@ void	Client::updateActivity()
 	n_requests++;
 }
 
-/* HTTP */
+/* -------------------------------- HTTP -------------------------------- */
 
 void Client::setSocket(int sock)
 {
@@ -235,7 +235,8 @@ int	Client::sendResponse()
 	return sent;
 }
 
-/* Bonus */
+/* -------------------------------- Bonus -------------------------------- */
+
 std::string Client::getSessionId() const
 {
 	stringmap::const_iterator it = message.rq_headers.find("cookie");

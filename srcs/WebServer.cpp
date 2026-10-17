@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/17 01:14:31 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/17 17:44:09 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ int	WebServer::epoll_start_instance()
 	if ((epoll_instance = epoll_create(MAX_CONNECTIONS)) < 0)
 	{
 		clear();
-		return error_msg(errno, "epoll_create", NULL);
+		return sendError(errno, "epoll_create", NULL);
 	}
 	
 	if (SHOW_LOGS)
@@ -104,7 +104,7 @@ int	WebServer::epoll_add_fd(int fd)
 	event.events = EPOLLIN;
 	event.data.fd = fd;
 	if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, fd, &event) < 0)
-		return error_msg(errno, "epoll_ctl", NULL);
+		return sendError(errno, "epoll_ctl", NULL);
 	fd_events[fd] = event.events;
 	return 0;
 }
@@ -118,7 +118,7 @@ int	WebServer::epoll_add_fd(int fd)
 int	WebServer::epoll_del_fd(int fd)
 {
 	if (epoll_ctl(epoll_instance, EPOLL_CTL_DEL, fd, NULL) < 0)
-		return error_msg(errno, "epoll_ctl", NULL);
+		return sendError(errno, "epoll_ctl", NULL);
 	fd_events.erase(fd);
 	return 0;
 }
@@ -135,7 +135,7 @@ int	WebServer::epoll_addflag_fd(int fd, int flag)
 	event.events = fd_events[fd] | flag;
 
 	if (epoll_ctl(epoll_instance, EPOLL_CTL_MOD, fd, &event) < 0)
-		return error_msg(errno, "epoll_ctl", NULL);
+		return sendError(errno, "epoll_ctl", NULL);
 	return 0;
 }
 
@@ -152,7 +152,7 @@ int	WebServer::epoll_delflag_fd(int fd, int flag)
 	event.events = fd_events[fd] & ~flag;
 
 	if (epoll_ctl(epoll_instance, EPOLL_CTL_MOD, fd, &event) < 0)
-		return error_msg(errno, "epoll_ctl", NULL);
+		return sendError(errno, "epoll_ctl", NULL);
 		
 	return 0;
 }
@@ -266,9 +266,9 @@ int	WebServer::prepareListeners()
 				&servers[i].listens[j].serversock_info) < 0))
 			{
 				clear();
-				return error_msg(errno, "getaddrinfo", NULL);
+				return sendError(errno, "getaddrinfo", NULL);
 			}
-			if ((servers[i].listens[j].sockfd = listen_socket(
+			if ((servers[i].listens[j].sockfd = listenSocket(
 				servers[i].listens[j].serversock_info, MAX_CONNECTIONS)) < 0)
 			{
 				clear();
@@ -442,10 +442,10 @@ int	WebServer::handleNewConnection(int listener)
 	int						clientsock;
 
 	if ((clientsock = accept(listener, addr, &clientlen)) < 0)
-		return error_msg(errno, "accept", NULL);
+		return sendError(errno, "accept", NULL);
 
 	if (setNonBlocking(clientsock) < 0)
-			return error_msg(errno, "fcntl", NULL);
+			return sendError(errno, "fcntl", NULL);
 
 	if (epoll_add_fd(clientsock) < 0)
 	{
@@ -485,7 +485,7 @@ int	WebServer::sendClientData(int clientsock)
 	if (sent_size < 0)
 	{
 		if (closeConnection(clientsock) < 0)
-			return error_msg(errno, "send", NULL);
+			return sendError(errno, "send", NULL);
 		return -1;
 	}
 	client.setLastActivity(std::time(NULL));
@@ -571,7 +571,7 @@ int	WebServer::handleClientData(int client)
 		if ((response_status = clientUnit.generateResponse()) < 0)
 		{
 			clear();
-			return error_msg(1, "generateResponse", "couldn't generate response");
+			return sendError(1, "generateResponse", "couldn't generate response");
 		}
 		else if (response_status == IS_CGI)
 		{

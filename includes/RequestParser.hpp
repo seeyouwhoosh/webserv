@@ -34,6 +34,8 @@ class RequestParser
 {
 public:
 	RequestParser();
+	RequestParser(const RequestParser &other);
+	RequestParser	&operator=(const RequestParser &other);
 	~RequestParser();
 
 	void		appendData(const std::string& data);

@@ -117,10 +117,12 @@ private:
 	int				openErrorFile(int error, std::fstream &fs);
 	bool			manageActuallyDir();
 
-	/* Other */
+	/* Post helpers */
 	int				handleSpecialType();
 	int				parseMultipartToBody(const std::string &contentHeader);
 	void			processURLencoded();
+
+	/* Other */
 	int				matchMethod(std::string &method);
 	void			setAllowHeader();
 	void			printQHeaders();

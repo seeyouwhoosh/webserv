@@ -21,11 +21,12 @@ INCLUDES	= -I$(INCLUDE_DIR)
 # Sources
 SRC_DIR		= srcs
 SOURCES		= main.cpp \
-				HTTPmessage/HTTPmessage.cpp HTTPmessage/http_methods.cpp HTTPmessage/generate_response.cpp HTTPmessage/file_handler.cpp HTTPmessage/autoindex.cpp \
+				HTTPmessage.cpp \
 				WebServer.cpp \
 				utils.cpp \
-				ConfigParser.cpp HTTPContext.cpp ServerConfig.cpp LocationConfig.cpp \
-				Client.cpp CGIHandler.cpp \
+				ConfigParser/ConfigParser.cpp ConfigParser/HTTPContext.cpp ConfigParser/ServerConfig.cpp ConfigParser/LocationConfig.cpp \
+				Client.cpp \
+				CGIHandler.cpp \
 				RequestParser.cpp
 
 # Objects

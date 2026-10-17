@@ -107,7 +107,7 @@ void	init_responses()
  * @brief outputs error message if msg is not NULL (else, picks from strerror) and return -err_code
  * @note Takes into account the SHoW_LOGS macro
  w*/
-int	error_msg(int err_code, const char *func, const char *msg)
+int	sendError(int err_code, const char *func, const char *msg)
 {
 	if (!SHOW_LOGS)
 		return -err_code;
@@ -183,14 +183,14 @@ void	closePipes(int pipe_in[2], int pipe_out[2])
  * 
  * @return If it fails, return value < 0, else returns socket
  * @note Prints out error messages */
-int	listen_socket(struct addrinfo *addr, int listen_num)
+int	listenSocket(struct addrinfo *addr, int listen_num)
 {
 	int	serversock;
 	int	status = 1;
 	int	yes = 1;
 
 	if (!addr)
-		return error_msg(-1, "listen_socket", "not a valid struct");
+		return sendError(-1, "listenSocket", "not a valid struct");
 
 	for (struct addrinfo *p = addr; p != NULL; p = p->ai_next)
 	{
@@ -200,7 +200,7 @@ int	listen_socket(struct addrinfo *addr, int listen_num)
 			continue;
 		}
 		if (setNonBlocking(serversock) < 0)
-			return error_msg(errno, "fcntl", NULL);
+			return sendError(errno, "fcntl", NULL);
 		setsockopt(serversock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 		if (bind(serversock, p->ai_addr, p->ai_addrlen) < 0)
 		{
@@ -212,14 +212,14 @@ int	listen_socket(struct addrinfo *addr, int listen_num)
 		if (listen(serversock, listen_num) < 0)
 		{
 			close(serversock);
-			return error_msg(errno, "listen", NULL);
+			return sendError(errno, "listen", NULL);
 		}
 		return serversock;
 	}
-	return error_msg(status, "listen_socket", NULL);
+	return sendError(status, "listenSocket", NULL);
 }
 
-bool	all_digits(std::string s)
+bool	allDigits(std::string s)
 {
 	for (size_t i = 0; i < s.size(); i++)
 	{
@@ -373,6 +373,9 @@ int	hexToAscii(std::string s)
 	return result;
 }
 
+/**
+ * @brief When received "hola%21" -> "hola!"
+ */
 void	urlDecode(std::string &s)
 {
 	std::string result;
@@ -398,24 +401,6 @@ void	urlDecode(std::string &s)
 	}
 
 	s = result;
-}
-
-std::string	parseRawBody(std::string &body)
-{
-	std::string::size_type pos = body.find('=');
-
-	if (pos == std::string::npos)
-		return "";
-
-	std::string key = body.substr(0, pos);
-	std::string value = body.substr(pos + 1);
-	urlDecode(value);
-	urlDecode(key);
-
-	if (key != "raw_body")
-		return "";
-
-	return value;
 }
 
 /**

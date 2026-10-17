@@ -84,7 +84,7 @@ int	main(int ac, char **av)
 			if (!g_signal)
 				break;
 			webserv.clear();
-			return error_msg(errno, "epoll_wait", NULL);
+			return sendError(errno, "epoll_wait", NULL);
 		}
 		if (webserv.processConnections(num_events) < 0)
 			break;

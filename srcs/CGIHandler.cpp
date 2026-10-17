@@ -3,7 +3,7 @@
 #include "ServerConfig.hpp"
 #include "utils.hpp"
 
-/* Orthodox Canonical form */
+/* ----------------------- Orthodox Canonical Form ----------------------- */
 
 CGIHandler::CGIHandler(): pid(-1), isrunning(false), iscgi(false)
 {
@@ -18,7 +18,7 @@ CGIHandler::CGIHandler(CGIHandler &other)
 	*this = other;
 }
 
-CGIHandler	&CGIHandler::operator=(CGIHandler &other)//change
+CGIHandler	&CGIHandler::operator=(CGIHandler &other)
 {
 	cgi_env = other.cgi_env;
 	argv = other.argv;
@@ -38,6 +38,8 @@ CGIHandler::~CGIHandler()
 {
 	killScript();
 }
+
+/* ---------------------- Class private functions ---------------------- */
 
 std::string	CGIHandler::matchExtension(const std::string &ext,
 										const LocationConfig *location) const
@@ -60,7 +62,7 @@ std::string	CGIHandler::matchExtension(const std::string &ext,
  * 
  * If cgi-bin is detected, send it to the parseCGIbinFile function
  */
-void	CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location)//change
+void	CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location)
 {
 	size_t cgibin_pos = full_path.find("/cgi-bin/");
 
@@ -141,11 +143,6 @@ void	CGIHandler::separateQuery(std::string &full_path)
 	full_path = full_path.erase(query_pos);
 }
 
-bool	CGIHandler::isCGI()
-{
-	return iscgi;
-}
-
 /**
  * @brief Having detected "cgi-bin", searches for the executable path
  * 
@@ -159,10 +156,9 @@ bool	CGIHandler::isCGI()
  *  because there may be a pseudopath for the cgi to use (see PATH_INFO)
  * 
  * @note Updates full_path
- * @note Updates iscgi
  */
 
-void CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path, LocationConfig *location)//change
+void CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path, LocationConfig *location)
 {
 	size_t start_pos = cgibin_pos + std::strlen("/cgi-bin/");
 	std::stringstream ss(full_path.substr(start_pos));
@@ -223,18 +219,146 @@ void CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path, Loca
 	}
 }
 
-int	CGIHandler::execute(HTTPmessage& request)//change
+size_t CGIHandler::findHeaderEnd(const std::string &output)
+{
+	size_t pos = 0;
+
+	while (pos < output.size())
+	{
+		size_t end = output.find('\n', pos);
+		if (end == std::string::npos)
+			return std::string::npos;
+
+		size_t line_end = end;
+		if (line_end > pos && output[line_end - 1] == '\r')
+			--line_end;
+
+		if (line_end == pos)
+			return end + 1;
+
+		size_t colon = output.find(':', pos);
+		if (colon == std::string::npos || colon >= line_end)
+			return std::string::npos;
+
+		if (colon == pos)
+			return std::string::npos;
+
+		pos = end + 1;
+	}
+
+	return std::string::npos;
+}
+
+int CGIHandler::gotoDirectory()
+{
+	if (script_path.empty())
+		return INTERNAL_SERVER_ERROR;
+
+	size_t slash_pos = script_path.find_last_of('/');
+
+	std::string dir_path;
+
+	if (slash_pos == std::string::npos)
+		dir_path = ".";
+	else if (slash_pos == 0)
+		dir_path = "/";
+	else
+		dir_path = script_path.substr(0, slash_pos);
+
+	struct stat st;
+
+	if (stat(dir_path.c_str(), &st) != 0)
+		return FORBIDDEN;
+
+	if ((st.st_mode & S_IFMT) != S_IFDIR)
+		return UNPROCESSABLE_CONTENT;
+
+	return chdir(dir_path.c_str());
+}
+
+/* ----------------------------------- Fillers ----------------------------------- */
+
+void	CGIHandler::fill_env(const HTTPmessage &request)
+{
+	cgi_env.reserve(request.rq_headers.size() + 17); // 17 variables from below
+
+	cgi_env.push_back("SERVER_SOFTWARE=Custom/1.0");
+	cgi_env.push_back("GATEWAY_INTERFACE=CGI/1.1");
+	
+	cgi_env.push_back("SERVER_PROTOCOL=" + request.rq_startline.version);
+	cgi_env.push_back("SERVER_PORT=" + server_port);
+	cgi_env.push_back("SERVER_NAME=" + request.getServerConf()->server_name[0]);
+	cgi_env.push_back("REQUEST_METHOD=" + request.rq_startline.method);
+	cgi_env.push_back("QUERY_STRING=" + query);
+
+	cgi_env.push_back("CONTENT_LENGTH=" + toString(request.rq_content_length));
+
+	stringmap::const_iterator it = request.rq_headers.find("content-type");
+	if (it != request.rq_headers.end())
+		cgi_env.push_back("CONTENT_TYPE=" + it->second);
+	
+	cgi_env.push_back("PATH_INFO=" + path_info);
+	cgi_env.push_back("PATH_TRANSLATED=" + request.getServerConf()->root + path_info);
+
+	cgi_env.push_back("AUTH_TYPE=");
+	cgi_env.push_back("REMOTE_ADDR=" + client_addr);
+	cgi_env.push_back("REMOTE_HOST=" + client_addr);
+	cgi_env.push_back("REMOTE_IDENT=");
+	cgi_env.push_back("REMOTE_USER=");
+
+	cgi_env.push_back("SCRIPT_NAME=" + filename);
+
+	for (stringmap::const_iterator it = request.rq_headers.begin(); it != request.rq_headers.end(); it++)
+	{
+		if (it->first == "content-type" || it->first == "content-length")
+			continue;
+		std::string	var = it->first;
+		toupperString(var);
+		std::replace(var.begin(), var.end(), '-', '_');
+		cgi_env.push_back("HTTP_" + var + "=" + it->second);
+	}
+}
+
+void CGIHandler::fill_argv()
+{
+	argv.clear();
+
+	if (cgi_path.empty() || filename.empty())
+	{
+		argv.push_back(NULL);
+		return;
+	}
+
+	if (cgi_path == script_path)
+		argv.push_back(const_cast<char *>(filename.c_str()));
+	else
+	{
+		argv.push_back(const_cast<char *>(cgi_path.c_str()));
+		argv.push_back(const_cast<char *>(filename.c_str()));
+	}
+
+	argv.push_back(NULL);
+}
+
+void	CGIHandler::fill_envp()
+{
+	for (size_t i = 0; i < cgi_env.size(); ++i)
+		envp.push_back(const_cast<char *>(cgi_env[i].c_str()));
+	envp.push_back(NULL);
+}
+
+/* --------------------------- Class public functions --------------------------- */
+
+int	CGIHandler::execute(HTTPmessage& request)
 {
 	int		status;
 
 	if (cgi_path.empty() || script_path.empty())
 		return INTERNAL_SERVER_ERROR;
 
-	// El intérprete debe existir y poder ejecutarse.
 	if ((status = checkFileStatus(F_OK | X_OK, cgi_path)) != OK)
 		return status;
 
-	// El script debe existir y ser legible.
 	if ((status = checkFileStatus(F_OK | R_OK, script_path)) != OK)
 		return status;
 	
@@ -282,35 +406,6 @@ int	CGIHandler::execute(HTTPmessage& request)//change
 	}
 }
 
-size_t CGIHandler::findHeaderEnd(const std::string &output)
-{
-	size_t pos = 0;
-
-	while (pos < output.size())
-	{
-		size_t end = output.find('\n', pos);
-		if (end == std::string::npos)
-			return std::string::npos;
-
-		size_t line_end = end;
-		if (line_end > pos && output[line_end - 1] == '\r')
-			--line_end;
-
-		if (line_end == pos)
-			return end + 1;
-
-		size_t colon = output.find(':', pos);
-		if (colon == std::string::npos || colon >= line_end)
-			return std::string::npos;
-
-		if (colon == pos)
-			return std::string::npos;
-
-		pos = end + 1;
-	}
-
-	return std::string::npos;
-}
 
 void CGIHandler::parseOutput(HTTPmessage &request)
 {
@@ -348,107 +443,6 @@ void CGIHandler::parseOutput(HTTPmessage &request)
 	}
 }
 
-
-void	CGIHandler::fill_env(const HTTPmessage &request)
-{
-	cgi_env.reserve(request.rq_headers.size() + 17); // 17 variables from below
-
-	cgi_env.push_back("SERVER_SOFTWARE=Custom/1.0");
-	cgi_env.push_back("GATEWAY_INTERFACE=CGI/1.1");
-	
-	cgi_env.push_back("SERVER_PROTOCOL=" + request.rq_startline.version);
-	cgi_env.push_back("SERVER_PORT=" + server_port);
-	cgi_env.push_back("SERVER_NAME=" + request.getServerConf()->server_name[0]);
-	cgi_env.push_back("REQUEST_METHOD=" + request.rq_startline.method);
-	cgi_env.push_back("QUERY_STRING=" + query);
-
-	cgi_env.push_back("CONTENT_LENGTH=" + toString(request.rq_content_length));
-
-	stringmap::const_iterator it = request.rq_headers.find("content-type");
-	if (it != request.rq_headers.end())
-		cgi_env.push_back("CONTENT_TYPE=" + it->second);
-	
-	cgi_env.push_back("PATH_INFO=" + path_info);
-	cgi_env.push_back("PATH_TRANSLATED=" + request.getServerConf()->root + path_info);
-
-	cgi_env.push_back("AUTH_TYPE=");
-	cgi_env.push_back("REMOTE_ADDR=" + client_addr);
-	cgi_env.push_back("REMOTE_HOST=" + client_addr);
-	cgi_env.push_back("REMOTE_IDENT=");
-	cgi_env.push_back("REMOTE_USER=");
-
-	cgi_env.push_back("SCRIPT_NAME=" + filename);
-
-	for (stringmap::const_iterator it = request.rq_headers.begin(); it != request.rq_headers.end(); it++)
-	{
-		if (it->first == "content-type" || it->first == "content-length")
-			continue;
-		std::string	var = it->first;
-		toupperString(var);
-		std::replace(var.begin(), var.end(), '-', '_');
-		cgi_env.push_back("HTTP_" + var + "=" + it->second);
-	}
-}
-
-void CGIHandler::fill_argv()//change
-{
-	argv.clear();
-
-	if (cgi_path.empty() || filename.empty())
-	{
-		argv.push_back(NULL);
-		return;
-	}
-
-	if (cgi_path == script_path)
-	{
-		// Ejecución directa de un script .cgi.
-		argv.push_back(const_cast<char *>(filename.c_str()));
-	}
-	else
-	{
-		// Ejecutar el intérprete pasando el script como argumento.
-		argv.push_back(const_cast<char *>(cgi_path.c_str()));
-		argv.push_back(const_cast<char *>(filename.c_str()));
-	}
-
-	argv.push_back(NULL);
-}
-
-void	CGIHandler::fill_envp()
-{
-	for (size_t i = 0; i < cgi_env.size(); ++i)
-		envp.push_back(const_cast<char *>(cgi_env[i].c_str()));
-	envp.push_back(NULL);
-}
-
-int CGIHandler::gotoDirectory()//change
-{
-	if (script_path.empty())
-		return INTERNAL_SERVER_ERROR;
-
-	size_t slash_pos = script_path.find_last_of('/');
-
-	std::string dir_path;
-
-	if (slash_pos == std::string::npos)
-		dir_path = ".";
-	else if (slash_pos == 0)
-		dir_path = "/";
-	else
-		dir_path = script_path.substr(0, slash_pos);
-
-	struct stat st;
-
-	if (stat(dir_path.c_str(), &st) != 0)
-		return FORBIDDEN;
-
-	if ((st.st_mode & S_IFMT) != S_IFDIR)
-		return UNPROCESSABLE_CONTENT;
-
-	return chdir(dir_path.c_str());
-}
-
 void	CGIHandler::killScript()
 {
 	int status;
@@ -472,6 +466,29 @@ void	CGIHandler::killScript()
 		}
 	}
 }
+
+void	CGIHandler::clear()
+{
+	cgi_env.clear();
+	argv.clear();
+	envp.clear();
+	cgi_path.clear();
+	script_path.clear();
+	filename.clear();
+	path_info.clear();
+	query.clear();
+	pid = -1;
+	pipe_in[0] = -1;
+	pipe_in[1] = -1;
+	pipe_out[0] = -1;
+	pipe_out[1] = -1;
+	isrunning = false;
+	iscgi = false;
+	output.clear();
+	last_activity = -1;
+}
+
+/* ------------------ Getters and setters and booleans ------------------ */
 
 const std::string	&CGIHandler::getQuery() const
 {
@@ -516,31 +533,15 @@ void	CGIHandler::setClientAddress(std::string client_address)
 	client_addr = client_address;
 }
 
+bool	CGIHandler::isCGI()
+{
+	return iscgi;
+}
+
 /**
  * @brief Set server port
 */
 void	CGIHandler::setServerPort(std::string ServerPort)
 {
 	server_port = ServerPort;
-}
-
-void	CGIHandler::clear()
-{
-	cgi_env.clear();
-	argv.clear();
-	envp.clear();
-	cgi_path.clear();
-	script_path.clear();
-	filename.clear();
-	path_info.clear();
-	query.clear();
-	pid = -1;
-	pipe_in[0] = -1;
-	pipe_in[1] = -1;
-	pipe_out[0] = -1;
-	pipe_out[1] = -1;
-	isrunning = false;
-	iscgi = false;
-	output.clear();
-	last_activity = -1;
 }
