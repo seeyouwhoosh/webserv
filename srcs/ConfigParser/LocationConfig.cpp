@@ -31,6 +31,7 @@ LocationConfig	&LocationConfig::operator=(const LocationConfig &other)
 {
 	HTTPContext::operator=(other);
 	name = other.name;
+	alias = other.alias;
 	allowed_methods = other.allowed_methods;
 	upload_store = other.upload_store;
 	return_status = other.return_status;
@@ -45,7 +46,10 @@ int	LocationConfig::parseAllowedMethods(std::string &value)
 			return DUPLICATED_VALUE;
 	}
 	if (value != "GET" && value != "POST" && value != "DELETE")
+	{
+		error_par = "limit_except";
 		return INVALID_VALUE;
+	}
 	allowed_methods.push_back(value);
 	return 0;
 }
@@ -68,7 +72,10 @@ int	LocationConfig::parseReturnstatus(std::string &value)
 	if (page_return.empty())
 	{
 		if (!allDigits(value) || value.length() > 3)
+		{
+			error_par = "return";
 			return INVALID_VALUE;
+		}
 		page_return = value;
 	}
 	else
@@ -80,11 +87,27 @@ int	LocationConfig::parseReturnstatus(std::string &value)
 	return 0;
 }
 
+int	LocationConfig::parseAlias(std::string &value)
+{
+	if (flags & ROOT)
+		return ALIAS_ROOT;
+	if (flags & ALIAS)
+	{
+		error_par = "alias";
+		return MULTIPLE_VALUES;
+	}
+
+	flags = flags | ALIAS;
+	alias = value;
+	return 0;
+}
+
 void	LocationConfig::clear()
 {
 	HTTPContext::clear();
 
 	name.clear();
+	alias.clear();
 	allowed_methods.clear();
 	upload_store.clear();
 	return_status.first = 0;

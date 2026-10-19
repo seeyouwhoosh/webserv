@@ -159,8 +159,8 @@ This example illustrates the intended configuration structure. Adapt directive n
 | `index` | Specifies the default index file for directories. | inherited or "index.html" | global, server, location |
 | `autoindex` | Enables or disables directory listings. | inherited or "off" | global, server, location |
 | `client_max_body_size` | Limits the size of incoming request bodies (KB, MB or GB). | inherited of 1MB | global, server, location |
-| `timeout` | Defines a timeout for client connection. | inherited or 15s | global, server, location |
-| `cgi_timeout` | Defines a timeout for cgi execution. | inherited or 5s | global, server, location |
+| `timeout` | Defines a timeout for client connection. | inherited or 15s | global, server |
+| `cgi_timeout` | Defines a timeout for cgi execution. | inherited or 5s | global, server |
 | `error_page` | Configures custom error pages. | inherited or empty | global, server, location |
 | `cgi` | Configures CGI handling for supported file extensions. | inherited or empty | global, server, location |
 | `server_name` | Defines the server names. | "" | server |

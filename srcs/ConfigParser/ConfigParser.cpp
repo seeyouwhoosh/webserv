@@ -64,6 +64,8 @@ int	ConfigParser::parseConfig(char *file, std::vector<ServerConfig> *servers)
 	if (!f.is_open())
 		return sendError(1, "open", "can't open the file");
 
+	if (isFileEmpty(f))
+		return sendError(1, "parseConfig", "file is empty");
 	raw = dumptoString(f);
 	f.close();
 
