@@ -46,7 +46,6 @@ public:
 	std::string					error_par;
 
 	std::string					root;
-	std::string					alias;
 	std::vector<std::string>	indexes;
 	short						autoindex;
 	std::string					str_max_body_size;
@@ -59,7 +58,6 @@ public:
 	cgi_handler_type			cgi_handlers;
 
 	int		parseRoot(std::string &value);
-	int		parseAlias(std::string &value);
 	int		parseAutoindex(std::string &value);
 	int		toMaxBodySize(std::string s);
 	int		parseMaxbody(std::string &value);

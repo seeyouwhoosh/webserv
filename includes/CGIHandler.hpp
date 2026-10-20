@@ -23,7 +23,7 @@ private:
 	std::vector<char *>			argv;
 	std::vector<char *>			envp;
 	std::string					cgi_path;
-	std::string 				script_path; //change
+	std::string 				script_path;
 	std::string					filename;
 	std::string					path_info;
 	std::string					query;
@@ -33,13 +33,18 @@ private:
 	bool						isrunning;
 	bool						iscgi;
 
+	/* Fillers */
 	void			fill_env(const HTTPmessage &request);
 	void			fill_argv();
 	void			fill_envp();
-	void			parseCGIbinFile(size_t cgibin_pos, std::string &full_path, LocationConfig *location);
-	std::string		matchExtension(const std::string &ext, const LocationConfig *location) const;
+
+	void			parseCGIbinFile(size_t cgibin_pos, std::string &full_path,
+									LocationConfig *location);
+	std::string		matchExtension(const std::string &ext,
+									const LocationConfig *location) const;
 	int				gotoDirectory();
-	
+	size_t			findHeaderEnd(const std::string &output);
+
 	public:
 	CGIHandler();
 	CGIHandler(CGIHandler &other);
@@ -54,7 +59,6 @@ private:
 	void				separateQuery(std::string &full_path);
 	int					execute(HTTPmessage& request);
 	void				parseOutput(HTTPmessage &request);
-	size_t				findHeaderEnd(const std::string &output);
 	void				killScript();
 	void				clear();
 

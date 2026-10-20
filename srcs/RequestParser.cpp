@@ -6,11 +6,13 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/17 01:31:04 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/17 18:37:19 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestParser.hpp"
+
+/* ----------------------- Orthodox Canonical Form ----------------------- */
 
 RequestParser::RequestParser()
 	: _state(REQUEST_LINE), _contentLength(0),
@@ -18,10 +20,30 @@ RequestParser::RequestParser()
 {
 }
 
+RequestParser::RequestParser(const RequestParser &other)
+	: _state(other._state), _contentLength(other._contentLength),
+	  _bodyReceived(other._bodyReceived), _chunkSize(other._chunkSize)
+{
+}
+
+RequestParser	&RequestParser::operator=(const RequestParser &other)
+{
+	_state = other._state;
+	_contentLength = other._contentLength;
+	_bodyReceived = other._bodyReceived;
+	_chunkSize = other._chunkSize;
+	return *this;
+}
+
 RequestParser::~RequestParser()
 {
 }
 
+/* -------------------------- Main user functions -------------------------- */
+
+/**
+ * @brief Resets the parser state and clears the counters for a new request.
+ */
 void RequestParser::clear()
 {
 	_state = REQUEST_LINE;
@@ -30,11 +52,19 @@ void RequestParser::clear()
 	_chunkSize = 0;
 }
 
+/**
+ * @brief Appends newly received data to the parser buffer.
+ */
 void RequestParser::appendData(const std::string& data)
 {
 	_buffer += data;
 }
 
+/**
+ * @brief Parses the buffered data according to the current parser state.
+ * 
+ * @return Returns whether the request is complete, incomplete, or invalid.
+ */
 ParseResult RequestParser::parse(HTTPmessage& request)
 {
 	while (_state != COMPLETE)
@@ -129,6 +159,9 @@ ParseResult RequestParser::parse(HTTPmessage& request)
 
 /* ----------------------------- Request line ----------------------------- */
 
+/**
+ * @brief Parses the request line and stores the method, path, and HTTP version.
+ */
 bool RequestParser::parseRequestLine(const std::string& line,
 									 HTTPmessage& request)
 {
@@ -185,6 +218,9 @@ bool RequestParser::isValidPath(const std::string& path) const
 
 /* -------------------------------- Headers -------------------------------- */
 
+/**
+ * @brief Parses a header line, validates its format, and stores it in the request.
+ */
 bool RequestParser::parseHeader(const std::string& line,
 								HTTPmessage& request)
 {
@@ -221,6 +257,9 @@ bool RequestParser::parseHeader(const std::string& line,
 	return true;
 }
 
+/**
+ * @brief Validates and extracts the Content-Length header.
+ */
 bool RequestParser::parseContentLength(const HTTPmessage& request)
 {
 	std::map<std::string, std::string>::const_iterator it;
@@ -287,6 +326,7 @@ bool RequestParser::hasContentLength(const HTTPmessage& request) const
 		!= request.rq_headers.end();
 }
 
+
 bool RequestParser::hasHost(const HTTPmessage& request) const
 {
 	std::map<std::string, std::string>::const_iterator it;
@@ -304,6 +344,9 @@ bool RequestParser::hasHost(const HTTPmessage& request) const
 
 /* -------------------------------- Chunked -------------------------------- */
 
+/**
+ * @brief Parses the next chunk size and updates the parser state.
+ */
 ParseResult RequestParser::parseChunkSize()
 {
 	std::string line;
@@ -354,6 +397,9 @@ ParseResult RequestParser::parseChunkSize()
 	return PARSE_INCOMPLETE;
 }
 
+/**
+ * @brief Reads a complete chunk from the buffer and appends it to the request body.
+ */
 ParseResult RequestParser::parseChunkData(HTTPmessage& request)
 {
 	if (_buffer.size() < _chunkSize)
@@ -367,6 +413,10 @@ ParseResult RequestParser::parseChunkData(HTTPmessage& request)
 	return PARSE_INCOMPLETE;
 }
 
+/**
+ * @brief Validates and consumes the CRLF following a chunk.
+ * @note Marks the request as complete when the terminating chunk is reached.
+ */
 ParseResult RequestParser::parseChunkCRLF(HTTPmessage& request)
 {
 	if (_buffer.size() < 2)
@@ -391,6 +441,9 @@ ParseResult RequestParser::parseChunkCRLF(HTTPmessage& request)
 
 /* ---------------------------------- Body ---------------------------------- */
 
+/**
+ * @brief Extracts the next CRLF-terminated line from the buffer.
+ */
 bool RequestParser::getNextLine(std::string& line)
 {
 	std::string::size_type end = _buffer.find("\r\n");
@@ -404,6 +457,10 @@ bool RequestParser::getNextLine(std::string& line)
 	return true;
 }
 
+/**
+ * @brief Reads the request body according to Content-Length,
+ * updating the received byte count until the body is complete.
+ */
 ParseResult RequestParser::parseBody(HTTPmessage& request)
 {
 	std::size_t remaining = _contentLength - _bodyReceived;

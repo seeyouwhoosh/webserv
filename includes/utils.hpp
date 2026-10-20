@@ -30,7 +30,7 @@ std::string toString(const T val)
 
 /* General */
 
-int			error_msg(int err_code, const char *func, const char *msg);
+int			sendError(int err_code, const char *func, const char *msg);
 
 std::string	getDate();
 
@@ -40,9 +40,9 @@ void		closePipes(int pipe_in[2], int pipe_out[2]);
 
 int			setNonBlocking(int fd);
 
-int			listen_socket(struct addrinfo *addr, int listen_num);
+int			listenSocket(struct addrinfo *addr, int listen_num);
 
-bool		all_digits(std::string s);
+bool		allDigits(std::string s);
 
 int			matchDirective(std::string &s);
 
@@ -73,8 +73,6 @@ int			hexToAscii(std::string s);
 long		strtoInt(std::string s);
 
 void		urlDecode(std::string &s);
-
-std::string	parseRawBody(std::string &body);
 
 /* INITs */
 

@@ -18,10 +18,12 @@ public:
 	LocationConfig	&operator=(const LocationConfig &other);
 
 	std::string					name;
+	std::string					alias;
 	std::vector<std::string>	allowed_methods;
 	std::string					upload_store;
 	std::pair<int, std::string>	return_status;
 
+	int		parseAlias(std::string &value);
 	int		parseAllowedMethods(std::string &value);
 	int		parseUpload(std::string &value);
 	int		parseReturnstatus(std::string &value);

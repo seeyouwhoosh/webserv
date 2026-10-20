@@ -52,7 +52,7 @@ int	ServerConfig::parseListens(std::string &value)
 
 	if (sep == std::string::npos)
 	{
-		if (all_digits(value))
+		if (allDigits(value))
 			temp_listen.port = value;
 		else
 		{
@@ -79,7 +79,7 @@ int	ServerConfig::parseListens(std::string &value)
 	{
 		if (it->port == temp_listen.port)
 		{
-			
+			error_par = "listen";
 			if (it->host == temp_listen.host)
 				return DUPLICATED_VALUE;
 			if (it->host == "0.0.0.0" || temp_listen.host == "0.0.0.0" || it->host == "*" || temp_listen.host == "*")
@@ -99,7 +99,10 @@ int	ServerConfig::parseServerName(std::string &value)
 		return INVALID_VALUE;
 	}
 	if (std::find(server_name.begin(), server_name.end(), value) != server_name.end())
+	{
+		error_par = "server_name";
 		return DUPLICATED_VALUE;
+	}
 
 	server_name.push_back(value);
 
@@ -114,24 +117,30 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 	int					status;
 	std::vector<int>	error_keys;
 	std::string			directive;
+	int					open_bracket = 0;
 
 	location.setTokens(*tokens);
 	if (!tokens)
 		return GENERIC_ERROR;
 	if (start != tokens->end() && *start != "{")
 	{
-		error_par = *start;
+		error_par = "server";
 		if (*start == ";")
-		{
-			error_par = "server";
 			return EMPTY_VALUE;
-		}
 		return INVALID_VALUE;
 	}
 	start++;
 
-	for (; start != tokens->end() && *start != "}"; start++)
+	for (; start != tokens->end(); start++)
 	{
+		if (*start == "}")
+		{
+			if (!open_bracket)
+				break;
+			else
+				open_bracket--;
+			continue;
+		}
 		status = UNKNOWN_DIRECTIVE;
 		error_par = *start;
 		if (*start == ";")
@@ -143,6 +152,11 @@ int	ServerConfig::fillServer(std::vector<std::string>::iterator &start)
 		}
 		if (directive.empty())
 		{
+			if (*start == "{")
+			{
+				open_bracket++;
+				continue;
+			}
 			if ((start + 1) == tokens->end() || *(start + 1) == ";")
 				return EMPTY_VALUE;
 

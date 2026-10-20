@@ -3,7 +3,7 @@
 #include "ServerConfig.hpp"
 #include "utils.hpp"
 
-/* Orthodox Canonical form */
+/* ----------------------- Orthodox Canonical Form ----------------------- */
 
 CGIHandler::CGIHandler(): pid(-1), isrunning(false), iscgi(false)
 {
@@ -18,7 +18,7 @@ CGIHandler::CGIHandler(CGIHandler &other)
 	*this = other;
 }
 
-CGIHandler	&CGIHandler::operator=(CGIHandler &other)//change
+CGIHandler	&CGIHandler::operator=(CGIHandler &other)
 {
 	cgi_env = other.cgi_env;
 	argv = other.argv;
@@ -38,6 +38,8 @@ CGIHandler::~CGIHandler()
 {
 	killScript();
 }
+
+/* ---------------------- Class private functions ---------------------- */
 
 std::string	CGIHandler::matchExtension(const std::string &ext,
 										const LocationConfig *location) const
@@ -60,7 +62,7 @@ std::string	CGIHandler::matchExtension(const std::string &ext,
  * 
  * If cgi-bin is detected, send it to the parseCGIbinFile function
  */
-void CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location)//change
+void	CGIHandler::parseFiletoCGI(std::string &full_path, LocationConfig *location)
 {
 	size_t cgibin_pos = full_path.find("/cgi-bin/");
 
@@ -141,11 +143,6 @@ void	CGIHandler::separateQuery(std::string &full_path)
 	full_path = full_path.erase(query_pos);
 }
 
-bool	CGIHandler::isCGI()
-{
-	return iscgi;
-}
-
 /**
  * @brief Having detected "cgi-bin", searches for the executable path
  * 
@@ -159,10 +156,9 @@ bool	CGIHandler::isCGI()
  *  because there may be a pseudopath for the cgi to use (see PATH_INFO)
  * 
  * @note Updates full_path
- * @note Updates iscgi
  */
 
-void CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path, LocationConfig *location)//change
+void CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path, LocationConfig *location)
 {
 	size_t start_pos = cgibin_pos + std::strlen("/cgi-bin/");
 	std::stringstream ss(full_path.substr(start_pos));
@@ -223,65 +219,6 @@ void CGIHandler::parseCGIbinFile(size_t cgibin_pos, std::string &full_path, Loca
 	}
 }
 
-int	CGIHandler::execute(HTTPmessage& request)//change
-{
-	int		status;
-
-	if (cgi_path.empty() || script_path.empty())
-		return INTERNAL_SERVER_ERROR;
-
-	// El intérprete debe existir y poder ejecutarse.
-	if ((status = checkFileStatus(F_OK | X_OK, cgi_path)) != OK)
-		return status;
-
-	// El script debe existir y ser legible.
-	if ((status = checkFileStatus(F_OK | R_OK, script_path)) != OK)
-		return status;
-	
-	if (pipePipes(pipe_in, pipe_out) < 0)
-		return INTERNAL_SERVER_ERROR;
-
-	setNonBlocking(pipe_out[0]);
-	setNonBlocking(pipe_in[1]);
-
-	fill_env(request);
-	input = request.rq_body;
-
-	pid = fork();
-	switch (pid)
-	{
-		case -1:
-		{
-			closePipes(pipe_in, pipe_out);
-			return INTERNAL_SERVER_ERROR;
-		}
-		case 0:
-		{
-			if ((status = gotoDirectory()) != 0)
-				exit(status);
-			fill_argv();
-			fill_envp();
-		
-			dup2(pipe_in[0], STDIN_FILENO);
-			dup2(pipe_out[1], STDOUT_FILENO);
-			dup2(pipe_out[1], STDERR_FILENO);
-			closePipes(pipe_in, pipe_out);
-		
-			execve(argv[0], argv.data(), envp.data());
-			exit(1);
-		}
-		default:
-		{
-			close(pipe_in[0]);
-			close(pipe_out[1]);
-
-			last_activity = std::time(NULL); 
-			isrunning = true;
-			return OK;
-		}
-	}
-}
-
 size_t CGIHandler::findHeaderEnd(const std::string &output)
 {
 	size_t pos = 0;
@@ -312,43 +249,34 @@ size_t CGIHandler::findHeaderEnd(const std::string &output)
 	return std::string::npos;
 }
 
-void	CGIHandler::parseOutput(HTTPmessage &request)
+int CGIHandler::gotoDirectory()
 {
-	size_t	end_of_header = findHeaderEnd(output);
-	if (end_of_header == output.npos)
-		return;
+	if (script_path.empty())
+		return INTERNAL_SERVER_ERROR;
 
-	std::string			header_part = output.substr(0, end_of_header + 4);
-	output.erase(0, end_of_header + 4);
+	size_t slash_pos = script_path.find_last_of('/');
 
-	std::stringstream	ss(header_part);
-	std::string			line;
+	std::string dir_path;
 
-	while (std::getline(ss, line))
-	{
-		if (!line.empty() && line[line.length() - 1] == '\r')
-			line.erase(line.length() - 1, 1);
+	if (slash_pos == std::string::npos)
+		dir_path = ".";
+	else if (slash_pos == 0)
+		dir_path = "/";
+	else
+		dir_path = script_path.substr(0, slash_pos);
 
-		if (line.empty())
-			continue;
+	struct stat st;
 
-		size_t colon_pos = line.find(':');
-		if (colon_pos == std::string::npos)
-			continue;
+	if (stat(dir_path.c_str(), &st) != 0)
+		return FORBIDDEN;
 
-		std::string key = line.substr(0, colon_pos);
-		std::string value = line.substr(colon_pos + 1);
+	if ((st.st_mode & S_IFMT) != S_IFDIR)
+		return UNPROCESSABLE_CONTENT;
 
-		size_t first_non_space = value.find_first_not_of(" \t");
-		if (first_non_space != std::string::npos)
-			value = value.substr(first_non_space);
-		else
-			value.clear();
-		request.setHeader(key, value);
-	}
-
+	return chdir(dir_path.c_str());
 }
 
+/* ----------------------------------- Fillers ----------------------------------- */
 
 void	CGIHandler::fill_env(const HTTPmessage &request)
 {
@@ -391,7 +319,7 @@ void	CGIHandler::fill_env(const HTTPmessage &request)
 	}
 }
 
-void CGIHandler::fill_argv()//change
+void CGIHandler::fill_argv()
 {
 	argv.clear();
 
@@ -402,13 +330,9 @@ void CGIHandler::fill_argv()//change
 	}
 
 	if (cgi_path == script_path)
-	{
-		// Ejecución directa de un script .cgi.
 		argv.push_back(const_cast<char *>(filename.c_str()));
-	}
 	else
 	{
-		// Ejecutar el intérprete pasando el script como argumento.
 		argv.push_back(const_cast<char *>(cgi_path.c_str()));
 		argv.push_back(const_cast<char *>(filename.c_str()));
 	}
@@ -423,31 +347,100 @@ void	CGIHandler::fill_envp()
 	envp.push_back(NULL);
 }
 
-int CGIHandler::gotoDirectory()//change
+/* --------------------------- Class public functions --------------------------- */
+
+int	CGIHandler::execute(HTTPmessage& request)
 {
-	if (script_path.empty())
+	int		status;
+
+	if (cgi_path.empty() || script_path.empty())
 		return INTERNAL_SERVER_ERROR;
 
-	size_t slash_pos = script_path.find_last_of('/');
+	if ((status = checkFileStatus(F_OK | X_OK, cgi_path)) != OK)
+		return status;
 
-	std::string dir_path;
+	if ((status = checkFileStatus(F_OK | R_OK, script_path)) != OK)
+		return status;
+	
+	if (pipePipes(pipe_in, pipe_out) < 0)
+		return INTERNAL_SERVER_ERROR;
 
-	if (slash_pos == std::string::npos)
-		dir_path = ".";
-	else if (slash_pos == 0)
-		dir_path = "/";
-	else
-		dir_path = script_path.substr(0, slash_pos);
+	setNonBlocking(pipe_out[0]);
+	setNonBlocking(pipe_in[1]);
 
-	struct stat st;
+	fill_env(request);
+	input = request.rq_body;
 
-	if (stat(dir_path.c_str(), &st) != 0)
-		return FORBIDDEN;
+	pid = fork();
+	switch (pid)
+	{
+		case -1:
+		{
+			closePipes(pipe_in, pipe_out);
+			return INTERNAL_SERVER_ERROR;
+		}
+		case 0:
+		{
+			if ((status = gotoDirectory()) != 0)
+				exit(status);
+			fill_argv();
+			fill_envp();
+		
+			dup2(pipe_in[0], STDIN_FILENO);
+			dup2(pipe_out[1], STDOUT_FILENO);
+			dup2(pipe_out[1], STDERR_FILENO);
+			closePipes(pipe_in, pipe_out);
+		
+			execve(argv[0], argv.data(), envp.data());
+			exit(INTERNAL_SERVER_ERROR);
+		}
+		default:
+		{
+			close(pipe_in[0]);
+			close(pipe_out[1]);
 
-	if ((st.st_mode & S_IFMT) != S_IFDIR)
-		return UNPROCESSABLE_CONTENT;
+			last_activity = std::time(NULL); 
+			isrunning = true;
+			return OK;
+		}
+	}
+}
 
-	return chdir(dir_path.c_str());
+
+void CGIHandler::parseOutput(HTTPmessage &request)
+{
+	size_t	end_of_header = findHeaderEnd(output);
+	if (end_of_header == std::string::npos)
+		return;
+
+	std::string			header_part = output.substr(0, end_of_header);
+	output.erase(0, end_of_header);
+
+	std::stringstream	ss(header_part);
+	std::string			line;
+
+	while (std::getline(ss, line))
+	{
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line.erase(line.size() - 1);
+
+		if (line.empty())
+			continue;
+
+		size_t colon_pos = line.find(':');
+		if (colon_pos == std::string::npos)
+			continue;
+
+		std::string key = line.substr(0, colon_pos);
+		std::string value = line.substr(colon_pos + 1);
+
+		size_t first = value.find_first_not_of(" \t");
+		value = (first == std::string::npos)
+			? ""
+			: value.substr(first);
+
+		request.setHeader(key, value);
+	}
 }
 
 void	CGIHandler::killScript()
@@ -473,6 +466,29 @@ void	CGIHandler::killScript()
 		}
 	}
 }
+
+void	CGIHandler::clear()
+{
+	cgi_env.clear();
+	argv.clear();
+	envp.clear();
+	cgi_path.clear();
+	script_path.clear();
+	filename.clear();
+	path_info.clear();
+	query.clear();
+	pid = -1;
+	pipe_in[0] = -1;
+	pipe_in[1] = -1;
+	pipe_out[0] = -1;
+	pipe_out[1] = -1;
+	isrunning = false;
+	iscgi = false;
+	output.clear();
+	last_activity = -1;
+}
+
+/* ------------------ Getters and setters and booleans ------------------ */
 
 const std::string	&CGIHandler::getQuery() const
 {
@@ -517,31 +533,15 @@ void	CGIHandler::setClientAddress(std::string client_address)
 	client_addr = client_address;
 }
 
+bool	CGIHandler::isCGI()
+{
+	return iscgi;
+}
+
 /**
  * @brief Set server port
 */
 void	CGIHandler::setServerPort(std::string ServerPort)
 {
 	server_port = ServerPort;
-}
-
-void	CGIHandler::clear()
-{
-	cgi_env.clear();
-	argv.clear();
-	envp.clear();
-	cgi_path.clear();
-	script_path.clear();
-	filename.clear();
-	path_info.clear();
-	query.clear();
-	pid = -1;
-	pipe_in[0] = -1;
-	pipe_in[1] = -1;
-	pipe_out[0] = -1;
-	pipe_out[1] = -1;
-	isrunning = false;
-	iscgi = false;
-	output.clear();
-	last_activity = -1;
 }

@@ -62,8 +62,10 @@ int	ConfigParser::parseConfig(char *file, std::vector<ServerConfig> *servers)
 	int				status;
 
 	if (!f.is_open())
-		return error_msg(1, "open", "can't open the file");
+		return sendError(1, "open", "can't open the file");
 
+	if (isFileEmpty(f))
+		return sendError(1, "parseConfig", "file is empty");
 	raw = dumptoString(f);
 	f.close();
 
@@ -133,7 +135,7 @@ int	ConfigParser::sendParseError(int error)
 	default:
 		break;
 	}
-	return error_msg(1, "parse", msg.c_str());
+	return sendError(1, "parse", msg.c_str());
 }
 
 int ConfigParser::handleQuote(std::stringstream &ss, std::string &starter, char quote_char)

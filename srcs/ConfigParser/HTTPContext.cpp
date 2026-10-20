@@ -25,7 +25,7 @@ HTTPContext::HTTPContext(const HTTPContext &other)
 	*this = other;
 }
 
-HTTPContext &HTTPContext::operator=(const HTTPContext &other)//change
+HTTPContext &HTTPContext::operator=(const HTTPContext &other)
 {
 	if (this == &other)
 		return *this;
@@ -33,7 +33,6 @@ HTTPContext &HTTPContext::operator=(const HTTPContext &other)//change
 	flags = other.flags;
 	error_par = other.error_par;
 	root = other.root;
-	alias = other.alias;
 	indexes = other.indexes;
 	autoindex = other.autoindex;
 	str_max_body_size = other.str_max_body_size;
@@ -68,21 +67,6 @@ int	HTTPContext::parseRoot(std::string &value)
 
 	flags = flags | ROOT;
 	root = value;
-	return 0;
-}
-
-int	HTTPContext::parseAlias(std::string &value)
-{
-	if (flags & ROOT)
-		return ALIAS_ROOT;
-	if (flags & ALIAS)
-	{
-		error_par = "alias";
-		return MULTIPLE_VALUES;
-	}
-
-	flags = flags | ALIAS;
-	alias = value;
 	return 0;
 }
 
@@ -267,7 +251,7 @@ int	HTTPContext::parseCGITimeOut(std::string &value)
 
 int	HTTPContext::parseErrorPage(std::vector<std::string>::iterator &it, std::vector<int> &error_keys)
 {
-	if (!all_digits(*it) && (it + 1) != tokens->end() && *(it + 1) == ";")
+	if (!allDigits(*it) && (it + 1) != tokens->end() && *(it + 1) == ";")
 	{
 		std::string	error_page = *it;
 		for (size_t i = 0; i < error_keys.size(); i++)
@@ -276,15 +260,17 @@ int	HTTPContext::parseErrorPage(std::vector<std::string>::iterator &it, std::vec
 	}
 	else
 	{
-		if (!all_digits(*it))
+		if (!allDigits(*it))
+		{
+			error_par = "error_page";
 			return INVALID_VALUE;
+		}
 		error_keys.push_back(strtoInt(*it));
 	}
 	return 0;
 }
 
-// mirar si suele pasar con el punto o no, porque yo lo suelo parsear sin punto, creo
-int HTTPContext::parseCGIHandler(std::string &value)//change
+int HTTPContext::parseCGIHandler(std::string &value)
 {
 	if (cgi_file.empty())
 	{
@@ -295,6 +281,7 @@ int HTTPContext::parseCGIHandler(std::string &value)//change
 	if (cgi_handlers.find(cgi_file) != cgi_handlers.end())
 	{
 		cgi_file.clear();
+		error_par = "cgi";
 		return DUPLICATED_VALUE;
 	}
 
@@ -407,7 +394,7 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 	}
 	if (str_cgi_timeout.empty())
 	{
-		str_cgi_timeout = "5";
+		str_cgi_timeout = "5s";
 		cgi_timeout = 5;
 	}
 	for (std::vector<ServerConfig>::iterator it = servers->begin(); it != servers->end(); it++)
@@ -451,7 +438,7 @@ void	HTTPContext::fillDefaults(std::vector<ServerConfig> *servers)
 		/* Location config */
 		for (std::vector<LocationConfig>::iterator jt = it->locations.begin(); jt != it->locations.end() ; jt++)
 		{
-			if (jt->root.empty())
+			if (jt->root.empty() && !(jt->flags & ALIAS))
 				jt->root = it->root;
 			if ((jt->autoindex == AUTOINDEX_UNSET))
 				jt->autoindex = it->autoindex;
@@ -479,7 +466,6 @@ void	HTTPContext::clear()
 	cgi_file.clear();
 	error_par.clear();
 	root.clear();
-	alias.clear();
 	indexes.clear();
 	autoindex = AUTOINDEX_UNSET;
 	str_max_body_size.clear();
