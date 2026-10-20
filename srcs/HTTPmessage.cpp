@@ -347,6 +347,9 @@ int HTTPmessage::httpGET()
 	struct stat st;
 	LocationConfig *locationconf = getFullPath(full_path);
 
+	if (locationconf && std::find(locationconf->allowed_methods.begin(), locationconf->allowed_methods.end(), "GET") == locationconf->allowed_methods.end())
+		return setStatusCode(METHOD_NOT_ALLOWED);
+
 	/* Return directive */
 	if (locationconf && (locationconf->return_status.first != 0 || !locationconf->return_status.second.empty()))
 	{
@@ -425,9 +428,12 @@ int	HTTPmessage::httpPOST()
 	full_path = rq_startline.raw_path;
 	LocationConfig	*locationconf = getFullPath(full_path);
 	
+	if (locationconf && std::find(locationconf->allowed_methods.begin(), locationconf->allowed_methods.end(), "POST") == locationconf->allowed_methods.end())
+		return setStatusCode(METHOD_NOT_ALLOWED);
 	if (rq_content_length > locationconf->max_body_size)
 		return -setStatusCode(CONTENT_TOO_LARGE);
 
+	/* Handles cgi */
 	int	status;
 	if (cgi->isCGI())
 	{
@@ -438,23 +444,43 @@ int	HTTPmessage::httpPOST()
 			return -setStatusCode(status);
 	}
 
+	/* Handles x-www-form-urlencoded and multipart/form-data */
 	if ((status = handleSpecialType()) != 1)
 		return status;
 
 	if ((locationconf && locationconf->upload_store.empty()))
 		return -setStatusCode(NOT_FOUND);
-	
+
+	if (locationconf->upload_store.empty())
+	{
+		setStatusCode(OK);
+		return 0;
+	}
+
 	struct stat	st;
 	std::string	upload_store = locationconf->upload_store;
-
-	if (full_path.find(upload_store) == std::string::npos)
-		return -setStatusCode(METHOD_NOT_ALLOWED);
 
 	if (stat(upload_store.c_str(), &st) < 0 || access(upload_store.c_str(), X_OK | W_OK) < 0)
 		return -setStatusCode(FORBIDDEN);
 
 	if (upload_name.empty())
-		upload_name = "upload_" + toString(time(NULL));
+	{
+		std::string content_type = rq_headers["content-type"];
+		size_t dot = full_path.find_last_of('.');
+		size_t slash = full_path.find_last_of('/');
+
+		if (dot == std::string::npos || (content_type == getMIMEtype("plain")
+				|| content_type == getMIMEtype("")))
+		{
+			if (slash != std::string::npos)
+				upload_name = full_path.substr(slash + 1);
+			else
+				upload_name = full_path;
+		}
+
+		if (upload_name.empty())
+			upload_name = "upload_" + toString(time(NULL));
+	}
 	refactorFile(upload_store, upload_name);
 	full_path = upload_name;
 
@@ -480,8 +506,10 @@ int	HTTPmessage::httpPOST()
 int	HTTPmessage::httpDELETE()
 {
 	full_path = rq_startline.raw_path;
-	getFullPath(full_path);
+	LocationConfig	*locationconf = getFullPath(full_path);
 
+	if (locationconf && std::find(locationconf->allowed_methods.begin(), locationconf->allowed_methods.end(), "DELETE") == locationconf->allowed_methods.end())
+		return setStatusCode(METHOD_NOT_ALLOWED);
 	struct stat	st;
 	if (stat(full_path.c_str(), &st) < 0)
 		return -setStatusCode(NOT_FOUND);
@@ -949,20 +977,19 @@ int HTTPmessage::parseMultipartToBody(const std::string& contentHeader)
 int	HTTPmessage::handleSpecialType()
 {
 	stringmap::iterator it = rq_headers.find("content-type");
+	if (it == rq_headers.end())
+		return 1;
 
-	if (it != rq_headers.end())
+	if (it->second.find("multipart/form-data") != std::string::npos)
 	{
-		if (it->second.find("multipart/form-data") != std::string::npos)
-		{
-			if (parseMultipartToBody(it->second) < 0)
-				return setStatusCode(BAD_REQUEST);
-		}
-		if (it->second.find("application/x-www-form-urlencoded") != std::string::npos)
-		{
-			processURLencoded();
-			setStatusCode(OK);
-			return 0;
-		}
+		if (parseMultipartToBody(it->second) < 0)
+			return setStatusCode(BAD_REQUEST);
+	}
+	else if (it->second.find("application/x-www-form-urlencoded") != std::string::npos)
+	{
+		processURLencoded();
+		setStatusCode(OK);
+		return 0;
 	}
 
 	return 1;
