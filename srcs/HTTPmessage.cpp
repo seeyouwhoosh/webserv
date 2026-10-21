@@ -757,35 +757,33 @@ bool	HTTPmessage::manageActuallyDir()
 int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 {
 	std::string	error_str = toString(error);
-	std::string	err_file = error_str + ".html";
-	int			pos = (serverconf) ? getLocationIndex(serverconf->locations, rq_startline.raw_path) : -1;
-	
-	std::string	file;
-	if (pos >= 0 && pos < static_cast<int>(serverconf->locations.size()))
+	std::string	err_file;
+
+	if (locationconf)
 	{
-		const LocationConfig &location = serverconf->locations[pos];
-		std::map<int, std::string>::const_iterator it = location.error_pages.find(error);
-		if (it != location.error_pages.end())
-			file = location.root + "/" + it->second;
+		std::map<int, std::string>::iterator it = locationconf->error_pages.find(error);
+		if (it != locationconf->error_pages.end())
+			err_file = it->second;
 	}
-	if (file.empty() && serverconf)
+	if (serverconf)
+		refactorFile(serverconf->root, err_file);
+	else
 	{
-		std::map<int, std::string>::const_iterator it = serverconf->error_pages.find(error);
-		if (it != serverconf->error_pages.end())
-			file = serverconf->root + "/" + it->second;
+		err_file = error_str + ".html";
+		err_file = "/" + err_file;
+		err_file = ERRPAGE_DIR + err_file;
 	}
-	if (file.empty())
-		file = std::string(ERRPAGE_DIR) + "/" + error_str + ".html";
+
 
 	struct stat	st;
-	if (stat(file.c_str(), &st) < 0)
+	if (stat(err_file.c_str(), &st) < 0)
 		return -1;
 	if ((st.st_mode & S_IFMT) != S_IFREG)
 		return -1;
-	if (access(file.c_str(), F_OK | R_OK) < 0)
+	if (access(err_file.c_str(), F_OK | R_OK) < 0)
 		return -1;
 
-	fs.open(file.c_str(), std::ios::in | std::ios::binary);
+	fs.open(err_file.c_str(), std::ios::in | std::ios::binary);
 	if (!fs.is_open() || fs.fail())
 		return -1;
 	if (isFileEmpty(fs))
@@ -794,7 +792,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 		return -1;
 	}
 	rs_content_length = st.st_size;
-	rs_headers["Content-type"] = getMIMEtype(getFileExtension(file));
+	rs_headers["Content-type"] = getMIMEtype(getFileExtension(err_file));
 	return 0;
 }
 
