@@ -389,7 +389,7 @@ int	CGIHandler::execute(HTTPmessage& request)
 		
 			dup2(pipe_in[0], STDIN_FILENO);
 			dup2(pipe_out[1], STDOUT_FILENO);
-			dup2(pipe_out[1], STDERR_FILENO);
+
 			closePipes(pipe_in, pipe_out);
 		
 			execve(argv[0], argv.data(), envp.data());
