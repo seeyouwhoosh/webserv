@@ -585,7 +585,7 @@ int	WebServer::handleClientData(int client)
 			if (!clientUnit.cgi.input.empty())
 			{
 				epoll_add_fd(pipe_in);
-				epoll_delflag_fd(pipe_out, EPOLLIN);
+				epoll_delflag_fd(pipe_in, EPOLLIN);
 				epoll_addflag_fd(pipe_in, EPOLLOUT);
 				cgi_pipes[pipe_in] = &clientUnit;
 			}

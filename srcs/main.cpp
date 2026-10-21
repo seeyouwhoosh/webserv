@@ -81,14 +81,19 @@ int	main(int ac, char **av)
 		num_events = webserv.epoll_wait(MAX_CONNECTIONS, 1000);
 		if (num_events < 0)
 		{
+			int saved_errno = errno;
+
 			if (!g_signal)
 				break;
+			if (saved_errno == EINTR)
+				continue;
+
 			webserv.clear();
 			return sendError(errno, "epoll_wait", NULL);
 		}
 		if (webserv.processConnections(num_events) < 0)
 			break;
-		webserv.checkTimeouts();
+		//webserv.checkTimeouts();
 	}
 
 	webserv.clear();
