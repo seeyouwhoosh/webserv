@@ -369,6 +369,8 @@ int	CGIHandler::execute(HTTPmessage& request)
 	setNonBlocking(pipe_in[1]);
 
 	fill_env(request);
+	fill_argv();
+	fill_envp();
 	input = request.rq_body;
 
 	pid = fork();
@@ -383,8 +385,7 @@ int	CGIHandler::execute(HTTPmessage& request)
 		{
 			if ((status = gotoDirectory()) != 0)
 				exit(status);
-			fill_argv();
-			fill_envp();
+
 		
 			dup2(pipe_in[0], STDIN_FILENO);
 			dup2(pipe_out[1], STDOUT_FILENO);

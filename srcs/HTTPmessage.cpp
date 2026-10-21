@@ -167,33 +167,18 @@ void	HTTPmessage::printAHeaders()
 /**
  * @brief Creates an error file into the default error pages directory established in the header
  */
-static std::string	generateErrorFile(int error, std::string phrase, std::fstream &fs)
+static std::string	generateErrorFile(int error, std::string phrase)
 {
 	std::string	error_str = toString(error);
-	std::string			file;
-
-	file = std::string(ERRPAGE_DIR) + "/" + error_str + ".html";
-	fs.open(file.c_str(), std::fstream::out | std::fstream::in | std::fstream::trunc | std::fstream::binary);
-	if (!fs.is_open() || fs.fail())
-		return "";
-
 	std::stringstream	content;
+
 	content << "<!DOCTYPE html>\n<html>\n  <head>\n\t<title>";
 	content << error_str << " " << phrase;
 	content << "</title>\n  </head>\n  <body>\n\t<h1>";
 	content << error_str << " " << phrase; 
 	content << "</h1>\n  </body>\n</html>\n";
-	std::string body = content.str();
 
-	fs << body;
-	bool read_failed = fs.fail();
-
-	if (fs.is_open())
-		fs.close();
-
-	if (read_failed)
-		return "";
-	return body;
+	return content.str();
 }
 
 /**
@@ -205,9 +190,11 @@ int	HTTPmessage::generateErrorResponse(int error)
 {
 	std::fstream	fs;
 
+	if (error == 0)
+		return 0;
 	if (rs_startline.status_code != error)
 		setStatusCode(error);
-	if (!openErrorFile(error, fs) && rs_content_length > 0)
+	if (!openErrorFile(error, fs))
 	{
 		rs_body.resize(rs_content_length);
 		fs.read(&rs_body[0], rs_content_length);
@@ -219,15 +206,13 @@ int	HTTPmessage::generateErrorResponse(int error)
 		if (read_failed)
 		{
 			rs_body.clear();
-			return -setStatusCode(INTERNAL_SERVER_ERROR);
+			return -1;
 		}
 		return 0;
 	}
 
-	rs_body = generateErrorFile(error, rs_startline.reason_phrase, fs);
+	rs_body = generateErrorFile(error, rs_startline.reason_phrase);
 	rs_content_length = rs_body.size();
-	if (!rs_content_length)
-		return -setStatusCode(INTERNAL_SERVER_ERROR);
 
 	rs_headers["Content-type"] = "text/html";
 	return 0;
@@ -765,15 +750,20 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 		if (it != locationconf->error_pages.end())
 			err_file = it->second;
 	}
-	if (serverconf)
-		refactorFile(serverconf->root, err_file);
 	else
+	{
+		std::map<int, std::string>::iterator it = serverconf->error_pages.find(error);
+		if (it != locationconf->error_pages.end())
+			err_file = it->second;
+	}
+	if (err_file.empty())
 	{
 		err_file = error_str + ".html";
 		err_file = "/" + err_file;
 		err_file = ERRPAGE_DIR + err_file;
 	}
 
+	refactorFile(serverconf->root, err_file);
 
 	struct stat	st;
 	if (stat(err_file.c_str(), &st) < 0)
