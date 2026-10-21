@@ -1,5 +1,4 @@
-```sh
-#!/bin/sh
+#!/bin/bash
 
 # 1. Read the request body if the method is POST and CONTENT_LENGTH > 0
 POST_BODY=""
@@ -24,7 +23,7 @@ print(body)
 ')
 
 # 3. Generate HTML
-cat <<EOF
+cat << EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,4 +72,3 @@ cat <<EOF
 </body>
 </html>
 EOF
-```
