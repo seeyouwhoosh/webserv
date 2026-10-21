@@ -386,12 +386,11 @@ int	CGIHandler::execute(HTTPmessage& request)
 			if ((status = gotoDirectory()) != 0)
 				exit(status);
 
-		
 			dup2(pipe_in[0], STDIN_FILENO);
 			dup2(pipe_out[1], STDOUT_FILENO);
 
 			closePipes(pipe_in, pipe_out);
-		
+
 			execve(argv[0], argv.data(), envp.data());
 			exit(INTERNAL_SERVER_ERROR);
 		}
@@ -452,8 +451,6 @@ void	CGIHandler::killScript()
 	{
 		kill(pid, SIGKILL);
 		waitpid(pid, &status, WNOHANG);
-		isrunning = false;
-		pid = -1;
 
 		if (pipe_in[1] != -1)
 		{
@@ -466,6 +463,7 @@ void	CGIHandler::killScript()
 			pipe_out[0] = -1;
 		}
 	}
+	clear();
 }
 
 void	CGIHandler::clear()

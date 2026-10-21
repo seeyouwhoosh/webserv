@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/17 17:44:09 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/22 00:04:33 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -272,6 +272,7 @@ int	WebServer::prepareListeners()
 				servers[i].listens[j].serversock_info, MAX_CONNECTIONS)) < 0)
 			{
 				clear();
+				freeaddrinfo(servers[i].listens[j].serversock_info);
 				return -1;
 			}
 			if (SHOW_LOGS)
@@ -636,6 +637,7 @@ void WebServer::checkTimeouts()
 			if (client.generateErrorResponse(GATEWAY_TIMEOUT) >= 0)
 			{
 				client.setResponse();
+				epoll_addflag_fd(client_fd, EPOLLOUT);
 				continue;
 			}
 		}
