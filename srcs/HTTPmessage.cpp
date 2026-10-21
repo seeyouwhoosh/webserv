@@ -203,18 +203,18 @@ static std::string	generateErrorFile(int error, std::string phrase, std::fstream
  */
 int	HTTPmessage::generateErrorResponse(int error)
 {
-	std::fstream	err_file;
+	std::fstream	fs;
 
 	if (rs_startline.status_code != error)
 		setStatusCode(error);
-	if (!openErrorFile(error, err_file) && rs_content_length > 0)
+	if (!openErrorFile(error, fs) && rs_content_length > 0)
 	{
 		rs_body.resize(rs_content_length);
-		err_file.read(&rs_body[0], rs_content_length);
-		bool read_failed = err_file.fail();
+		fs.read(&rs_body[0], rs_content_length);
+		bool read_failed = fs.fail();
 
-		if (err_file.is_open())
-			err_file.close();
+		if (fs.is_open())
+			fs.close();
 
 		if (read_failed)
 		{
@@ -224,7 +224,7 @@ int	HTTPmessage::generateErrorResponse(int error)
 		return 0;
 	}
 
-	rs_body = generateErrorFile(error, rs_startline.reason_phrase, err_file);
+	rs_body = generateErrorFile(error, rs_startline.reason_phrase, fs);
 	rs_content_length = rs_body.size();
 	if (!rs_content_length)
 		return -setStatusCode(INTERNAL_SERVER_ERROR);
