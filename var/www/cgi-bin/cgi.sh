@@ -22,8 +22,11 @@ if body.startswith("raw_body="):
 print(body)
 ')
 
+
+printf 'Content-Type: text/html; charset=UTF-8\r\n\r\n'
+
 # 3. Generate HTML
-cat << EOF
+cat <<EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -1,4 +1,3 @@
-```sh
 #!/bin/sh
 
 # 1. Read the request body if the method is POST and CONTENT_LENGTH > 0
@@ -73,4 +72,3 @@ cat <<EOF
 </body>
 </html>
 EOF
-```
