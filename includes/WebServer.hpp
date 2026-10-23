@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   WebServer.cpp                                      :+:      :+:    :+:   */
+/*   WebServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/17 01:14:31 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/23 23:56:18 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,7 @@ private:
 	/* Sockets and clients handlers */
 	int			sendCgiData(int fd, Client *client);
 	int			handleCgiData(int fd, Client *client);
+	void		checkFinishedCgi();
 	int			handleNewConnection(int listener);
 	int			sendClientData(int client);
 	int			handleClientData(int client);

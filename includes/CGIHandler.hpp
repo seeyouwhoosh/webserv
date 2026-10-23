@@ -31,8 +31,8 @@ private:
 	int							pipe_in[2]; // Writing to CGI
 	int							pipe_out[2]; // Reading from CGI
 	bool						isrunning;
-	bool						outputEof;
 	bool						iscgi;
+	bool						outputEof;
 
 	/* Fillers */
 	void			fill_env(const HTTPmessage &request);

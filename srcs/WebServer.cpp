@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/23 21:19:11 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/24 00:52:29 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -287,9 +287,52 @@ int	WebServer::prepareListeners()
 	return 0;
 }
 
-int	WebServer::checkFinishedCgi()
+void	WebServer::checkFinishedCgi()
 {
-	
+	for (std::map<int, Client>::iterator it = clients.begin();
+		it != clients.end(); ++it)
+	{
+		Client *client = &it->second;
+
+		if (!client->cgi.isRunning()
+			|| !client->cgi.getOutputEof())
+			continue;
+
+		int status = 0;
+		pid_t result = waitpid(client->cgi.getPID(), &status, WNOHANG);
+
+		if (result == 0)
+			continue;
+
+		if (result < 0)
+		{
+			client->generateErrorResponse(INTERNAL_SERVER_ERROR);
+			client->setResponse();
+			epoll_addflag_fd(client->fd, EPOLLOUT);
+			continue;
+		}
+
+		client->cgi.setRunning(false);
+
+		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+		{
+			client->cgi.parseOutput(client->message);
+			client->message.setBody(client->cgi.output);
+
+			if (client->setResponse() < 0)
+				continue;
+
+			if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
+				continue;
+		}
+		else
+		{
+			if (client->generateErrorResponse(INTERNAL_SERVER_ERROR) < 0
+				|| client->setResponse() < 0
+				|| epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
+				continue;
+		}
+	}
 }
 
 /**
