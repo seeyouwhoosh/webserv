@@ -5,7 +5,7 @@
 
 /* ----------------------- Orthodox Canonical Form ----------------------- */
 
-CGIHandler::CGIHandler(): pid(-1), isrunning(false), iscgi(false)
+CGIHandler::CGIHandler(): pid(-1), isrunning(false), iscgi(false), outputEof(false)
 {
 	pipe_in[0] = -1;
 	pipe_in[1] = -1;
@@ -483,6 +483,7 @@ void	CGIHandler::clear()
 	pipe_out[1] = -1;
 	isrunning = false;
 	iscgi = false;
+	outputEof = false;
 	output.clear();
 	last_activity = -1;
 }
@@ -523,6 +524,17 @@ void	CGIHandler::setRunning(bool b)
 {
 	isrunning = b;
 }
+
+bool	CGIHandler::getOutputEof()
+{
+	return outputEof;
+}
+
+void	CGIHandler::setOutputEof(bool b)
+{
+	outputEof = b;
+}
+
 
 /**
  * @brief Set client address

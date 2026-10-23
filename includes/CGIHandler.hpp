@@ -31,6 +31,7 @@ private:
 	int							pipe_in[2]; // Writing to CGI
 	int							pipe_out[2]; // Reading from CGI
 	bool						isrunning;
+	bool						outputEof;
 	bool						iscgi;
 
 	/* Fillers */
@@ -66,6 +67,8 @@ private:
 	bool				isCGI();
 	bool				isRunning();
 	void				setRunning(bool b);
+	void				setOutputEof(bool b);
+	bool				getOutputEof();
 	void				setClientAddress(std::string client_address);
 	void				setServerPort(std::string ServerPort);
 	const std::string	&getQuery() const;

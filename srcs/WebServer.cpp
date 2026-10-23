@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/22 00:04:33 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/23 21:19:11 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -287,6 +287,11 @@ int	WebServer::prepareListeners()
 	return 0;
 }
 
+int	WebServer::checkFinishedCgi()
+{
+	
+}
+
 /**
  * @brief Processes active events returned by epoll_wait.
  *
@@ -349,6 +354,7 @@ int	WebServer::processConnections(int num_events)
 			}
 		}
 	}
+	checkFinishedCgi();
 	return 0;
 }
 
@@ -406,8 +412,10 @@ int WebServer::handleCgiData(int fd, Client *client)
 		int status;
 		pid_t result = waitpid(client->cgi.getPID(), &status, WNOHANG);
 
-		if (result != 0)
-			client->cgi.setRunning(false);
+		if (result == 0)
+			return 0;
+
+		client->cgi.setRunning(false);
 		if (result > 0 && WIFEXITED(status) && WEXITSTATUS(status) == 0)
 		{
 			client->cgi.parseOutput(client->message);

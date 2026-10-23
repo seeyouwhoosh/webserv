@@ -93,7 +93,7 @@ int	main(int ac, char **av)
 		}
 		if (webserv.processConnections(num_events) < 0)
 			break;
-		webserv.checkTimeouts();
+		//webserv.checkTimeouts();
 	}
 
 	webserv.clear();
