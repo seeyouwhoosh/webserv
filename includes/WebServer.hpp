@@ -24,13 +24,21 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <list>
 #include <map>
 
 #include "ConfigParser.hpp"
 #include "Client.hpp"
 #include "utils.hpp"
 
-#define MAX_CONNECTIONS	1024
+#ifndef MAX_CONNECTIONS
+# define MAX_CONNECTIONS 1024
+#endif
+
+#ifndef EPOLL_TIMEOUT
+# define EPOLL_TIMEOUT 1024
+#endif
+
 
 #ifndef BUFFER_SIZE
 # define BUFFER_SIZE 1024
@@ -62,6 +70,7 @@ private:
 	std::vector<ServerConfig>			servers;
 
 	/* Connection variables */
+	std::list<Client *>				unfinished_cgis;
 	std::map<int, Client *>				cgi_pipes;
 	std::map<int, Client>				clients;
 	std::map<int, t_listener>			listeners;

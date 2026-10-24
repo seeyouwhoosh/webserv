@@ -289,31 +289,33 @@ int	WebServer::prepareListeners()
 
 void	WebServer::checkFinishedCgi()
 {
-	for (std::map<int, Client>::iterator it = clients.begin();
-		it != clients.end(); ++it)
+	std::list<Client *>::iterator it = unfinished_cgis.begin();
+
+	while (it != unfinished_cgis.end())
 	{
-		Client *client = &it->second;
-
-		if (!client->cgi.isRunning()
-			|| !client->cgi.getOutputEof())
-			continue;
-
+		Client	*client = *it;
 		int status = 0;
 		pid_t result = waitpid(client->cgi.getPID(), &status, WNOHANG);
 
 		if (result == 0)
+		{
+			++it;
 			continue;
+		}
+
+		std::list<Client *>::iterator current = it;
+		++it;
+		unfinished_cgis.erase(current);
+		client->cgi.setRunning(false);
 
 		if (result < 0)
 		{
 			client->generateErrorResponse(INTERNAL_SERVER_ERROR);
 			client->setResponse();
 			epoll_addflag_fd(client->fd, EPOLLOUT);
+			++it;
 			continue;
 		}
-
-		client->cgi.setRunning(false);
-
 		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
 		{
 			client->cgi.parseOutput(client->message);
@@ -348,7 +350,9 @@ void	WebServer::checkFinishedCgi()
  */
 int	WebServer::processConnections(int num_events)
 {
-	for (int i = 0; i < num_events ; i++)
+	int	i = 0;
+
+	while (i < num_events)
 	{
 		int fd = epoll_events[i].data.fd;
 		if (isCgiPipe(fd))
@@ -389,13 +393,19 @@ int	WebServer::processConnections(int num_events)
 			{
 				if (isListener(epoll_events[i].data.fd))
 				{
-					if (handleNewConnection(fd) < 0)
-						return -1;
+					while (i < num_events && (epoll_events[i].events & EPOLLIN) && isListener(epoll_events[i].data.fd))
+					{
+						if (handleNewConnection(fd) < 0)
+							return -1;
+						i++;
+					}
+					continue;
 				}
 				else if (handleClientData(fd) < 0)
 					return -1;
 			}
 		}
+		i++;
 	}
 	checkFinishedCgi();
 	return 0;
@@ -456,7 +466,10 @@ int WebServer::handleCgiData(int fd, Client *client)
 		pid_t result = waitpid(client->cgi.getPID(), &status, WNOHANG);
 
 		if (result == 0)
+		{
+			unfinished_cgis.push_back(client);
 			return 0;
+		}
 
 		client->cgi.setRunning(false);
 		if (result > 0 && WIFEXITED(status) && WEXITSTATUS(status) == 0)
