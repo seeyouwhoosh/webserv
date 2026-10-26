@@ -6,7 +6,7 @@
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/22 00:04:33 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/24 00:52:29 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -287,6 +287,56 @@ int	WebServer::prepareListeners()
 	return 0;
 }
 
+void	WebServer::checkFinishedCgi()
+{
+	std::list<Client *>::iterator it = unfinished_cgis.begin();
+
+	while (it != unfinished_cgis.end())
+	{
+		Client	*client = *it;
+		int status = 0;
+		pid_t result = waitpid(client->cgi.getPID(), &status, WNOHANG);
+
+		if (result == 0)
+		{
+			++it;
+			continue;
+		}
+
+		std::list<Client *>::iterator current = it;
+		++it;
+		unfinished_cgis.erase(current);
+		client->cgi.setRunning(false);
+
+		if (result < 0)
+		{
+			client->generateErrorResponse(INTERNAL_SERVER_ERROR);
+			client->setResponse();
+			epoll_addflag_fd(client->fd, EPOLLOUT);
+			++it;
+			continue;
+		}
+		if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+		{
+			client->cgi.parseOutput(client->message);
+			client->message.setBody(client->cgi.output);
+
+			if (client->setResponse() < 0)
+				continue;
+
+			if (epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
+				continue;
+		}
+		else
+		{
+			if (client->generateErrorResponse(INTERNAL_SERVER_ERROR) < 0
+				|| client->setResponse() < 0
+				|| epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
+				continue;
+		}
+	}
+}
+
 /**
  * @brief Processes active events returned by epoll_wait.
  *
@@ -300,7 +350,9 @@ int	WebServer::prepareListeners()
  */
 int	WebServer::processConnections(int num_events)
 {
-	for (int i = 0; i < num_events ; i++)
+	int	i = 0;
+
+	while (i < num_events)
 	{
 		int fd = epoll_events[i].data.fd;
 		if (isCgiPipe(fd))
@@ -341,14 +393,21 @@ int	WebServer::processConnections(int num_events)
 			{
 				if (isListener(epoll_events[i].data.fd))
 				{
-					if (handleNewConnection(fd) < 0)
-						return -1;
+					while (i < num_events && (epoll_events[i].events & EPOLLIN) && isListener(epoll_events[i].data.fd))
+					{
+						if (handleNewConnection(fd) < 0)
+							return -1;
+						i++;
+					}
+					continue;
 				}
 				else if (handleClientData(fd) < 0)
 					return -1;
 			}
 		}
+		i++;
 	}
+	checkFinishedCgi();
 	return 0;
 }
 
@@ -406,8 +465,13 @@ int WebServer::handleCgiData(int fd, Client *client)
 		int status;
 		pid_t result = waitpid(client->cgi.getPID(), &status, WNOHANG);
 
-		if (result != 0)
-			client->cgi.setRunning(false);
+		if (result == 0)
+		{
+			unfinished_cgis.push_back(client);
+			return 0;
+		}
+
+		client->cgi.setRunning(false);
 		if (result > 0 && WIFEXITED(status) && WEXITSTATUS(status) == 0)
 		{
 			client->cgi.parseOutput(client->message);

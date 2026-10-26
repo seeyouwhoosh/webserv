@@ -40,8 +40,12 @@ if ($query_string !== '') {
 }
 
 // 4. Read and parse the body from STDIN
-$post_data = 'None';
-$raw_body = '';
+$post_data = $_POST;
+$raw_body = file_get_contents('php://input');
+
+if ($raw_body === false) {
+    $raw_body = '';
+}
 $body_bytes_received = 0;
 $json_error = null;
 

@@ -78,7 +78,7 @@ int	main(int ac, char **av)
 
 	while (g_signal)
 	{
-		num_events = webserv.epoll_wait(MAX_CONNECTIONS, 1000);
+		num_events = webserv.epoll_wait(MAX_CONNECTIONS, EPOLL_TIMEOUT);
 		if (num_events < 0)
 		{
 			int saved_errno = errno;

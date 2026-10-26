@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   WebServer.cpp                                      :+:      :+:    :+:   */
+/*   WebServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/17 01:14:31 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/23 23:56:18 by xwu              ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,13 +24,21 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <list>
 #include <map>
 
 #include "ConfigParser.hpp"
 #include "Client.hpp"
 #include "utils.hpp"
 
-#define MAX_CONNECTIONS	1024
+#ifndef MAX_CONNECTIONS
+# define MAX_CONNECTIONS 1024
+#endif
+
+#ifndef EPOLL_TIMEOUT
+# define EPOLL_TIMEOUT 1024
+#endif
+
 
 #ifndef BUFFER_SIZE
 # define BUFFER_SIZE 1024
@@ -62,6 +70,7 @@ private:
 	std::vector<ServerConfig>			servers;
 
 	/* Connection variables */
+	std::list<Client *>				unfinished_cgis;
 	std::map<int, Client *>				cgi_pipes;
 	std::map<int, Client>				clients;
 	std::map<int, t_listener>			listeners;
@@ -76,6 +85,7 @@ private:
 	/* Sockets and clients handlers */
 	int			sendCgiData(int fd, Client *client);
 	int			handleCgiData(int fd, Client *client);
+	void		checkFinishedCgi();
 	int			handleNewConnection(int listener);
 	int			sendClientData(int client);
 	int			handleClientData(int client);
