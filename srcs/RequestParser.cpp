@@ -194,9 +194,11 @@ bool RequestParser::isValidMethod(const std::string& method) const
 {
 	if (method == "POST")
 		return true;
-	if (method == "GET")
+	else if (method == "GET")
 		return true;
-	if (method == "DELETE")
+	else if (method == "DELETE")
+		return true;
+	else if (method == "HEAD" | method == "PATCH" | method == "QUERY" | method == "PUT" | method == "CONNECT" | method == "TRACE" | method == "OPTIONS")
 		return true;
 	return false;
 }

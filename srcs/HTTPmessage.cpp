@@ -258,7 +258,7 @@ int	HTTPmessage::generateResponse()
 			break;
 		default:
 			setAllowHeader();
-			error = setStatusCode(METHOD_NOT_ALLOWED);
+			error = setStatusCode(NOT_IMPLEMENTED);
 			break;
 		}
 	}
