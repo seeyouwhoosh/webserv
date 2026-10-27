@@ -214,7 +214,7 @@ int	HTTPmessage::generateErrorResponse(int error)
 	rs_body = generateErrorFile(error, rs_startline.reason_phrase);
 	rs_content_length = rs_body.size();
 
-	rs_headers["Content-type"] = "text/html";
+	rs_headers["Content-Type"] = "text/html";
 	return 0;
 }
 
@@ -502,7 +502,7 @@ int	HTTPmessage::httpDELETE()
 	if ((st.st_mode & S_IFMT) == S_IFDIR)
 		return -setStatusCode(NOT_IMPLEMENTED);
 
-	if (access(full_path.c_str(), F_OK | R_OK |X_OK) < 0 || std::remove(full_path.c_str()) != 0)
+	if (access(full_path.c_str(), F_OK) < 0 || std::remove(full_path.c_str()) != 0)
 		return -setStatusCode(FORBIDDEN);
 
 	setStatusCode(NO_CONTENT);
@@ -782,7 +782,7 @@ int	HTTPmessage::openErrorFile(int error, std::fstream &fs)
 		return -1;
 	}
 	rs_content_length = st.st_size;
-	rs_headers["Content-type"] = getMIMEtype(getFileExtension(err_file));
+	rs_headers["Content-Type"] = getMIMEtype(getFileExtension(err_file));
 	return 0;
 }
 
