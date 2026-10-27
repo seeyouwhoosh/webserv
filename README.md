@@ -111,8 +111,8 @@ Example configuration:
 
 ```nginx
 client_max_body_size	5M;
-timeout					      10s;
-cgi_timeout			    	5s;
+timeout					10s;
+cgi_timeout			    5s;
 
 server
 {
@@ -272,3 +272,15 @@ This project explores several important networking and systems programming conce
 ### CGI
 * https://www6.uniovi.es/~antonio/ncsa_httpd/cgi/env.html
 * http://www.mnuwer.dbasedeveloper.co.uk/dlearn/web/session03.htm
+
+### AI Usage
+
+AI tools were used as a support resource throughout the development of this project. Their use included:
+
+- **Documentation:** Assisting with the writing and organization of this README.
+- **Research:** Finding relevant websites, documentation, and online resources.
+- **Concept clarification:** Explaining technical terms, concepts, and protocols to support our understanding.
+- **Debugging:** Helping identify potential bugs, analyze error messages, and investigate unexpected behavior in the code.
+- **Testing:** Assisting in designing test cases, identifying edge cases, and verifying expected server behavior.
+
+AI-generated suggestions were reviewed and evaluated by the team. The implementation, testing, and final decisions remained our responsibility.
