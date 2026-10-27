@@ -332,7 +332,11 @@ void	WebServer::checkFinishedCgi()
 			if (client->generateErrorResponse(INTERNAL_SERVER_ERROR) < 0
 				|| client->setResponse() < 0
 				|| epoll_addflag_fd(client->fd, EPOLLOUT) < 0)
+			{
+				closeConnection(client->fd);
 				continue;
+			}
+			continue;
 		}
 	}
 }
@@ -387,7 +391,7 @@ int	WebServer::processConnections(int num_events)
 			if (epoll_events[i].events & EPOLLOUT)
 			{
 				if (sendClientData(fd) < 0)
-						return -1;
+					return -1;
 			}
 			if (epoll_events[i].events & EPOLLIN)
 			{
@@ -396,7 +400,10 @@ int	WebServer::processConnections(int num_events)
 					while (i < num_events && (epoll_events[i].events & EPOLLIN) && isListener(epoll_events[i].data.fd))
 					{
 						if (handleNewConnection(fd) < 0)
-							return -1;
+						{
+							i++;
+							continue;
+						}
 						i++;
 					}
 					continue;
@@ -510,7 +517,7 @@ int	WebServer::handleNewConnection(int listener)
 		return sendError(errno, "accept", NULL);
 
 	if (setNonBlocking(clientsock) < 0)
-			return sendError(errno, "fcntl", NULL);
+		return sendError(errno, "fcntl", NULL);
 
 	if (epoll_add_fd(clientsock) < 0)
 	{
@@ -663,9 +670,15 @@ int	WebServer::handleClientData(int client)
 		}
 		/* Adds it to the response queue */
 		if (clientUnit.setResponse() < 0)
-			return -1;
+		{
+			if (closeConnection(client) < 0)
+				return -1;
+		}
 		if (epoll_addflag_fd(client, EPOLLOUT) < 0)
-			return -1;
+		{
+			if (closeConnection(client) < 0)
+				return -1;
+		}
 	}
 	return 0;
 }
