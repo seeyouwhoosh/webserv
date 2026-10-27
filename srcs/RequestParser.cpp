@@ -198,7 +198,7 @@ bool RequestParser::isValidMethod(const std::string& method) const
 		return true;
 	else if (method == "DELETE")
 		return true;
-	else if (method == "HEAD" | method == "PATCH" | method == "QUERY" | method == "PUT" | method == "CONNECT" | method == "TRACE" | method == "OPTIONS")
+	else if (method == "HEAD" || method == "PATCH" || method == "QUERY" || method == "PUT" || method == "CONNECT" || method == "TRACE" || method == "OPTIONS")
 		return true;
 	return false;
 }

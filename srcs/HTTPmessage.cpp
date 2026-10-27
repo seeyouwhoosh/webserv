@@ -411,7 +411,7 @@ int	HTTPmessage::httpPOST()
 		return -setStatusCode(BAD_REQUEST);
 
 	full_path = rq_startline.raw_path;
-	LocationConfig	*locationconf = getFullPath(full_path);
+	locationconf = getFullPath(full_path);
 	
 	if (locationconf && std::find(locationconf->allowed_methods.begin(), locationconf->allowed_methods.end(), "POST") == locationconf->allowed_methods.end())
 		return setStatusCode(METHOD_NOT_ALLOWED);
@@ -491,7 +491,7 @@ int	HTTPmessage::httpPOST()
 int	HTTPmessage::httpDELETE()
 {
 	full_path = rq_startline.raw_path;
-	LocationConfig	*locationconf = getFullPath(full_path);
+	locationconf = getFullPath(full_path);
 
 	if (locationconf && std::find(locationconf->allowed_methods.begin(), locationconf->allowed_methods.end(), "DELETE") == locationconf->allowed_methods.end())
 		return setStatusCode(METHOD_NOT_ALLOWED);
@@ -790,14 +790,18 @@ void	HTTPmessage::setAllowHeader()
 {
 	std::stringstream	header;
 
-	for (std::vector<std::string>::iterator it = locationconf->allowed_methods.begin(); it != locationconf->allowed_methods.end(); it++)
+	full_path = rq_startline.raw_path;
+	locationconf = getFullPath(full_path);
+
+	for (std::vector<std::string>::const_iterator it = 
+		locationconf->allowed_methods.begin();
+		 it != locationconf->allowed_methods.end(); ++it)
 	{
-		header << *it;
-		if (it != locationconf->allowed_methods.end() - 1)
+		if (it != locationconf->allowed_methods.begin())
 			header << ", ";
-		else
-			header << "\r\n";
+		header << *it;
 	}
+
 	rs_headers["Allow"] = header.str();
 }
 
