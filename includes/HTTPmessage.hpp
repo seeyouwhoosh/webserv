@@ -3,7 +3,7 @@
 #include <unistd.h> /* open, close, read, write, access, execve, fork, pipe, dup2, chdir, opendir */
 #include <dirent.h> /* readdir, closedir */
 #include <sys/stat.h> /* stat */
-#include <sys/wait.h> /* wait */
+#include <sys/wait.h> /* wait */ 
 #include <sys/socket.h>
 
 #include <cstdio>

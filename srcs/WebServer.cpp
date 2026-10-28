@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: xwu <xwu@student.42urduliz.com>            +#+  +:+       +#+        */
+/*   By: uelizegi <uelizegi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 22:20:15 by xwu               #+#    #+#             */
-/*   Updated: 2026/10/24 00:52:29 by xwu              ###   ########.fr       */
+/*   Updated: 2026/10/28 13:51:18 by uelizegi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -744,6 +744,9 @@ void		WebServer::handleSession(Client &client)
 	}
 	else
 		sessions[sessionId].visits++;
+	std::cout << "[SESSION] ID: " << sessionId
+			  << " | Visitas: " << sessions[sessionId].visits
+			  << std::endl;
 }
 
 std::string WebServer::createSession()

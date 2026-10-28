@@ -191,17 +191,18 @@ int	ConfigParser::getTokens()
 	int					status;
 
 	while (ss >> temp)
-	{		size_t	index;
+	{
+		size_t	index;
+		size_t	quote_pos = temp.find('\'') != std::string::npos ? temp.find('\'') : temp.find('\"');
+
+		if (quote_pos != std::string::npos && (status = handleQuote(ss, temp, temp[quote_pos])))
+			return status;
 		if ((index = temp.find(';')) != std::string::npos)
 			push_separately(temp, index);
 		if ((index = temp.find('{'))!= std::string::npos)
 			push_separately(temp, index);
 		if ((index = temp.find('}'))!= std::string::npos)
 			push_separately(temp, index);
-
-		size_t	quote_pos = temp.find('\'') != std::string::npos ? temp.find('\'') : temp.find('\"');
-		if (quote_pos != std::string::npos && (status = handleQuote(ss, temp, temp[quote_pos])))
-			return status;
 
 		if (!temp.empty())
 			tokens.push_back(temp);
